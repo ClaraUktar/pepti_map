@@ -1,1 +1,1 @@
-# PeptiMap
+# pepti_map
