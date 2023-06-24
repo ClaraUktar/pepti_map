@@ -1,4 +1,4 @@
-import rna_importer, peptide_importer
+from importing import peptide_importer, rna_importer
 
 
 def import_rna_and_peptides(rna_file_path: str, peptides_file_path: str):
