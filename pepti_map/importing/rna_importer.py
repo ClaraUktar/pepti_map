@@ -7,12 +7,11 @@ import pandas as pd
 # e.g. https://stackoverflow.com/questions/19371860/python-open-file-in-zip-without-temporarily-extracting-it
 def import_file(file_path: str) -> pd.DataFrame:
     with open(file_path) as rna_file:
-        df_data: Dict[str, Tuple[str, str, str, int]] = {}
+        df_data: Dict[str, Tuple[str, str, int]] = {}
         line_count_for_current_sequence: int = 0
         id = ""
         sequence = ""
-        quality = ""
-        found_duplicate = False
+        duplicate = None
 
         for line in rna_file:
             if line_count_for_current_sequence == 0:
@@ -20,35 +19,32 @@ def import_file(file_path: str) -> pd.DataFrame:
             elif line_count_for_current_sequence == 1:
                 sequence = line.strip()
                 duplicate = df_data.get(sequence)
-                if duplicate is not None:
-                    found_duplicate = True
-                    # TODO: Should use list here instead?
-                    # TODO: Deal with quality for duplicates
-                    df_data[sequence] = (
-                        duplicate[0],
-                        duplicate[1],
-                        duplicate[2],
-                        duplicate[3] + 1,
-                    )
-            # Information from field 3 is not needed
-            elif line_count_for_current_sequence == 3:
-                quality = line.strip()
+            # Information from field 2 (line 3) is not needed
+            # For now skip quality info, getting cutoff value supplied by user
+            # elif line_count_for_current_sequence == 3:
+            #     quality = line.strip()
 
             line_count_for_current_sequence = line_count_for_current_sequence + 1
 
             # Always read 4 lines per sequence, as per FASTQ format
             if line_count_for_current_sequence == 4:
-                if found_duplicate:
-                    found_duplicate = False
+                if duplicate is not None:
+                    # TODO: Should use list here instead?
+                    # TODO: Deal with quality for duplicates
+                    df_data[sequence] = (
+                        "".join([duplicate[0], ",", id]),
+                        duplicate[1],
+                        duplicate[2] + 1,
+                    )
+                    duplicate = None
                 else:
-                    df_data[sequence] = (id, sequence, quality, 1)
+                    df_data[sequence] = (id, sequence, 1)
                 line_count_for_current_sequence = 0
                 id = ""
                 sequence = ""
-                quality = ""
 
         rna_df = pd.DataFrame(
-            list(df_data.values()), columns=["id", "sequence", "quality", "count"]
+            list(df_data.values()), columns=["ids", "sequence_after_cutoff", "count"]
         )
         print(rna_df)
         return rna_df
