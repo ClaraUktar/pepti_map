@@ -1,23 +1,24 @@
-from typing import Dict, TextIO, Tuple
+from typing import Dict, List, TextIO, Tuple
 import pandas as pd
 import gzip
 
 
-def _convert_file_to_df(rna_file: TextIO, cutoff: int = -1) -> pd.DataFrame:
-    df_data: Dict[str, Tuple[str, str, int]] = {}
+def _convert_rna_data_to_df(
+    rna_data: TextIO, rna_dict: Dict[str, Tuple[str, str, int]] = {}, cutoff: int = -1
+) -> Dict[str, Tuple[str, str, int]]:
     line_count_for_current_sequence: int = 0
     id = ""
     sequence = ""
     duplicate = None
 
-    for line in rna_file:
+    for line in rna_data:
         if line_count_for_current_sequence == 0:
             id = line.strip()
         elif line_count_for_current_sequence == 1:
             sequence = line.strip()
             if cutoff > 0:
                 sequence = sequence[0:cutoff]
-            duplicate = df_data.get(sequence)
+            duplicate = rna_dict.get(sequence)
         # Information from field 2 (line 3) is not needed
         # For now skip quality info, getting cutoff value supplied by user
         # elif line_count_for_current_sequence == 3:
@@ -28,23 +29,37 @@ def _convert_file_to_df(rna_file: TextIO, cutoff: int = -1) -> pd.DataFrame:
         # Always read 4 lines per sequence, as per FASTQ format
         if line_count_for_current_sequence == 4:
             if duplicate is not None:
-                df_data[sequence] = (
+                rna_dict[sequence] = (
                     "".join([duplicate[0], ",", id]),
                     duplicate[1],
                     duplicate[2] + 1,
                 )
                 duplicate = None
             else:
-                df_data[sequence] = (id, sequence, 1)
+                rna_dict[sequence] = (id, sequence, 1)
             line_count_for_current_sequence = 0
             id = ""
             sequence = ""
 
-    rna_df = pd.DataFrame(
-        list(df_data.values()), columns=["ids", "sequence_after_cutoff", "count"]
-    )
-    print(rna_df)
-    return rna_df
+    return rna_dict
+
+
+def _fill_dict_from_file(
+    file_path: str,
+    rna_dict: Dict[str, Tuple[str, str, int]],
+    cutoff: int = -1,
+    is_reverse_complement: bool = False,
+) -> Dict[str, Tuple[str, str, int]]:
+    with gzip.open(file_path, "rt") as rna_data_gzipped:
+        try:
+            rna_data_gzipped.read(1)
+            print("Detected gzip file. Reading in compressed format...")
+            return _convert_rna_data_to_df(rna_data_gzipped, rna_dict, cutoff)
+        except gzip.BadGzipFile:
+            print("File is not a gzip file. Trying to read as uncompressed file...")
+
+    with open(file_path, "rt") as rna_data:
+        return _convert_rna_data_to_df(rna_data, rna_dict, cutoff)
 
 
 # TODO: Give option to import two files or deal with one pairend end file,
@@ -52,14 +67,23 @@ def _convert_file_to_df(rna_file: TextIO, cutoff: int = -1) -> pd.DataFrame:
 # TODO: Add parameter documentation
 # cutoff is the position of the last bp in the reads
 # after which the cutoff should be performed (starting with 1) (should be > 0)
-def import_file(file_path: str, cutoff: int = -1) -> pd.DataFrame:
-    with gzip.open(file_path, "rt") as rna_file_gzipped:
-        try:
-            rna_file_gzipped.read(1)
-            print("Detected gzip file. Reading in compressed format...")
-            return _convert_file_to_df(rna_file_gzipped, cutoff)
-        except gzip.BadGzipFile:
-            print("File is not a gzip file. Trying to read as uncompressed file...")
+def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
+    if len(file_paths) > 2:
+        raise ValueError(
+            (
+                "Only one file (single-read sequencing) "
+                "or two files (pairend-end sequencing) expected"
+                "for the RNA-seq data"
+            )
+        )
 
-    with open(file_path, "rt") as rna_file:
-        return _convert_file_to_df(rna_file, cutoff)
+    rna_dict: Dict[str, Tuple[str, str, int]] = {}
+    for file_path in file_paths:
+        # TODO: Add ccomplement behavior for second file
+        rna_dict = _fill_dict_from_file(file_path, rna_dict, cutoff, False)
+
+    rna_df = pd.DataFrame(
+        list(rna_dict.values()), columns=["ids", "sequence_after_cutoff", "count"]
+    )
+    print(rna_df)
+    return rna_df
