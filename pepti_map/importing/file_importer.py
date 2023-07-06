@@ -1,5 +1,6 @@
 from typing import List
-from pepti_map.importing import peptide_importer, rna_importer
+from pepti_map.importing.rna_import import rna_importer
+from pepti_map.importing.peptide_import import peptide_importer
 
 
 def import_rna_and_peptides(
