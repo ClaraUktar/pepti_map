@@ -26,7 +26,7 @@ def _convert_rna_data_to_df(
                 sequence = sequence[0:cutoff]
 
             if is_reverse_complement:
-                # TODO
+                # TODO Make sure this is correct (verify with data)
                 sequence = "".join(
                     [BASE_COMPLEMENT[base] for base in reversed(sequence)]
                 )
@@ -79,8 +79,6 @@ def _fill_dict_from_file(
         )
 
 
-# TODO: Give option to import two files or deal with one pairend end file,
-# see https://www.ncbi.nlm.nih.gov/sra/docs/submitformats/#pairedend-fastq
 # TODO: Add parameter documentation
 # cutoff is the position of the last bp in the reads
 # after which the cutoff should be performed (starting with 1) (should be > 0)
