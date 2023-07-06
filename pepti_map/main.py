@@ -1,5 +1,10 @@
+import logging
 import click
 import pepti_map.importing.file_importer as file_importer
+
+
+def _setup():
+    logging.basicConfig(level=logging.DEBUG)
 
 
 @click.command()
@@ -46,6 +51,8 @@ def main(
     paired_end_file: str,
     cutoff: int,
 ):
+    _setup()
+
     rna_files = [rna_file]
     if paired_end_file != "":
         rna_files.append(paired_end_file)

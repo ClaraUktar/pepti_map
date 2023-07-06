@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List, TextIO, Tuple
 import pandas as pd
 import gzip
@@ -65,12 +66,14 @@ def _fill_dict_from_file(
     with gzip.open(file_path, "rt") as rna_data_gzipped:
         try:
             rna_data_gzipped.read(1)
-            print(f"Detected gzip file: {file_path}. Reading in compressed format...")
+            logging.info(
+                f"Detected gzip file: {file_path}. Reading in compressed format..."
+            )
             return _convert_rna_data_to_df(
                 rna_data_gzipped, rna_dict, cutoff, is_reverse_complement
             )
         except gzip.BadGzipFile:
-            print(
+            logging.info(
                 (
                     f"File {file_path} is not a gzip file. "
                     "Trying to read as uncompressed file..."
@@ -100,15 +103,19 @@ def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
     the corresponding sequence. The column `count` contains the number of duplicates
     for the sequence.
     :rtype pandas.DataFrame
+    :raises ValueError: Raised if the list of file paths does not contain exactly
+    1 or 2 entries.
+    raises FileNotFoundError: Raised if no file could be found for a given path.
     """
-    if len(file_paths) > 2:
-        raise ValueError(
-            (
-                "Only one file (single-read sequencing) "
-                "or two files (pairend-end sequencing) expected"
-                "for the RNA-seq data"
-            )
+    if len(file_paths) > 2 or len(file_paths) < 1:
+        error_message = (
+            "Only one file (single-read sequencing) "
+            "or two files (pairend-end sequencing) expected "
+            "for the RNA-seq data. "
+            f"Received {len(file_paths)} files."
         )
+        logging.error(error_message)
+        raise ValueError(error_message)
 
     rna_dict: Dict[str, Tuple[str, str, int]] = {}
     for index, file_path in enumerate(file_paths):
