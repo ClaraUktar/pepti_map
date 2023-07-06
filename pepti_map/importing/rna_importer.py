@@ -32,10 +32,9 @@ def _convert_rna_data_to_df(
                 )
 
             duplicate = rna_dict.get(sequence)
+
         # Information from field 2 (line 3) is not needed
-        # For now skip quality info, getting cutoff value supplied by user
-        # elif line_count_for_current_sequence == 3:
-        #     quality = line.strip()
+        # For now skip quality info (line 4), getting cutoff value supplied by user
 
         line_count_for_current_sequence = line_count_for_current_sequence + 1
 
@@ -66,12 +65,17 @@ def _fill_dict_from_file(
     with gzip.open(file_path, "rt") as rna_data_gzipped:
         try:
             rna_data_gzipped.read(1)
-            print("Detected gzip file. Reading in compressed format...")
+            print(f"Detected gzip file: {file_path}. Reading in compressed format...")
             return _convert_rna_data_to_df(
                 rna_data_gzipped, rna_dict, cutoff, is_reverse_complement
             )
         except gzip.BadGzipFile:
-            print("File is not a gzip file. Trying to read as uncompressed file...")
+            print(
+                (
+                    f"File {file_path} is not a gzip file. "
+                    "Trying to read as uncompressed file..."
+                )
+            )
 
     with open(file_path, "rt") as rna_data:
         return _convert_rna_data_to_df(
@@ -79,10 +83,24 @@ def _fill_dict_from_file(
         )
 
 
-# TODO: Add parameter documentation
-# cutoff is the position of the last bp in the reads
-# after which the cutoff should be performed (starting with 1) (should be > 0)
 def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
+    """
+    Reads the file(s) given and transforms them into a pandas DataFrame,
+    with columns `ids`, `sequence_after_cutoff`, and `count`.
+
+    :param List[str] file_paths: A list containing the paths to the files that
+    should be imported. In case of single-end sequencing, only one file path
+    is expected. In case of paired-end sequencing, two file paths are expected.
+    For the reads from the second file, the reverse complement is constructed
+    and then the reads are merged with those from the first file into one output.
+    :param int cutoff: The position of the last base in the reads after which a
+    cutoff should be performed, starting with 1. If given, the value should be > 0.
+    :returns A pandas DataFrame. The column `ids` contains all ids with duplicate
+    read sequences after cutoff. The column `sequence_after_cutoff` contains
+    the corresponding sequence. The column `count` contains the number of duplicates
+    for the sequence.
+    :rtype pandas.DataFrame
+    """
     if len(file_paths) > 2:
         raise ValueError(
             (
@@ -93,9 +111,7 @@ def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
         )
 
     rna_dict: Dict[str, Tuple[str, str, int]] = {}
-    # TODO: Base on file name etc instead?
     for index, file_path in enumerate(file_paths):
-        # TODO: Add complement behavior for second file
         rna_dict = _fill_dict_from_file(file_path, rna_dict, cutoff, index == 1)
 
     rna_df = pd.DataFrame(
