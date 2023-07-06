@@ -99,8 +99,8 @@ def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
     :param int cutoff: The position of the last base in the reads after which a
     cutoff should be performed, starting with 1. If given, the value should be > 0.
     :returns A pandas DataFrame. The column `ids` contains all ids with duplicate
-    read sequences after cutoff. The column `sequence_after_cutoff` contains
-    the corresponding sequence. The column `count` contains the number of duplicates
+    read sequences after cutoff. The column `sequence` contains the corresponding
+    sequence after cutoff. The column `count` contains the number of duplicates
     for the sequence.
     :rtype pandas.DataFrame
     :raises ValueError: Raised if the list of file paths does not contain exactly
@@ -121,8 +121,6 @@ def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
     for index, file_path in enumerate(file_paths):
         rna_dict = _fill_dict_from_file(file_path, rna_dict, cutoff, index == 1)
 
-    rna_df = pd.DataFrame(
-        list(rna_dict.values()), columns=["ids", "sequence_after_cutoff", "count"]
-    )
+    rna_df = pd.DataFrame(list(rna_dict.values()), columns=["ids", "sequence", "count"])
     print(rna_df)
     return rna_df
