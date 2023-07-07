@@ -1,12 +1,3 @@
-"""
-- DONE test single file import
-- DONE test import of two files
-- DONE test error for incorrect number of files given
-- test cutoff
-- test gzip vs uncompressed?
-"""
-
-
 from unittest.mock import patch
 from io import StringIO
 import pandas as pd
@@ -35,7 +26,7 @@ class TestRNAImporter:
     +
     '~~3QhIkE}yGC<jzj.Lx1|,oV/{dQMZ/ksH>/iH5uK`3c;K]=a-O/N{3.G+ym=\\_8!-;A`JBA:~-tYt7l]5J3%ZMlf\\},a"NcE}I$
     @ABC1234567.5 5/1
-    CATACAAGGAATCCTACCTTGTAAGAGGATATCAATGGCGATCGGTGTACAAACAGAGCTGATGCCCACTATTTCACGTAAGTAGTGGGAGGGTCGCGTGC
+    ACCGCCACGCATCCTACCTTGTAAGAGGATATCAATGGCGATCGGTGTACAAACAGAGCTGATGCCCACTATTTCACGTAAGTAGTGGGAGGGTCGCGTGC
     +
     <zpLIB(|@OT;0R`<5n5hbT5<|kSBZo!5kI1)1aL~7qX3\\2MIbj*/'+}pk)kVQdlcK1\\Fe|M68b2`2Y/Zz}"NUhOLzay097Y.$'`]/
     """
@@ -84,7 +75,7 @@ class TestRNAImporter:
                     "TTCATCTTATAGCAACACCCCGGAGTAAGCGCACTCATCCTCTCCTATC"
                 ),
                 (
-                    "CATACAAGGAATCCTACCTTGTAAGAGGATATCAATGGCGATCGGTGTACAAAC"
+                    "ACCGCCACGCATCCTACCTTGTAAGAGGATATCAATGGCGATCGGTGTACAAAC"
                     "AGAGCTGATGCCCACTATTTCACGTAAGTAGTGGGAGGGTCGCGTGC"
                 ),
             ],
@@ -118,7 +109,7 @@ class TestRNAImporter:
                     "TTCATCTTATAGCAACACCCCGGAGTAAGCGCACTCATCCTCTCCTATC"
                 ),
                 (
-                    "CATACAAGGAATCCTACCTTGTAAGAGGATATCAATGGCGATCGGTGTACAAAC"
+                    "ACCGCCACGCATCCTACCTTGTAAGAGGATATCAATGGCGATCGGTGTACAAAC"
                     "AGAGCTGATGCCCACTATTTCACGTAAGTAGTGGGAGGGTCGCGTGC"
                 ),
                 (
@@ -139,6 +130,18 @@ class TestRNAImporter:
                 ),
             ],
             "count": [2, 1, 2, 1, 1, 1, 1, 1],
+        }
+    )
+
+    expected_result_df_single_end_cutoff = pd.DataFrame(
+        {
+            "ids": [
+                "@ABC1234567.1 1/1,@ABC1234567.4 4/1",
+                "@ABC1234567.2 2/1,@ABC1234567.5 5/1",
+                "@ABC1234567.3 3/1",
+            ],
+            "sequence": ["GCGTGTAATG", "ACCGCCACGC", "GGCCCTCGAG"],
+            "count": [2, 2, 1],
         }
     )
 
@@ -165,3 +168,12 @@ class TestRNAImporter:
     def test_import_paired_end_file(self, _):
         result_df = rna_importer.import_file(["path/to/file1", "path/to/file2"])
         pd.testing.assert_frame_equal(result_df, self.expected_result_df_paired_end)
+
+    @patch("gzip.open", return_value=StringIO(mock_file_1_content))
+    def test_cutoff(self, _):
+        result_df = rna_importer.import_file(["path/to/file"], 10)
+        pd.testing.assert_frame_equal(
+            result_df, self.expected_result_df_single_end_cutoff
+        )
+
+    # TODO: Test gzip vs uncompressed?
