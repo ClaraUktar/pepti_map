@@ -66,6 +66,7 @@ def _fill_dict_from_file(
     with gzip.open(file_path, "rt") as rna_data_gzipped:
         try:
             rna_data_gzipped.read(1)
+            rna_data_gzipped.seek(0)
             logging.info(
                 f"Detected gzip file: {file_path}. Reading in compressed format..."
             )
