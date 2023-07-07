@@ -5,7 +5,7 @@ from pepti_map.importing.peptide_import import peptide_importer
 
 
 class TestPeptideSimpleFormatImport:
-    # Data was randomly generated
+    # Test data was randomly generated
     mock_file_content = """GQLDR
     NCYQKAQHLYTPEGRKGMVHLTWDRTVLPPPCMDIVDRHRSSRY
     QIPCI
