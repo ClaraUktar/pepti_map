@@ -23,11 +23,15 @@ def _convert_rna_data_to_df(
         elif line_count_for_current_sequence == 1:
             sequence = line.strip()
 
+            # TODO: Exchange all T for U? (inplace?)
+
             if cutoff > 0:
                 sequence = sequence[0:cutoff]
 
             if is_reverse_complement:
                 # TODO Make sure this is correct (verify with data)
+                # TODO: Add support for ambiguous characters?
+                # TODO: Perhaps do this inplace (use lib / implement myself)
                 sequence = "".join(
                     [BASE_COMPLEMENT[base] for base in reversed(sequence)]
                 )
