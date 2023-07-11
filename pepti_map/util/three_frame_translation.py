@@ -1,14 +1,19 @@
-from typing import Dict
+from typing import List
 from Bio.Seq import translate
 
 
-def get_three_frame_translations(sequence: str) -> Dict[int, str]:
+def translate_for_frame(sequence: str, frame: int) -> str:
+    def shorten_sequence_to_translatable_len(sequence: str) -> str:
+        mod = len(sequence) % 3
+        if mod == 0:
+            return sequence
+        return sequence[:-mod]
+
+    translation = translate(shorten_sequence_to_translatable_len(sequence[frame:]))
+    assert isinstance(translation, str)
+    return translation
+
+
+def get_three_frame_translations(sequence: str) -> List[str]:
     # TODO: Split into k-mers here?
-    translated_frames = {}
-    seq_length = len(sequence)
-    for i in range(3):
-        translatable_length = 3 * ((seq_length - i) // 3)
-        translated_frames[i] = translate(
-            sequence[i : i + translatable_length]  # noqa: E203
-        )
-    return translated_frames
+    return [translate_for_frame(sequence, i) for i in range(3)]
