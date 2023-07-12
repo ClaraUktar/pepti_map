@@ -85,6 +85,7 @@ def _fill_dict_from_file(
         )
 
 
+# TODO: Use numpy instead?
 def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
     """
     Reads the file(s) given and transforms them into a pandas DataFrame,

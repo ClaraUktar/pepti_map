@@ -5,6 +5,7 @@ import pandas as pd
 
 # TODO: Add support for custom format
 # TODO: Add support for MZTab
+# TODO: Use numpy instead?
 def import_file(file_path: str) -> pd.DataFrame:
     """
     Reads the file given and transforms it into a pandas DataFrame,
