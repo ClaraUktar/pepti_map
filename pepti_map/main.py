@@ -45,11 +45,25 @@ def _setup():
         "If the value is equal to or smaller than 0, no cutoff is performed."
     ),
 )
+@click.option(
+    "-k",
+    "--kmer-length",
+    required=False,
+    type=int,
+    default=6,
+    show_default=True,
+    help=(
+        "The k-mer size used during the mapping of peptides to RNA. "
+        "As the RNA is 3-frame translated for the mapping, "
+        "the k-mer size refers to amino acids."
+    ),
+)
 def main(
     peptide_file: str,
     rna_file: str,
     paired_end_file: str,
     cutoff: int,
+    kmersize: int,
 ):
     _setup()
 

@@ -9,6 +9,7 @@ def import_file(file_path: str) -> pd.DataFrame:
     peptides: Dict[str, Tuple[str, int]] = {}
     with open(file_path) as peptide_file:
         for line in peptide_file:
+            # TODO: Exchange all I for L?
             sequence = line.strip()
             duplicate = peptides.get(sequence)
             if duplicate is not None:
