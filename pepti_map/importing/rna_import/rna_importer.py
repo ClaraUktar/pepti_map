@@ -1,9 +1,8 @@
 import logging
 from typing import Dict, List, TextIO, Tuple
+from Bio.Seq import MutableSeq
 import pandas as pd
 import gzip
-
-from pepti_map.util.complementarity import BASE_COMPLEMENT
 
 
 def _convert_rna_data_to_df(
@@ -29,12 +28,7 @@ def _convert_rna_data_to_df(
                 sequence = sequence[0:cutoff]
 
             if is_reverse_complement:
-                # TODO Make sure this is correct (verify with data)
-                # TODO: Add support for ambiguous characters?
-                # TODO: Perhaps do this inplace (use lib / implement myself)
-                sequence = "".join(
-                    [BASE_COMPLEMENT[base] for base in reversed(sequence)]
-                )
+                sequence = str(MutableSeq(sequence).reverse_complement(inplace=True))
 
             duplicate = rna_dict.get(sequence)
 
@@ -94,7 +88,7 @@ def _fill_dict_from_file(
 def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
     """
     Reads the file(s) given and transforms them into a pandas DataFrame,
-    with columns `ids`, `sequence_after_cutoff`, and `count`.
+    with columns `ids`, `sequence`, and `count`.
 
     :param List[str] file_paths: A list containing the paths to the files that
     should be imported. In case of single-end sequencing, only one file path
