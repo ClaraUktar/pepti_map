@@ -86,7 +86,9 @@ def _fill_dict_from_file(
 
 
 # TODO: Use numpy instead?
-def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
+def import_file(
+    file_paths: List[str], cutoff: int = -1, kmer_length: int = 6
+) -> pd.DataFrame:
     """
     Reads the file(s) given and transforms them into a pandas DataFrame,
     with columns `ids`, `sequence`, and `count`.
@@ -98,6 +100,9 @@ def import_file(file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
     and then the reads are merged with those from the first file into one output.
     :param int cutoff: The position of the last base in the reads after which a
     cutoff should be performed, starting with 1. If given, the value should be > 0.
+    :param int kmer_length: The k-mer size used during the mapping of peptides to RNA.
+    As the RNA is 3-frame translated for the mapping, the k-mer size refers to
+    amino acids.
     :returns A pandas DataFrame. The column `ids` contains all ids with duplicate
     read sequences after cutoff. The column `sequence` contains the corresponding
     sequence after cutoff. The column `count` contains the number of duplicates

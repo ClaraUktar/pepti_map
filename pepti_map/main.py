@@ -1,6 +1,7 @@
 import logging
 import click
-import pepti_map.importing.file_importer as file_importer
+from pepti_map.importing.peptide_import import peptide_importer
+from pepti_map.importing.rna_import import rna_importer
 
 
 def _setup():
@@ -71,11 +72,8 @@ def main(
     if paired_end_file != "":
         rna_files.append(paired_end_file)
 
-    file_importer.import_rna_and_peptides(
-        rna_files,
-        peptide_file,
-        cutoff,
-    )
+    rna_data = rna_importer.import_file(rna_files, cutoff, kmer_length)
+    peptides_data = peptide_importer.import_file(peptide_file)
 
 
 if __name__ == "__main__":
