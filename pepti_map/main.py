@@ -63,7 +63,7 @@ def main(
     rna_file: str,
     paired_end_file: str,
     cutoff: int,
-    kmersize: int,
+    kmer_length: int,
 ):
     _setup()
 

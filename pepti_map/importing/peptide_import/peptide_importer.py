@@ -9,11 +9,11 @@ import pandas as pd
 def import_file(file_path: str) -> pd.DataFrame:
     """
     Reads the file given and transforms it into a pandas DataFrame,
-    with columns `ids`, `sequence`, and `count`.
+    with columns `sequence` and `count`.
 
     :param str file_path: The paths to the file that should be imported.
-    :returns A pandas DataFrame. The column `ids` contains all ids with duplicate
-    sequences. The column `sequence` contains the corresponding sequence.
+    :returns A pandas DataFrame. It has one row per unique sequence in the given file.
+    The column `sequence` contains the sequence.
     The column `count` contains the number of duplicates for the sequence.
     :rtype pandas.DataFrame
     raises FileNotFoundError: Raised if no file could be found for the given path.
