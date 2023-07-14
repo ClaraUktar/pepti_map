@@ -29,5 +29,5 @@ class TestKmerSplitting:
 
     def test_big_step(self):
         test_sequence = "WHQVRNWCKHVEIEQCLECV"
-        expected_result = ["WHQVRNWCKH", "NWCKHVEIEQ" "VEIEQCLECV"]
+        expected_result = ["WHQVRNWCKH", "NWCKHVEIEQ", "VEIEQCLECV"]
         assert list(split_into_kmer(test_sequence, 10, 5)) == expected_result

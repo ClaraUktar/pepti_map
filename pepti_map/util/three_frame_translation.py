@@ -1,4 +1,4 @@
-from typing import Any, Generator
+from typing import Generator
 from Bio.Seq import translate
 
 
@@ -15,8 +15,6 @@ def translate_for_frame(sequence: str, frame: int) -> str:
     return translation
 
 
-def get_three_frame_translations(sequence: str) -> Generator[str, Any, Any]:
-    # TODO: Split into k-mers here?
+def get_three_frame_translations(sequence: str) -> Generator[str, None, None]:
     for i in range(3):
         yield translate_for_frame(sequence, i)
-    return [translate_for_frame(sequence, i) for i in range(3)]
