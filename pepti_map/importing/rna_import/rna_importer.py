@@ -126,6 +126,9 @@ def import_file(
     for index, file_path in enumerate(file_paths):
         rna_dict = _fill_dict_from_file(file_path, rna_dict, cutoff, index == 1)
 
-    rna_df = pd.DataFrame(list(rna_dict.values()), columns=["ids", "sequence", "count"])
+    rna_df = pd.DataFrame(
+        list(rna_dict.values()), columns=["ids", "sequence", "count"]
+    ).astype({"ids": "string", "sequence": "string", "count": "int32"})
     print(rna_df)
+    print(rna_df.info(verbose=True))
     return rna_df

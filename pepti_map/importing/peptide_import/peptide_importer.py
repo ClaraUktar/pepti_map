@@ -28,6 +28,9 @@ def import_file(file_path: str) -> pd.DataFrame:
                 peptides[sequence] = (duplicate[0], duplicate[1] + 1)
             else:
                 peptides[sequence] = (sequence, 1)
-    peptide_df = pd.DataFrame(list(peptides.values()), columns=["sequence", "count"])
+    peptide_df = pd.DataFrame(
+        list(peptides.values()), columns=["sequence", "count"]
+    ).astype({"sequence": "string", "count": "int32"})
     print(peptide_df)
+    print(peptide_df.info(verbose=True))
     return peptide_df

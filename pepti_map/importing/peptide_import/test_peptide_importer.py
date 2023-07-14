@@ -32,7 +32,7 @@ class TestPeptideSimpleFormatImport:
             ],
             "count": [1, 1, 1, 1, 2, 1, 1, 1, 1],
         }
-    )
+    ).astype({"sequence": "string", "count": "int32"})
 
     def test_import_as_df_with_duplicates(self):
         with patch(
