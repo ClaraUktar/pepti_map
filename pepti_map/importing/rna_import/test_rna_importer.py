@@ -4,10 +4,11 @@ import pandas as pd
 
 import pytest
 
-from pepti_map.importing.rna_import import rna_importer
+from pepti_map.importing.rna_import.rna_importer import RNAImporter
 
 
 class TestRNAImporter:
+    rna_importer = RNAImporter()
     # Test data was randomly generated
     mock_file_1_content = """@ABC1234567.1 1/1
     GCGTGTAATGTTATGATCTTATGCTTGTTTTAGTCCGCTAGGTTCTTTGGTGTACTGCCACTTTTCGATGCCATGCGCATTCTTGGGACTAGGAAGTACGA
@@ -147,15 +148,15 @@ class TestRNAImporter:
 
     def test_raises_error_when_no_file_given(self):
         with pytest.raises(ValueError):
-            rna_importer.import_file([])
+            self.rna_importer.import_files([])
 
     def test_raises_error_when_more_than_two_files_given(self):
         with pytest.raises(ValueError):
-            rna_importer.import_file(["file1", "file2", "file3"])
+            self.rna_importer.import_files(["file1", "file2", "file3"])
 
     @patch("gzip.open", return_value=StringIO(mock_file_1_content))
     def test_import_single_end_file(self, _):
-        result_df = rna_importer.import_file(["path/to/file"])
+        result_df = self.rna_importer.import_files(["path/to/file"])
         pd.testing.assert_frame_equal(result_df, self.expected_result_df_single_end)
 
     @patch(
@@ -166,12 +167,12 @@ class TestRNAImporter:
         ],
     )
     def test_import_paired_end_file(self, _):
-        result_df = rna_importer.import_file(["path/to/file1", "path/to/file2"])
+        result_df = self.rna_importer.import_files(["path/to/file1", "path/to/file2"])
         pd.testing.assert_frame_equal(result_df, self.expected_result_df_paired_end)
 
     @patch("gzip.open", return_value=StringIO(mock_file_1_content))
     def test_cutoff(self, _):
-        result_df = rna_importer.import_file(["path/to/file"], 10)
+        result_df = self.rna_importer.import_files(["path/to/file"], cutoff=10)
         pd.testing.assert_frame_equal(
             result_df, self.expected_result_df_single_end_cutoff
         )
