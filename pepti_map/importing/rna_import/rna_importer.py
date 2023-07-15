@@ -10,8 +10,9 @@ from pepti_map.util.three_frame_translation import get_three_frame_translations
 class RNAImporter:
     kmer_length: int
     _cutoff: int
-    _rna_dict: Dict[str, Tuple[str, str, int]] = {}
-    _rna_dict_translated: Dict[str, Tuple[str, str, int, str]] = {}
+    # TODO: Use objects for values instead? (Better readability)
+    _rna_dict: Dict[str, Tuple[List[str], str, int]] = {}
+    _rna_dict_translated: Dict[str, Tuple[List[str], str, int, List[int]]] = {}
 
     def __init__(self, kmer_length: int = 6):
         """
@@ -34,12 +35,12 @@ class RNAImporter:
 
         if duplicate is not None:
             self._rna_dict[sequence] = (
-                "".join([duplicate[0], ",", id]),
+                duplicate[0] + [id],
                 duplicate[1],
                 duplicate[2] + 1,
             )
         else:
-            self._rna_dict[sequence] = (id, sequence, 1)
+            self._rna_dict[sequence] = ([id], sequence, 1)
 
     def _add_entry_to_translated_dict(self, id: str, sequence: str) -> None:
         for translation in get_three_frame_translations(sequence):
@@ -47,17 +48,17 @@ class RNAImporter:
 
             if duplicate is not None:
                 self._rna_dict_translated[translation[0]] = (
-                    "".join([duplicate[0], ",", id]),
+                    duplicate[0] + [id],
                     duplicate[1],
                     duplicate[2] + 1,
-                    "".join([duplicate[3], ",", str(translation[1])]),
+                    duplicate[3] + [translation[1]],
                 )
             else:
                 self._rna_dict_translated[translation[0]] = (
-                    id,
+                    [id],
                     translation[0],
                     1,
-                    str(translation[1]),
+                    [translation[1]],
                 )
 
     def _add_rna_data_to_dict(
@@ -178,16 +179,16 @@ class RNAImporter:
                 columns=["ids", "sequence", "count", "frames"],
             ).astype(
                 {
-                    "ids": "string",
+                    "ids": "object",
                     "sequence": "string",
                     "count": "uint32",
-                    "frames": "string",
+                    "frames": "object",
                 }
             )
         else:
             rna_df = pd.DataFrame(
                 list(self._rna_dict.values()), columns=["ids", "sequence", "count"]
-            ).astype({"ids": "string", "sequence": "string", "count": "uint32"})
+            ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
         print(rna_df)
         print(rna_df.info(verbose=True))
         return rna_df

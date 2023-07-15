@@ -58,10 +58,10 @@ class TestRNAImporter:
     expected_result_df_single_end = pd.DataFrame(
         {
             "ids": [
-                "@ABC1234567.1 1/1,@ABC1234567.4 4/1",
-                "@ABC1234567.2 2/1",
-                "@ABC1234567.3 3/1",
-                "@ABC1234567.5 5/1",
+                ["@ABC1234567.1 1/1", "@ABC1234567.4 4/1"],
+                ["@ABC1234567.2 2/1"],
+                ["@ABC1234567.3 3/1"],
+                ["@ABC1234567.5 5/1"],
             ],
             "sequence": [
                 (
@@ -83,19 +83,19 @@ class TestRNAImporter:
             ],
             "count": [2, 1, 1, 1],
         }
-    ).astype({"ids": "string", "sequence": "string", "count": "uint32"})
+    ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
 
     expected_result_df_paired_end = pd.DataFrame(
         {
             "ids": [
-                "@ABC1234567.1 1/1,@ABC1234567.4 4/1",
-                "@ABC1234567.2 2/1",
-                "@ABC1234567.3 3/1,@ABC1234567.5 5/2",
-                "@ABC1234567.5 5/1",
-                "@ABC1234567.1 1/2",
-                "@ABC1234567.2 2/2",
-                "@ABC1234567.3 3/2",
-                "@ABC1234567.4 4/2",
+                ["@ABC1234567.1 1/1", "@ABC1234567.4 4/1"],
+                ["@ABC1234567.2 2/1"],
+                ["@ABC1234567.3 3/1", "@ABC1234567.5 5/2"],
+                ["@ABC1234567.5 5/1"],
+                ["@ABC1234567.1 1/2"],
+                ["@ABC1234567.2 2/2"],
+                ["@ABC1234567.3 3/2"],
+                ["@ABC1234567.4 4/2"],
             ],
             "sequence": [
                 (
@@ -133,19 +133,19 @@ class TestRNAImporter:
             ],
             "count": [2, 1, 2, 1, 1, 1, 1, 1],
         }
-    ).astype({"ids": "string", "sequence": "string", "count": "uint32"})
+    ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
 
     expected_result_df_single_end_cutoff = pd.DataFrame(
         {
             "ids": [
-                "@ABC1234567.1 1/1,@ABC1234567.4 4/1",
-                "@ABC1234567.2 2/1,@ABC1234567.5 5/1",
-                "@ABC1234567.3 3/1",
+                ["@ABC1234567.1 1/1", "@ABC1234567.4 4/1"],
+                ["@ABC1234567.2 2/1", "@ABC1234567.5 5/1"],
+                ["@ABC1234567.3 3/1"],
             ],
             "sequence": ["GCGTGTAATG", "ACCGCCACGC", "GGCCCTCGAG"],
             "count": [2, 2, 1],
         }
-    ).astype({"ids": "string", "sequence": "string", "count": "uint32"})
+    ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
 
     def test_raises_error_when_no_file_given(self):
         with pytest.raises(ValueError):
