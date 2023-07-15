@@ -83,7 +83,7 @@ class TestRNAImporter:
             ],
             "count": [2, 1, 1, 1],
         }
-    ).astype({"ids": "string", "sequence": "string", "count": "int32"})
+    ).astype({"ids": "string", "sequence": "string", "count": "uint32"})
 
     expected_result_df_paired_end = pd.DataFrame(
         {
@@ -133,7 +133,7 @@ class TestRNAImporter:
             ],
             "count": [2, 1, 2, 1, 1, 1, 1, 1],
         }
-    ).astype({"ids": "string", "sequence": "string", "count": "int32"})
+    ).astype({"ids": "string", "sequence": "string", "count": "uint32"})
 
     expected_result_df_single_end_cutoff = pd.DataFrame(
         {
@@ -145,7 +145,7 @@ class TestRNAImporter:
             "sequence": ["GCGTGTAATG", "ACCGCCACGC", "GGCCCTCGAG"],
             "count": [2, 2, 1],
         }
-    ).astype({"ids": "string", "sequence": "string", "count": "int32"})
+    ).astype({"ids": "string", "sequence": "string", "count": "uint32"})
 
     def test_raises_error_when_no_file_given(self):
         with pytest.raises(ValueError):
@@ -157,7 +157,9 @@ class TestRNAImporter:
 
     @patch("gzip.open", return_value=StringIO(mock_file_1_content))
     def test_import_single_end_file(self, _):
-        result_df = self.rna_importer.import_files(["path/to/file"])
+        result_df = self.rna_importer.import_files(
+            ["path/to/file"], should_translate=False
+        )
         pd.testing.assert_frame_equal(result_df, self.expected_result_df_single_end)
 
     @patch(
@@ -168,12 +170,16 @@ class TestRNAImporter:
         ],
     )
     def test_import_paired_end_file(self, _):
-        result_df = self.rna_importer.import_files(["path/to/file1", "path/to/file2"])
+        result_df = self.rna_importer.import_files(
+            ["path/to/file1", "path/to/file2"], should_translate=False
+        )
         pd.testing.assert_frame_equal(result_df, self.expected_result_df_paired_end)
 
     @patch("gzip.open", return_value=StringIO(mock_file_1_content))
     def test_cutoff(self, _):
-        result_df = self.rna_importer.import_files(["path/to/file"], cutoff=10)
+        result_df = self.rna_importer.import_files(
+            ["path/to/file"], cutoff=10, should_translate=False
+        )
         pd.testing.assert_frame_equal(
             result_df, self.expected_result_df_single_end_cutoff
         )

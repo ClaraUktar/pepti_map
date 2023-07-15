@@ -4,11 +4,14 @@ from Bio.Seq import MutableSeq
 import pandas as pd
 import gzip
 
+from pepti_map.util.three_frame_translation import get_three_frame_translations
+
 
 class RNAImporter:
     kmer_length: int
     _cutoff: int
     _rna_dict: Dict[str, Tuple[str, str, int]] = {}
+    _rna_dict_translated: Dict[str, Tuple[str, str, int, str]] = {}
 
     def __init__(self, kmer_length: int = 6):
         """
@@ -20,20 +23,52 @@ class RNAImporter:
 
     def reset(self) -> None:
         self._rna_dict = {}
+        self._rna_dict_translated = {}
         self._cutoff = -1
 
     def set_kmer_length(self, kmer_length) -> None:
         self.kmer_length = kmer_length
 
+    def _add_entry_to_dict(self, id: str, sequence: str) -> None:
+        duplicate = self._rna_dict.get(sequence)
+
+        if duplicate is not None:
+            self._rna_dict[sequence] = (
+                "".join([duplicate[0], ",", id]),
+                duplicate[1],
+                duplicate[2] + 1,
+            )
+        else:
+            self._rna_dict[sequence] = (id, sequence, 1)
+
+    def _add_entry_to_translated_dict(self, id: str, sequence: str) -> None:
+        for translation in get_three_frame_translations(sequence):
+            duplicate = self._rna_dict_translated.get(translation[0])
+
+            if duplicate is not None:
+                self._rna_dict_translated[translation[0]] = (
+                    "".join([duplicate[0], ",", id]),
+                    duplicate[1],
+                    duplicate[2] + 1,
+                    "".join([duplicate[3], ",", str(translation[1])]),
+                )
+            else:
+                self._rna_dict_translated[translation[0]] = (
+                    id,
+                    translation[0],
+                    1,
+                    str(translation[1]),
+                )
+
     def _add_rna_data_to_dict(
         self,
         rna_data: TextIO,
         is_reverse_complement: bool = False,
+        should_translate: bool = True,
     ) -> None:
         line_count_for_current_sequence: int = 0
         id = ""
         sequence = ""
-        duplicate = None
 
         for line in rna_data:
             if line_count_for_current_sequence == 0:
@@ -50,33 +85,28 @@ class RNAImporter:
                     sequence = str(
                         MutableSeq(sequence).reverse_complement(inplace=True)
                     )
-
-                duplicate = self._rna_dict.get(sequence)
-
             # Information from field 2 (line 3) is not needed
-            # For now skip quality info (line 4), getting cutoff value supplied by user
-
-            line_count_for_current_sequence = line_count_for_current_sequence + 1
 
             # Always read 4 lines per sequence, as per FASTQ format
-            if line_count_for_current_sequence == 4:
-                if duplicate is not None:
-                    self._rna_dict[sequence] = (
-                        "".join([duplicate[0], ",", id]),
-                        duplicate[1],
-                        duplicate[2] + 1,
-                    )
-                    duplicate = None
+            # For now skip quality info (line 4), getting cutoff value supplied by user
+            elif line_count_for_current_sequence == 3:
+                if should_translate:
+                    self._add_entry_to_translated_dict(id, sequence)
                 else:
-                    self._rna_dict[sequence] = (id, sequence, 1)
+                    self._add_entry_to_dict(id, sequence)
+
                 line_count_for_current_sequence = 0
                 id = ""
                 sequence = ""
+                continue
+
+            line_count_for_current_sequence = line_count_for_current_sequence + 1
 
     def _fill_dict_from_file(
         self,
         file_path: str,
         is_reverse_complement: bool = False,
+        should_translate: bool = True,
     ) -> None:
         with gzip.open(file_path, "rt") as rna_data_gzipped:
             try:
@@ -86,7 +116,7 @@ class RNAImporter:
                     f"Detected gzip file: {file_path}. Reading in compressed format..."
                 )
                 return self._add_rna_data_to_dict(
-                    rna_data_gzipped, is_reverse_complement
+                    rna_data_gzipped, is_reverse_complement, should_translate
                 )
             except gzip.BadGzipFile:
                 logging.info(
@@ -97,10 +127,14 @@ class RNAImporter:
                 )
 
         with open(file_path, "rt") as rna_data:
-            return self._add_rna_data_to_dict(rna_data, is_reverse_complement)
+            return self._add_rna_data_to_dict(
+                rna_data, is_reverse_complement, should_translate
+            )
 
     # TODO: Use numpy instead?
-    def import_files(self, file_paths: List[str], cutoff: int = -1) -> pd.DataFrame:
+    def import_files(
+        self, file_paths: List[str], cutoff: int = -1, should_translate: bool = True
+    ) -> pd.DataFrame:
         """
         Reads the file(s) given and transforms them into a pandas DataFrame,
         with columns `ids`, `sequence`, and `count`.
@@ -135,11 +169,25 @@ class RNAImporter:
             raise ValueError(error_message)
 
         for index, file_path in enumerate(file_paths):
-            self._fill_dict_from_file(file_path, index == 1)
+            self._fill_dict_from_file(file_path, index == 1, should_translate)
 
-        rna_df = pd.DataFrame(
-            list(self._rna_dict.values()), columns=["ids", "sequence", "count"]
-        ).astype({"ids": "string", "sequence": "string", "count": "int32"})
+        rna_df: pd.DataFrame
+        if should_translate:
+            rna_df = pd.DataFrame(
+                list(self._rna_dict_translated.values()),
+                columns=["ids", "sequence", "count", "frames"],
+            ).astype(
+                {
+                    "ids": "string",
+                    "sequence": "string",
+                    "count": "uint32",
+                    "frames": "string",
+                }
+            )
+        else:
+            rna_df = pd.DataFrame(
+                list(self._rna_dict.values()), columns=["ids", "sequence", "count"]
+            ).astype({"ids": "string", "sequence": "string", "count": "uint32"})
         print(rna_df)
         print(rna_df.info(verbose=True))
         return rna_df

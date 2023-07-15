@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, Tuple
 from Bio.Seq import translate
 
 
@@ -15,6 +15,8 @@ def translate_for_frame(sequence: str, frame: int) -> str:
     return translation
 
 
-def get_three_frame_translations(sequence: str) -> Generator[str, None, None]:
+def get_three_frame_translations(
+    sequence: str,
+) -> Generator[Tuple[str, int], None, None]:
     for i in range(3):
-        yield translate_for_frame(sequence, i)
+        yield (translate_for_frame(sequence, i), i)
