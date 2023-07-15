@@ -1,6 +1,6 @@
 import logging
 import click
-from pepti_map.importing.peptide_import import peptide_importer
+from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.rna_import.rna_importer import RNAImporter
 
 
@@ -73,7 +73,7 @@ def main(
         rna_files.append(paired_end_file)
 
     rna_data = RNAImporter(kmer_length).import_files(rna_files, cutoff)
-    peptides_data = peptide_importer.import_file(peptide_file)
+    peptides_data = PeptideImporter().import_file(peptide_file)
 
 
 if __name__ == "__main__":

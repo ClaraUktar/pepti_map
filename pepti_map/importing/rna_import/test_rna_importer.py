@@ -9,6 +9,7 @@ from pepti_map.importing.rna_import.rna_importer import RNAImporter
 
 class TestRNAImporter:
     rna_importer = RNAImporter()
+
     # Test data was randomly generated
     mock_file_1_content = """@ABC1234567.1 1/1
     GCGTGTAATGTTATGATCTTATGCTTGTTTTAGTCCGCTAGGTTCTTTGGTGTACTGCCACTTTTCGATGCCATGCGCATTCTTGGGACTAGGAAGTACGA
