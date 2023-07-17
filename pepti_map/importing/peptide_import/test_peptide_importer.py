@@ -21,6 +21,7 @@ class TestPeptideSimpleFormatImport:
 
     expected_result_df = pd.DataFrame(
         {
+            "ids": [[0], [1], [2], [3], [4, 8], [5], [6], [7], [9]],
             "sequence": [
                 "GQLDR",
                 "NCYQKAQHLYTPEGRKGMVHLTWDRTVLPPPCMDIVDRHRSSRY",
@@ -34,7 +35,7 @@ class TestPeptideSimpleFormatImport:
             ],
             "count": [1, 1, 1, 1, 2, 1, 1, 1, 1],
         }
-    ).astype({"sequence": "string", "count": "uint32"})
+    ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
 
     def test_import_as_df_with_duplicates(self):
         with patch(

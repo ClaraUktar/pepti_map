@@ -1,10 +1,10 @@
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
 
 class PeptideImporter:
-    _peptide_dict: Dict[str, Tuple[str, int]] = {}
+    _peptide_dict: Dict[str, Tuple[List[int], str, int]] = {}
 
     def reset(self) -> None:
         self._peptide_dict = {}
@@ -15,29 +15,35 @@ class PeptideImporter:
     def import_file(self, file_path: str) -> pd.DataFrame:
         """
         Reads the file given and transforms it into a pandas DataFrame,
-        with columns `sequence` and `count`.
+        with columns `ids`, `sequence` and `count`.
 
         :param str file_path: The paths to the file that should be imported.
         :returns A pandas DataFrame. It has one row per unique sequence in the
         given file. The column `sequence` contains the sequence.
-        The column `count` contains the number of duplicates for the sequence.
+        The column `ids` contains all ids for this sequence.
+        In case no ids are present in the file, the index of each line is used as its
+        id. The column `count` contains the number of duplicates for the sequence.
         :rtype pandas.DataFrame
         raises FileNotFoundError: Raised if no file could be found for the given path.
         """
         self.reset()
 
         with open(file_path) as peptide_file:
-            for line in peptide_file:
+            for index, line in enumerate(peptide_file):
                 # TODO: Exchange all I for L?
                 sequence = line.strip()
                 duplicate = self._peptide_dict.get(sequence)
                 if duplicate is not None:
-                    self._peptide_dict[sequence] = (duplicate[0], duplicate[1] + 1)
+                    self._peptide_dict[sequence] = (
+                        duplicate[0] + [index],
+                        duplicate[1],
+                        duplicate[2] + 1,
+                    )
                 else:
-                    self._peptide_dict[sequence] = (sequence, 1)
+                    self._peptide_dict[sequence] = ([index], sequence, 1)
         peptide_df = pd.DataFrame(
-            list(self._peptide_dict.values()), columns=["sequence", "count"]
-        ).astype({"sequence": "string", "count": "uint32"})
+            list(self._peptide_dict.values()), columns=["ids", "sequence", "count"]
+        ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
         print(peptide_df)
         print(peptide_df.info(verbose=True))
         return peptide_df
