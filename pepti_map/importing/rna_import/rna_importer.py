@@ -178,7 +178,7 @@ class RNAImporter:
                 list(self._rna_dict_translated.values()),
                 columns=["ids", "sequence", "count", "frames"],
             ).astype(
-                {
+                dtype={
                     "ids": "object",
                     "sequence": "string",
                     "count": "uint32",
@@ -188,7 +188,7 @@ class RNAImporter:
         else:
             rna_df = pd.DataFrame(
                 list(self._rna_dict.values()), columns=["ids", "sequence", "count"]
-            ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
+            ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
         print(rna_df)
         print(rna_df.info(verbose=True))
         return rna_df

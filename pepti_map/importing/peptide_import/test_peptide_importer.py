@@ -35,7 +35,7 @@ class TestPeptideSimpleFormatImport:
             ],
             "count": [1, 1, 1, 1, 2, 1, 1, 1, 1],
         }
-    ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
+    ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
 
     def test_import_as_df_with_duplicates(self):
         with patch(

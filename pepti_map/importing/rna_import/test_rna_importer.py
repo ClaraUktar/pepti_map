@@ -83,7 +83,7 @@ class TestRNAImporter:
             ],
             "count": [2, 1, 1, 1],
         }
-    ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
+    ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
 
     expected_result_df_paired_end = pd.DataFrame(
         {
@@ -133,7 +133,7 @@ class TestRNAImporter:
             ],
             "count": [2, 1, 2, 1, 1, 1, 1, 1],
         }
-    ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
+    ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
 
     expected_result_df_single_end_cutoff = pd.DataFrame(
         {
@@ -145,7 +145,7 @@ class TestRNAImporter:
             "sequence": ["GCGTGTAATG", "ACCGCCACGC", "GGCCCTCGAG"],
             "count": [2, 2, 1],
         }
-    ).astype({"ids": "object", "sequence": "string", "count": "uint32"})
+    ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
 
     def test_raises_error_when_no_file_given(self):
         with pytest.raises(ValueError):
