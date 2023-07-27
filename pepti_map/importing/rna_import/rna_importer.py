@@ -133,6 +133,7 @@ class RNAImporter:
             )
 
     # TODO: Use numpy instead?
+    # TODO: Add documentation for should_translate (if kept)
     def import_files(
         self, file_paths: List[str], cutoff: int = -1, should_translate: bool = True
     ) -> pd.DataFrame:

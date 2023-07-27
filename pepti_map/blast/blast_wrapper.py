@@ -1,6 +1,7 @@
 from subprocess import run
 
 
+# TODO: Delete / move somewhere else?
 # TODO: Test
 # TODO: Which parts of the tool suite do we actually need?
 # TODO: Remove remote option and let user install BLAST locally (+ needed db)
