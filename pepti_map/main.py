@@ -1,7 +1,7 @@
 import logging
 import click
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
-from pepti_map.importing.rna_import.rna_importer import RNAImporter
+from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
 
 
 def _setup():
@@ -72,7 +72,7 @@ def main(
     if paired_end_file != "":
         rna_files.append(paired_end_file)
 
-    rna_data = RNAImporter(kmer_length).import_files(rna_files, cutoff)
+    rna_data = RNAToIndexImporter(kmer_length).import_files_to_index(rna_files, cutoff)
     peptides_data = PeptideImporter().import_file(peptide_file)
 
 

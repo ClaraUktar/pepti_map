@@ -13,21 +13,21 @@ class TestKmerSplitting:
     def test_splitting_into_kmers(self):
         test_sequence = "WHQVRNWCKHVEIEQCLECV"
         expected_result = [
-            "WHQVRNWCKH",
-            "HQVRNWCKHV",
-            "QVRNWCKHVE",
-            "VRNWCKHVEI",
-            "RNWCKHVEIE",
-            "NWCKHVEIEQ",
-            "WCKHVEIEQC",
-            "CKHVEIEQCL",
-            "KHVEIEQCLE",
-            "HVEIEQCLEC",
-            "VEIEQCLECV",
+            ("WHQVRNWCKH", 0),
+            ("HQVRNWCKHV", 1),
+            ("QVRNWCKHVE", 2),
+            ("VRNWCKHVEI", 3),
+            ("RNWCKHVEIE", 4),
+            ("NWCKHVEIEQ", 5),
+            ("WCKHVEIEQC", 6),
+            ("CKHVEIEQCL", 7),
+            ("KHVEIEQCLE", 8),
+            ("HVEIEQCLEC", 9),
+            ("VEIEQCLECV", 10),
         ]
         assert list(split_into_kmer(test_sequence, 10)) == expected_result
 
     def test_big_step(self):
         test_sequence = "WHQVRNWCKHVEIEQCLECV"
-        expected_result = ["WHQVRNWCKH", "NWCKHVEIEQ", "VEIEQCLECV"]
+        expected_result = [("WHQVRNWCKH", 0), ("NWCKHVEIEQ", 5), ("VEIEQCLECV", 10)]
         assert list(split_into_kmer(test_sequence, 10, 5)) == expected_result
