@@ -10,7 +10,10 @@ from pepti_map.importing.rna_import.testdata_rna_importer import (
     EXPECTED_RESULT_DF_PAIRED_END,
     EXPECTED_RESULT_DF_SINGLE_END,
     EXPECTED_RESULT_DF_SINGLE_END_CUTOFF,
+    EXPECTED_RESULT_INDEX_PAIRED_END,
     EXPECTED_RESULT_INDEX_SINGLE_END,
+    EXPECTED_RESULT_INDEX_SINGLE_END_CUTOFF,
+    EXPECTED_RESULT_INDEX_SINGLE_END_SHORT_KMERS,
     MOCK_FILE_1_CONTENT,
     MOCK_FILE_2_CONTENT,
 )
@@ -71,4 +74,30 @@ class TestRNAToIndexImporter:
         self.rna_importer.import_files_to_index(["path/to/file"])
         assert self.rna_importer.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END
 
-    # TODO: Test gzip vs uncompressed?
+    @patch(
+        "gzip.open",
+        side_effect=[
+            StringIO(MOCK_FILE_1_CONTENT),
+            StringIO(MOCK_FILE_2_CONTENT),
+        ],
+    )
+    def test_import_paired_end_file(self, _):
+        self.rna_importer.import_files_to_index(["path/to/file1", "path/to/file2"])
+        assert self.rna_importer.kmer_index == EXPECTED_RESULT_INDEX_PAIRED_END
+
+    @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
+    def test_cutoff(self, _):
+        self.rna_importer.import_files_to_index(["path/to/file"], cutoff=20)
+        assert self.rna_importer.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END_CUTOFF
+
+    @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
+    def test_kmer_len(self, _):
+        rna_importer_short_kmers = RNAToIndexImporter(kmer_length=3)
+        rna_importer_short_kmers.import_files_to_index(["path/to/file"])
+        assert (
+            rna_importer_short_kmers.kmer_index
+            == EXPECTED_RESULT_INDEX_SINGLE_END_SHORT_KMERS
+        )
+
+
+# TODO: Test gzip vs uncompressed?
