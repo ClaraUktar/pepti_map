@@ -42,6 +42,7 @@ class RNAToIndexImporter:
     def reset(self) -> None:
         self._cutoff = -1
         self._rna_reads = []
+        self.kmer_index = {}
 
     def set_kmer_length(self, kmer_length: int) -> None:
         self.kmer_length = kmer_length
