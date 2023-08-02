@@ -31,7 +31,7 @@ class RNAToIndexImporter:
     _rna_reads: List[RNARead] = []
     kmer_index: Dict[str, List[Tuple[str, int, int]]] = {}
 
-    def __init__(self, kmer_length: int = 6):
+    def __init__(self, kmer_length: int = 7):
         """
         :param int kmer_length: The k-mer size used during the mapping of peptides to
         RNA. As the RNA is 3-frame translated for the mapping, the k-mer size refers to

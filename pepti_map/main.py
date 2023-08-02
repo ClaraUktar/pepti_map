@@ -51,7 +51,7 @@ def _setup():
     "--kmer-length",
     required=False,
     type=int,
-    default=6,
+    default=7,
     show_default=True,
     help=(
         "The k-mer size used during the mapping of peptides to RNA. "

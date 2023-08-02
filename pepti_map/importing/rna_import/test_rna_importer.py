@@ -59,7 +59,7 @@ class TestRNAImporter:
 
 
 class TestRNAToIndexImporter:
-    rna_importer = RNAToIndexImporter()
+    rna_importer = RNAToIndexImporter(kmer_length=7)
 
     def test_raises_error_when_no_file_given(self):
         with pytest.raises(ValueError):
@@ -87,7 +87,7 @@ class TestRNAToIndexImporter:
 
     @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
     def test_cutoff(self, _):
-        self.rna_importer.import_files_to_index(["path/to/file"], cutoff=20)
+        self.rna_importer.import_files_to_index(["path/to/file"], cutoff=30)
         assert self.rna_importer.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END_CUTOFF
 
     @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
