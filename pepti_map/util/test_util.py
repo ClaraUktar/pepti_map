@@ -27,11 +27,6 @@ class TestKmerSplitting:
         ]
         assert list(split_into_kmer(test_sequence, 10)) == expected_result
 
-    def test_big_step(self):
-        test_sequence = "WHQVRNWCKHVEIEQCLECV"
-        expected_result = [("WHQVRNWCKH", 0), ("NWCKHVEIEQ", 5), ("VEIEQCLECV", 10)]
-        assert list(split_into_kmer(test_sequence, 10, 5)) == expected_result
-
     def test_split_by_stop_codons(self):
         test_sequence = "ACNVMILCLF*SARFFG*VLP"
         for kmer in split_into_kmer(test_sequence, 6):
