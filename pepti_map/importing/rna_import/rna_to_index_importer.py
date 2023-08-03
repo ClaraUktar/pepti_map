@@ -1,6 +1,7 @@
 from collections import defaultdict
 import itertools
 import logging
+import pickle
 from typing import Dict, List, TextIO, Tuple
 from Bio.Seq import MutableSeq
 import gzip
@@ -184,3 +185,14 @@ class RNAToIndexImporter:
             self._fill_reads_list_from_file(file_path, index == 1)
 
         self._construct_index()
+
+    def dump_index_to_file(self, file_path: str) -> None:
+        if not file_path.endswith(".pkl"):
+            file_path = file_path + ".pkl"
+        with open(file_path, "wb") as index_file:
+            pickle.dump(self.kmer_index, index_file)
+
+    def load_index_from_file(self, file_path: str) -> None:
+        self.reset()
+        with open(file_path, "rb") as index_file:
+            self.kmer_index = pickle.load(index_file)
