@@ -72,7 +72,7 @@ def main(
     if paired_end_file != "":
         rna_files.append(paired_end_file)
 
-    rna_data = RNAToIndexImporter(kmer_length).import_files_to_index(rna_files, cutoff)
+    RNAToIndexImporter(kmer_length).import_files_to_index(rna_files, cutoff)
     peptides_data = PeptideImporter().import_file(peptide_file)
 
 

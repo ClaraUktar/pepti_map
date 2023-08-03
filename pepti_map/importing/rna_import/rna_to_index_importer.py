@@ -1,3 +1,4 @@
+from collections import defaultdict
 import itertools
 import logging
 from typing import Dict, List, TextIO, Tuple
@@ -29,7 +30,7 @@ class RNAToIndexImporter:
     kmer_length: int
     _cutoff: int
     _rna_reads: List[RNARead] = []
-    kmer_index: Dict[str, List[Tuple[str, int, int]]] = {}
+    kmer_index: Dict[str, List[Tuple[str, int, int]]] = defaultdict(list)
 
     def __init__(self, kmer_length: int = 7):
         """
@@ -42,7 +43,7 @@ class RNAToIndexImporter:
     def reset(self) -> None:
         self._cutoff = -1
         self._rna_reads = []
-        self.kmer_index = {}
+        self.kmer_index.clear()
 
     def set_kmer_length(self, kmer_length: int) -> None:
         self.kmer_length = kmer_length
@@ -90,9 +91,7 @@ class RNAToIndexImporter:
         for rna_read in self._rna_reads:
             kmers = self._process_rna_read_to_kmer(rna_read)
             for kmer in kmers:
-                self.kmer_index[kmer[0]] = self.kmer_index.get(kmer[0], []) + [
-                    (kmer[1], kmer[2], kmer[3])
-                ]
+                self.kmer_index[kmer[0]].append((kmer[1], kmer[2], kmer[3]))
         print(self.kmer_index)
 
     def _add_rna_data_to_list(
