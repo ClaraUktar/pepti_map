@@ -191,7 +191,7 @@ class RNAToIndexImporter:
         self._construct_index()
 
     def dump_index_to_file(self, file_path: str) -> None:
-        with open(file_path, "wt", encoding="utf-8") as index_file:
+        with gzip.open(file_path, "wt", encoding="utf-8") as index_file:
             for item in self.kmer_index.items():
                 file_entry = f"{item[0]}\t"
                 for index, value in enumerate(item[1]):
@@ -203,7 +203,7 @@ class RNAToIndexImporter:
 
     def load_index_from_file(self, file_path: str) -> None:
         self.reset()
-        with open(file_path, "rt", encoding="utf-8") as index_file:
+        with gzip.open(file_path, "rt", encoding="utf-8") as index_file:
             for line in index_file:
                 kmer, values = line.split("\t")
                 for value in values.split(";"):
