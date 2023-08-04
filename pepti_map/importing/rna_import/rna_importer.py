@@ -30,32 +30,32 @@ class RNAImporter:
     def set_kmer_length(self, kmer_length) -> None:
         self.kmer_length = kmer_length
 
-    def _add_entry_to_dict(self, id: str, sequence: str) -> None:
+    def _add_entry_to_dict(self, sequence_id: str, sequence: str) -> None:
         duplicate = self._rna_dict.get(sequence)
 
         if duplicate is not None:
             self._rna_dict[sequence] = (
-                duplicate[0] + [id],
+                duplicate[0] + [sequence_id],
                 duplicate[1],
                 duplicate[2] + 1,
             )
         else:
-            self._rna_dict[sequence] = ([id], sequence, 1)
+            self._rna_dict[sequence] = ([sequence_id], sequence, 1)
 
-    def _add_entry_to_translated_dict(self, id: str, sequence: str) -> None:
+    def _add_entry_to_translated_dict(self, sequence_id: str, sequence: str) -> None:
         for translation in get_three_frame_translations(sequence):
             duplicate = self._rna_dict_translated.get(translation[0])
 
             if duplicate is not None:
                 self._rna_dict_translated[translation[0]] = (
-                    duplicate[0] + [id],
+                    duplicate[0] + [sequence_id],
                     duplicate[1],
                     duplicate[2] + 1,
                     duplicate[3] + [translation[1]],
                 )
             else:
                 self._rna_dict_translated[translation[0]] = (
-                    [id],
+                    [sequence_id],
                     translation[0],
                     1,
                     [translation[1]],
@@ -68,12 +68,12 @@ class RNAImporter:
         should_translate: bool = True,
     ) -> None:
         line_count_for_current_sequence: int = 0
-        id = ""
+        sequence_id = ""
         sequence = ""
 
         for line in rna_data:
             if line_count_for_current_sequence == 0:
-                id = line.strip()
+                sequence_id = line.strip()
             elif line_count_for_current_sequence == 1:
                 sequence = line.strip()
 
@@ -92,12 +92,12 @@ class RNAImporter:
             # For now skip quality info (line 4), getting cutoff value supplied by user
             elif line_count_for_current_sequence == 3:
                 if should_translate:
-                    self._add_entry_to_translated_dict(id, sequence)
+                    self._add_entry_to_translated_dict(sequence_id, sequence)
                 else:
-                    self._add_entry_to_dict(id, sequence)
+                    self._add_entry_to_dict(sequence_id, sequence)
 
                 line_count_for_current_sequence = 0
-                id = ""
+                sequence_id = ""
                 sequence = ""
                 continue
 
@@ -109,7 +109,7 @@ class RNAImporter:
         is_reverse_complement: bool = False,
         should_translate: bool = True,
     ) -> None:
-        with gzip.open(file_path, "rt") as rna_data_gzipped:
+        with gzip.open(file_path, "rt", encoding="utf-8") as rna_data_gzipped:
             try:
                 rna_data_gzipped.read(1)
                 rna_data_gzipped.seek(0)
@@ -127,7 +127,7 @@ class RNAImporter:
                     )
                 )
 
-        with open(file_path, "rt") as rna_data:
+        with open(file_path, "rt", encoding="utf-8") as rna_data:
             return self._add_rna_data_to_dict(
                 rna_data, is_reverse_complement, should_translate
             )

@@ -28,7 +28,7 @@ class PeptideImporter:
         """
         self.reset()
 
-        with open(file_path) as peptide_file:
+        with open(file_path, "rt", encoding="utf-8") as peptide_file:
             for index, line in enumerate(peptide_file):
                 # TODO: Exchange all I for L?
                 sequence = line.strip()

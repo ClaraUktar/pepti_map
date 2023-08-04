@@ -29,8 +29,6 @@ class TestKmerSplitting:
 
     def test_split_by_stop_codons(self):
         test_sequence = "ACNVMILCLF*SARFFG*VLP"
-        for kmer in split_into_kmer(test_sequence, 6):
-            print(kmer)
         expected_result = [
             ("ACNVMI", 0),
             ("CNVMIL", 1),

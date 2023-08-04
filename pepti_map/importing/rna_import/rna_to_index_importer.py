@@ -1,8 +1,7 @@
 from collections import defaultdict
 import itertools
 import logging
-import pickle
-from typing import Dict, List, TextIO, Tuple
+from typing import List, TextIO, Tuple
 from Bio.Seq import MutableSeq
 import gzip
 from pepti_map.util.k_mer import split_into_kmer
@@ -11,18 +10,19 @@ from pepti_map.util.three_frame_translation import get_three_frame_translations
 
 
 class RNARead:
-    id: str
+    sequence_id: str
     sequence: str
     is_reverse_complement: bool
 
-    def __init__(self, id: str, sequence: str, is_reverse_complement: bool):
-        self.id = id
+    def __init__(self, sequence_id: str, sequence: str, is_reverse_complement: bool):
+        self.sequence_id = sequence_id
         self.sequence = sequence
         self.is_reverse_complement = is_reverse_complement
 
     def __repr__(self):
         return (
-            f"rna_to_index_importer.RNARead(id: {self.id}, sequence: {self.sequence}, "
+            f"rna_to_index_importer.RNARead(id: {self.sequence_id}, "
+            f"sequence: {self.sequence}, "
             f"is_reverse_complement: {self.is_reverse_complement})"
         )
 
@@ -31,7 +31,7 @@ class RNAToIndexImporter:
     kmer_length: int
     _cutoff: int
     _rna_reads: List[RNARead] = []
-    kmer_index: Dict[str, List[Tuple[str, int, int]]] = defaultdict(list)
+    kmer_index: "defaultdict[str, List[Tuple[str, int, int]]]" = defaultdict(list)
 
     def __init__(self, kmer_length: int = 7):
         """
@@ -50,10 +50,10 @@ class RNAToIndexImporter:
         self.kmer_length = kmer_length
 
     def _generate_kmers(
-        self, sequence: str, frame: int, id: str
+        self, sequence: str, frame: int, sequence_id: str
     ) -> List[Tuple[str, str, int, int]]:
         kmers = split_into_kmer(sequence, self.kmer_length)
-        return [(kmer[0], id, frame, kmer[1]) for kmer in kmers]
+        return [(kmer[0], sequence_id, frame, kmer[1]) for kmer in kmers]
 
     def _process_rna_read_to_kmer(
         self, rna_read: RNARead
@@ -72,7 +72,9 @@ class RNAToIndexImporter:
         return list(
             itertools.chain.from_iterable(
                 [
-                    self._generate_kmers(translation[0], translation[1], rna_read.id)
+                    self._generate_kmers(
+                        translation[0], translation[1], rna_read.sequence_id
+                    )
                     for translation in translations
                 ]
             )
@@ -93,7 +95,7 @@ class RNAToIndexImporter:
             kmers = self._process_rna_read_to_kmer(rna_read)
             for kmer in kmers:
                 self.kmer_index[kmer[0]].append((kmer[1], kmer[2], kmer[3]))
-        print(self.kmer_index)
+        # print(self.kmer_index)
 
     def _add_rna_data_to_list(
         self,
@@ -101,12 +103,12 @@ class RNAToIndexImporter:
         is_reverse_complement: bool = False,
     ) -> None:
         line_count_for_current_sequence: int = 0
-        id = ""
+        sequence_id = ""
         sequence = ""
 
         for line in rna_data:
             if line_count_for_current_sequence == 0:
-                id = line.strip()
+                sequence_id = line.strip()
             elif line_count_for_current_sequence == 1:
                 sequence = line.strip()
 
@@ -118,10 +120,12 @@ class RNAToIndexImporter:
             # Always read 4 lines per sequence, as per FASTQ format
             # For now skip quality info (line 4), getting cutoff value supplied by user
             elif line_count_for_current_sequence == 3:
-                self._rna_reads.append(RNARead(id, sequence, is_reverse_complement))
+                self._rna_reads.append(
+                    RNARead(sequence_id, sequence, is_reverse_complement)
+                )
 
                 line_count_for_current_sequence = 0
-                id = ""
+                sequence_id = ""
                 sequence = ""
                 continue
 
@@ -132,7 +136,7 @@ class RNAToIndexImporter:
         file_path: str,
         is_reverse_complement: bool = False,
     ) -> None:
-        with gzip.open(file_path, "rt") as rna_data_gzipped:
+        with gzip.open(file_path, "rt", encoding="utf-8") as rna_data_gzipped:
             try:
                 rna_data_gzipped.read(1)
                 rna_data_gzipped.seek(0)
@@ -150,7 +154,7 @@ class RNAToIndexImporter:
                     )
                 )
 
-        with open(file_path, "rt") as rna_data:
+        with open(file_path, "rt", encoding="utf-8") as rna_data:
             return self._add_rna_data_to_list(rna_data, is_reverse_complement)
 
     def import_files_to_index(self, file_paths: List[str], cutoff: int = -1) -> None:
@@ -187,12 +191,23 @@ class RNAToIndexImporter:
         self._construct_index()
 
     def dump_index_to_file(self, file_path: str) -> None:
-        if not file_path.endswith(".pkl"):
-            file_path = file_path + ".pkl"
-        with open(file_path, "wb") as index_file:
-            pickle.dump(self.kmer_index, index_file)
+        with open(file_path, "wt", encoding="utf-8") as index_file:
+            for item in self.kmer_index.items():
+                file_entry = f"{item[0]}\t"
+                for index, value in enumerate(item[1]):
+                    file_entry += ",".join([value[0], str(value[1]), str(value[2])])
+                    if index != len(item[1]) - 1:
+                        file_entry += ";"
+                index_file.write(file_entry)
+                index_file.write("\n")
 
     def load_index_from_file(self, file_path: str) -> None:
         self.reset()
-        with open(file_path, "rb") as index_file:
-            self.kmer_index = pickle.load(index_file)
+        with open(file_path, "rt", encoding="utf-8") as index_file:
+            for line in index_file:
+                kmer, values = line.split("\t")
+                for value in values.split(";"):
+                    sequence_id, frame, position = value.split(",")
+                    self.kmer_index[kmer].append(
+                        (sequence_id, int(frame), int(position))
+                    )

@@ -43,4 +43,4 @@ class TestPeptideSimpleFormatImport:
         ) as peptide_file_mock:
             result_df = self.peptide_importer.import_file("path/to/file")
             pd.testing.assert_frame_equal(result_df, self.expected_result_df)
-        peptide_file_mock.assert_called_with("path/to/file")
+        peptide_file_mock.assert_called_with("path/to/file", "rt", encoding="utf-8")

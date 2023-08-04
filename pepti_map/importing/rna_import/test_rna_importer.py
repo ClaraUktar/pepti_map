@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import Path
 from unittest.mock import patch
 from io import StringIO
@@ -104,10 +105,12 @@ class TestRNAToIndexImporter:
         self.rna_importer.reset()
         assert self.rna_importer.kmer_index == {}
 
-        self.rna_importer.kmer_index = EXPECTED_RESULT_INDEX_SINGLE_END.copy()
+        self.rna_importer.kmer_index = defaultdict(
+            list, EXPECTED_RESULT_INDEX_SINGLE_END.copy()
+        )
         temp_directory: Path = tmp_path / "kmer_index"
         temp_directory.mkdir()
-        file_path = temp_directory.as_posix() + "/index.pkl"
+        file_path = temp_directory.as_posix() + "/index.txt"
         self.rna_importer.dump_index_to_file(file_path)
         self.rna_importer.reset()
         assert self.rna_importer.kmer_index == {}
