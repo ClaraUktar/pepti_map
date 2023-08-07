@@ -1,12 +1,21 @@
 import logging
 import click
 import time
+import sys
+from memory_profiler import LogFile
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
 
 
 def _setup():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename="peptimap.log",
+        filemode="a",
+        format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    sys.stdout = LogFile("peptimap.log")
 
 
 @click.command()
@@ -78,7 +87,7 @@ def main(
         rna_files, cutoff
     )
     end_time = time.time()
-    print(f"Time for index creation: {end_time - start_time} seconds")
+    logging.info(f"Time for index creation: {end_time - start_time} seconds")
     # peptides_data = PeptideImporter().import_file(peptide_file)
 
 
