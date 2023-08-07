@@ -9,7 +9,6 @@ from pepti_map.rna_data.rna_kmer_index import RNAKmerIndex
 class TestRNAKmerIndex:
     def test_dump_and_load_index_file(self, tmp_path):
         kmer_index = RNAKmerIndex()
-        print(kmer_index.kmer_index)
         assert kmer_index.kmer_index == {}
 
         kmer_index.kmer_index = defaultdict(
