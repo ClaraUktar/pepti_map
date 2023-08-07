@@ -1,9 +1,9 @@
-from collections import defaultdict
 import itertools
 import logging
 from typing import List, TextIO, Tuple
 from Bio.Seq import MutableSeq
 import gzip
+from pepti_map.rna_data.rna_kmer_index import RNAKmerIndex
 from pepti_map.util.k_mer import split_into_kmer
 
 from pepti_map.util.three_frame_translation import get_three_frame_translations
@@ -31,7 +31,6 @@ class RNAToIndexImporter:
     kmer_length: int
     _cutoff: int
     _rna_reads: List[RNARead] = []
-    kmer_index: "defaultdict[str, List[Tuple[str, int, int]]]" = defaultdict(list)
 
     def __init__(self, kmer_length: int = 7):
         """
@@ -40,6 +39,7 @@ class RNAToIndexImporter:
         amino acids.
         """
         self.kmer_length = kmer_length
+        self.kmer_index = RNAKmerIndex()
 
     def reset(self) -> None:
         self._cutoff = -1
@@ -94,8 +94,9 @@ class RNAToIndexImporter:
         for rna_read in self._rna_reads:
             kmers = self._process_rna_read_to_kmer(rna_read)
             for kmer in kmers:
-                self.kmer_index[kmer[0]].append((kmer[1], kmer[2], kmer[3]))
-        # print(self.kmer_index)
+                self.kmer_index.appendToEntryForKmer(
+                    kmer[0], (kmer[1], kmer[2], kmer[3])
+                )
 
     def _add_rna_data_to_list(
         self,
@@ -157,7 +158,9 @@ class RNAToIndexImporter:
         with open(file_path, "rt", encoding="utf-8") as rna_data:
             return self._add_rna_data_to_list(rna_data, is_reverse_complement)
 
-    def import_files_to_index(self, file_paths: List[str], cutoff: int = -1) -> None:
+    def import_files_to_index(
+        self, file_paths: List[str], cutoff: int = -1
+    ) -> RNAKmerIndex:
         """
         Reads the FASTQ file(s) given and constructs a k-mer index (n-gram index)
         from them.
@@ -169,6 +172,8 @@ class RNAToIndexImporter:
         and then the reads are merged with those from the first file into one index.
         :param int cutoff: The position of the last base in the reads after which a
         cutoff should be performed, starting with 1. If given, the value should be > 0.
+        :returns An `RNAKmerIndex` object containing the constructed index.
+        :rtype RNAKmerIndex
         :raises ValueError: Raised if the list of file paths does not contain exactly
         1 or 2 entries.
         """
@@ -189,10 +194,11 @@ class RNAToIndexImporter:
             self._fill_reads_list_from_file(file_path, index == 1)
 
         self._construct_index()
+        return self.kmer_index
 
     def dump_index_to_file(self, file_path: str) -> None:
         with gzip.open(file_path, "wt", encoding="utf-8") as index_file:
-            for item in self.kmer_index.items():
+            for item in self.kmer_index.kmer_index.items():
                 file_entry = f"{item[0]}\t"
                 for index, value in enumerate(item[1]):
                     file_entry += ",".join([value[0], str(value[1]), str(value[2])])
@@ -201,13 +207,14 @@ class RNAToIndexImporter:
                 index_file.write(file_entry)
                 index_file.write("\n")
 
-    def load_index_from_file(self, file_path: str) -> None:
+    def load_index_from_file(self, file_path: str) -> RNAKmerIndex:
         self.reset()
         with gzip.open(file_path, "rt", encoding="utf-8") as index_file:
             for line in index_file:
-                kmer, values = line.split("\t")
-                for value in values.split(";"):
-                    sequence_id, frame, position = value.split(",")
-                    self.kmer_index[kmer].append(
-                        (sequence_id, int(frame), int(position))
+                kmer, values = line.split(sep="\t")
+                for value in values.split(sep=";"):
+                    sequence_id, frame, position = value.split(sep=",")
+                    self.kmer_index.appendToEntryForKmer(
+                        kmer, (sequence_id, int(frame), int(position))
                     )
+        return self.kmer_index

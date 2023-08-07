@@ -73,8 +73,8 @@ class TestRNAToIndexImporter:
 
     @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
     def test_import_single_end_file(self, _):
-        self.rna_importer.import_files_to_index(["path/to/file"])
-        assert self.rna_importer.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END
+        resulting_index = self.rna_importer.import_files_to_index(["path/to/file"])
+        assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END
 
     @patch(
         "gzip.open",
@@ -84,28 +84,32 @@ class TestRNAToIndexImporter:
         ],
     )
     def test_import_paired_end_file(self, _):
-        self.rna_importer.import_files_to_index(["path/to/file1", "path/to/file2"])
-        assert self.rna_importer.kmer_index == EXPECTED_RESULT_INDEX_PAIRED_END
+        resulting_index = self.rna_importer.import_files_to_index(
+            ["path/to/file1", "path/to/file2"]
+        )
+        assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_PAIRED_END
 
     @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
     def test_cutoff(self, _):
-        self.rna_importer.import_files_to_index(["path/to/file"], cutoff=30)
-        assert self.rna_importer.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END_CUTOFF
+        resulting_index = self.rna_importer.import_files_to_index(
+            ["path/to/file"], cutoff=30
+        )
+        assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END_CUTOFF
 
     @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
     def test_kmer_len(self, _):
-        rna_importer_short_kmers = RNAToIndexImporter(kmer_length=3)
-        rna_importer_short_kmers.import_files_to_index(["path/to/file"])
+        resulting_index = RNAToIndexImporter(kmer_length=3).import_files_to_index(
+            ["path/to/file"]
+        )
         assert (
-            rna_importer_short_kmers.kmer_index
-            == EXPECTED_RESULT_INDEX_SINGLE_END_SHORT_KMERS
+            resulting_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END_SHORT_KMERS
         )
 
     def test_dump_and_load_index_file(self, tmp_path):
         self.rna_importer.reset()
-        assert self.rna_importer.kmer_index == {}
+        assert self.rna_importer.kmer_index.kmer_index == {}
 
-        self.rna_importer.kmer_index = defaultdict(
+        self.rna_importer.kmer_index.kmer_index = defaultdict(
             list, EXPECTED_RESULT_INDEX_SINGLE_END.copy()
         )
         temp_directory: Path = tmp_path / "kmer_index"
@@ -113,10 +117,10 @@ class TestRNAToIndexImporter:
         file_path = temp_directory.as_posix() + "/index.txt"
         self.rna_importer.dump_index_to_file(file_path)
         self.rna_importer.reset()
-        assert self.rna_importer.kmer_index == {}
+        assert self.rna_importer.kmer_index.kmer_index == {}
 
-        self.rna_importer.load_index_from_file(file_path)
-        assert self.rna_importer.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END
+        resulting_index = self.rna_importer.load_index_from_file(file_path)
+        assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END
 
 
 # TODO: Test gzip vs uncompressed?
