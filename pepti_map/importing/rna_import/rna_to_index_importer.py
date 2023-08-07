@@ -30,7 +30,7 @@ class RNARead:
 class RNAToIndexImporter:
     kmer_length: int
     _cutoff: int
-    _rna_reads: List[RNARead] = []
+    _rna_reads: List[RNARead]
 
     def __init__(self, kmer_length: int = 7):
         """
@@ -40,6 +40,7 @@ class RNAToIndexImporter:
         """
         self.kmer_length = kmer_length
         self.kmer_index = RNAKmerIndex()
+        self._rna_reads = []
 
     def reset(self) -> None:
         self._cutoff = -1
@@ -194,27 +195,4 @@ class RNAToIndexImporter:
             self._fill_reads_list_from_file(file_path, index == 1)
 
         self._construct_index()
-        return self.kmer_index
-
-    def dump_index_to_file(self, file_path: str) -> None:
-        with gzip.open(file_path, "wt", encoding="utf-8") as index_file:
-            for item in self.kmer_index.kmer_index.items():
-                file_entry = f"{item[0]}\t"
-                for index, value in enumerate(item[1]):
-                    file_entry += ",".join([value[0], str(value[1]), str(value[2])])
-                    if index != len(item[1]) - 1:
-                        file_entry += ";"
-                index_file.write(file_entry)
-                index_file.write("\n")
-
-    def load_index_from_file(self, file_path: str) -> RNAKmerIndex:
-        self.reset()
-        with gzip.open(file_path, "rt", encoding="utf-8") as index_file:
-            for line in index_file:
-                kmer, values = line.split(sep="\t")
-                for value in values.split(sep=";"):
-                    sequence_id, frame, position = value.split(sep=",")
-                    self.kmer_index.appendToEntryForKmer(
-                        kmer, (sequence_id, int(frame), int(position))
-                    )
         return self.kmer_index

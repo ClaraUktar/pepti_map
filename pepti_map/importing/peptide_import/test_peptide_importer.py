@@ -7,6 +7,7 @@ from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 class TestPeptideSimpleFormatImport:
     peptide_importer = PeptideImporter()
 
+    # TODO: Extract into separate data file
     # Test data was randomly generated
     mock_file_content = """GQLDR
     NCYQKAQHLYTPEGRKGMVHLTWDRTVLPPPCMDIVDRHRSSRY

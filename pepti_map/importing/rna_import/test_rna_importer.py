@@ -1,5 +1,3 @@
-from collections import defaultdict
-from pathlib import Path
 from unittest.mock import patch
 from io import StringIO
 import pandas as pd
@@ -104,23 +102,6 @@ class TestRNAToIndexImporter:
         assert (
             resulting_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END_SHORT_KMERS
         )
-
-    def test_dump_and_load_index_file(self, tmp_path):
-        self.rna_importer.reset()
-        assert self.rna_importer.kmer_index.kmer_index == {}
-
-        self.rna_importer.kmer_index.kmer_index = defaultdict(
-            list, EXPECTED_RESULT_INDEX_SINGLE_END.copy()
-        )
-        temp_directory: Path = tmp_path / "kmer_index"
-        temp_directory.mkdir()
-        file_path = temp_directory.as_posix() + "/index.txt"
-        self.rna_importer.dump_index_to_file(file_path)
-        self.rna_importer.reset()
-        assert self.rna_importer.kmer_index.kmer_index == {}
-
-        resulting_index = self.rna_importer.load_index_from_file(file_path)
-        assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END
 
 
 # TODO: Test gzip vs uncompressed?

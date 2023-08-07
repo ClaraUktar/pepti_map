@@ -4,7 +4,10 @@ import pandas as pd
 
 
 class PeptideImporter:
-    _peptide_dict: Dict[str, Tuple[List[int], str, int]] = {}
+    _peptide_dict: Dict[str, Tuple[List[int], str, int]]
+
+    def __init__(self):
+        self._peptide_dict = {}
 
     def reset(self) -> None:
         self._peptide_dict = {}
