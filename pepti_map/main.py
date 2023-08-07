@@ -1,5 +1,6 @@
 import logging
 import click
+import time
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
 
@@ -72,10 +73,13 @@ def main(
     if paired_end_file != "":
         rna_files.append(paired_end_file)
 
+    start_time = time.time()
     kmer_index = RNAToIndexImporter(kmer_length).import_files_to_index(
         rna_files, cutoff
     )
-    peptides_data = PeptideImporter().import_file(peptide_file)
+    end_time = time.time()
+    print(f"Time for index creation: {end_time - start_time} seconds")
+    # peptides_data = PeptideImporter().import_file(peptide_file)
 
 
 if __name__ == "__main__":

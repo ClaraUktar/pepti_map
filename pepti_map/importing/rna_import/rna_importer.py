@@ -190,6 +190,6 @@ class RNAImporter:
             rna_df = pd.DataFrame(
                 list(self._rna_dict.values()), columns=["ids", "sequence", "count"]
             ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
-        print(rna_df)
-        print(rna_df.info(verbose=True))
+        # print(rna_df)
+        # print(rna_df.info(verbose=True))
         return rna_df

@@ -47,6 +47,6 @@ class PeptideImporter:
         peptide_df = pd.DataFrame(
             list(self._peptide_dict.values()), columns=["ids", "sequence", "count"]
         ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
-        print(peptide_df)
-        print(peptide_df.info(verbose=True))
+        # print(peptide_df)
+        # print(peptide_df.info(verbose=True))
         return peptide_df

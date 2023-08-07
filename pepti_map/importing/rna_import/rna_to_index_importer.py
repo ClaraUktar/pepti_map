@@ -1,5 +1,6 @@
 import itertools
 import logging
+from memory_profiler import profile
 from typing import List, TextIO, Tuple
 from Bio.Seq import MutableSeq
 import gzip
@@ -159,6 +160,7 @@ class RNAToIndexImporter:
         with open(file_path, "rt", encoding="utf-8") as rna_data:
             return self._add_rna_data_to_list(rna_data, is_reverse_complement)
 
+    @profile
     def import_files_to_index(
         self, file_paths: List[str], cutoff: int = -1
     ) -> RNAKmerIndex:
