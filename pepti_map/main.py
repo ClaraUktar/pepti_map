@@ -3,6 +3,7 @@ import click
 from os.path import isfile
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
+from pepti_map.matching.peptide_to_rna_matcher import PeptideToRNAMatcher
 from pepti_map.rna_data.rna_kmer_index import RNAKmerIndex
 
 
@@ -102,6 +103,11 @@ def main(
             kmer_index.dump_index_to_file(index_file)
 
     peptides_data = PeptideImporter().import_file(peptide_file)
+
+    matched_peptides = PeptideToRNAMatcher(
+        peptides_data
+    ).find_rna_read_matches_for_peptides(kmer_index, kmer_length)
+    kmer_index.clear()
 
 
 if __name__ == "__main__":

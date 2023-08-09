@@ -51,6 +51,7 @@ class PeptideImporter:
         print(peptide_df.info(verbose=True))
         return peptide_df
 
+    # TODO: Still save the peptide data in separate class, similar to the rna data?
     def import_file(self, file_path: str) -> pd.DataFrame:
         """
         TODO
