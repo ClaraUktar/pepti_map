@@ -15,7 +15,7 @@ class PeptideImporter:
     # TODO: Add support for custom format
     # TODO: Add support for MZTab
     # TODO: Use numpy instead?
-    def import_file(self, file_path: str) -> pd.DataFrame:
+    def import_file_with_deduplication(self, file_path: str) -> pd.DataFrame:
         """
         Reads the file given and transforms it into a pandas DataFrame,
         with columns `ids`, `sequence` and `count`.
@@ -47,6 +47,21 @@ class PeptideImporter:
         peptide_df = pd.DataFrame(
             list(self._peptide_dict.values()), columns=["ids", "sequence", "count"]
         ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
+        print(peptide_df)
+        print(peptide_df.info(verbose=True))
+        return peptide_df
+
+    def import_file(self, file_path: str) -> pd.DataFrame:
+        """
+        TODO
+        """
+        peptides = []
+        with open(file_path, "rt", encoding="utf-8") as peptide_file:
+            for line in peptide_file:
+                peptides.append(line.strip())
+        peptide_df = pd.DataFrame(peptides, columns=["sequence"]).astype(
+            dtype={"sequence": "string"}
+        )
         print(peptide_df)
         print(peptide_df.info(verbose=True))
         return peptide_df
