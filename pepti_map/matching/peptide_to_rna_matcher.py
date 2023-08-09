@@ -7,12 +7,9 @@ from pepti_map.util.k_mer import split_into_kmer
 
 
 class PeptideToRNAMatcher:
-    peptides: pd.DataFrame
-    kmer_index: Union[RNAKmerIndex, None]
-
     def __init__(self, peptides: pd.DataFrame):
-        self.peptides = peptides
-        self.kmer_index = None
+        self.peptides: pd.DataFrame = peptides
+        self.kmer_index: Union[RNAKmerIndex, None] = None
 
     def _find_rna_read_matches_for_peptide(self, peptide: str) -> List[str]:
         try:

@@ -10,17 +10,15 @@ from pepti_map.util.three_frame_translation import get_three_frame_translations
 
 
 class RNAToIndexImporter:
-    kmer_length: int
-    _cutoff: int
-
     def __init__(self, kmer_length: int = 7):
         """
         :param int kmer_length: The k-mer size used during the mapping of peptides to
         RNA. As the RNA is 3-frame translated for the mapping, the k-mer size refers to
         amino acids.
         """
-        self.kmer_length = kmer_length
-        self.kmer_index = RNAKmerIndex(kmer_length)
+        self.kmer_length: int = kmer_length
+        self.kmer_index: RNAKmerIndex = RNAKmerIndex(kmer_length)
+        self._cutoff = -1
 
     def reset(self) -> None:
         self._cutoff = -1

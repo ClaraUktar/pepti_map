@@ -20,7 +20,9 @@ from pepti_map.importing.rna_import.testdata_rna_importer import (
 
 
 class TestRNAImporter:
-    rna_importer = RNAImporter()
+    @pytest.fixture(autouse=True)
+    def _init_rna_importer(self):
+        self.rna_importer = RNAImporter()
 
     def test_raises_error_when_no_file_given(self):
         with pytest.raises(ValueError):

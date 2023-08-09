@@ -4,12 +4,11 @@ from typing import List, Tuple
 
 
 class RNAKmerIndex:
-    kmer_index: "defaultdict[str, List[Tuple[str, int, int]]]"
-    kmer_length: int
-
     def __init__(self, kmer_length: int = 7):
-        self.kmer_index = defaultdict(list)
-        self.kmer_length = kmer_length
+        self.kmer_index: "defaultdict[str, List[Tuple[str, int, int]]]" = defaultdict(
+            list
+        )
+        self.kmer_length: int = kmer_length
 
     def clear(self) -> None:
         self.kmer_index.clear()

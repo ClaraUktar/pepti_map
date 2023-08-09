@@ -1,12 +1,11 @@
 from unittest.mock import patch, mock_open
 import pandas as pd
+import pytest
 
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 
 
 class TestPeptideSimpleFormatImport:
-    peptide_importer = PeptideImporter()
-
     # TODO: Extract into separate data file
     # Test data was randomly generated
     mock_file_content = """GQLDR
@@ -54,6 +53,10 @@ class TestPeptideSimpleFormatImport:
             ]
         }
     ).astype(dtype={"sequence": "string"})
+
+    @pytest.fixture(autouse=True)
+    def _init_peptide_importer(self):
+        self.peptide_importer = PeptideImporter()
 
     def test_import_as_df_with_duplicates(self):
         with patch(
