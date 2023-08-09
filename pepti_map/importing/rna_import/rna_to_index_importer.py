@@ -10,28 +10,9 @@ from pepti_map.util.k_mer import split_into_kmer
 from pepti_map.util.three_frame_translation import get_three_frame_translations
 
 
-class RNARead:
-    sequence_id: str
-    sequence: str
-    is_reverse_complement: bool
-
-    def __init__(self, sequence_id: str, sequence: str, is_reverse_complement: bool):
-        self.sequence_id = sequence_id
-        self.sequence = sequence
-        self.is_reverse_complement = is_reverse_complement
-
-    def __repr__(self):
-        return (
-            f"rna_to_index_importer.RNARead(id: {self.sequence_id}, "
-            f"sequence: {self.sequence}, "
-            f"is_reverse_complement: {self.is_reverse_complement})"
-        )
-
-
 class RNAToIndexImporter:
     kmer_length: int
     _cutoff: int
-    _rna_reads: List[RNARead]
 
     def __init__(self, kmer_length: int = 7):
         """
@@ -41,11 +22,9 @@ class RNAToIndexImporter:
         """
         self.kmer_length = kmer_length
         self.kmer_index = RNAKmerIndex()
-        self._rna_reads = []
 
     def reset(self) -> None:
         self._cutoff = -1
-        self._rna_reads = []
         self.kmer_index.clear()
 
     def set_kmer_length(self, kmer_length: int) -> None:
@@ -58,49 +37,36 @@ class RNAToIndexImporter:
         return [(kmer[0], sequence_id, frame, kmer[1]) for kmer in kmers]
 
     def _process_rna_read_to_kmer(
-        self, rna_read: RNARead
+        self, sequence_id: str, sequence: str, is_reverse_complement: bool
     ) -> List[Tuple[str, str, int, int]]:
         """
         TODO
         """
         # TODO: Exchange all T for U? (inplace?)
         # TODO: Construct reverse complement here or during file reading?
-        if rna_read.is_reverse_complement:
-            rna_read.sequence = str(
-                MutableSeq(rna_read.sequence).reverse_complement(inplace=True)
-            )
+        if is_reverse_complement:
+            sequence = str(MutableSeq(sequence).reverse_complement(inplace=True))
 
-        translations = get_three_frame_translations(rna_read.sequence)
+        translations = get_three_frame_translations(sequence)
         return list(
             itertools.chain.from_iterable(
                 [
-                    self._generate_kmers(
-                        translation[0], translation[1], rna_read.sequence_id
-                    )
+                    self._generate_kmers(translation[0], translation[1], sequence_id)
                     for translation in translations
                 ]
             )
         )
 
-    def _construct_index(self) -> None:
-        if len(self._rna_reads) == 0:
-            error_message = (
-                "No RNA reads available to index. "
-                "Please make sure to import a valid, non-empty FASTQ file "
-                "before building an index."
-            )
-            logging.error(error_message)
-            raise ValueError(error_message)
+    def _add_rna_read_to_index(
+        self, sequence_id: str, sequence: str, is_reverse_complement: bool
+    ) -> None:
+        kmers = self._process_rna_read_to_kmer(
+            sequence_id, sequence, is_reverse_complement
+        )
+        for kmer in kmers:
+            self.kmer_index.appendToEntryForKmer(kmer[0], (kmer[1], kmer[2], kmer[3]))
 
-        # Build index
-        for rna_read in self._rna_reads:
-            kmers = self._process_rna_read_to_kmer(rna_read)
-            for kmer in kmers:
-                self.kmer_index.appendToEntryForKmer(
-                    kmer[0], (kmer[1], kmer[2], kmer[3])
-                )
-
-    def _add_rna_data_to_list(
+    def _add_rna_data_to_index(
         self,
         rna_data: TextIO,
         is_reverse_complement: bool = False,
@@ -123,8 +89,8 @@ class RNAToIndexImporter:
             # Always read 4 lines per sequence, as per FASTQ format
             # For now skip quality info (line 4), getting cutoff value supplied by user
             elif line_count_for_current_sequence == 3:
-                self._rna_reads.append(
-                    RNARead(sequence_id, sequence, is_reverse_complement)
+                self._add_rna_read_to_index(
+                    sequence_id, sequence, is_reverse_complement
                 )
 
                 line_count_for_current_sequence = 0
@@ -134,7 +100,7 @@ class RNAToIndexImporter:
 
             line_count_for_current_sequence = line_count_for_current_sequence + 1
 
-    def _fill_reads_list_from_file(
+    def _fill_index_from_file(
         self,
         file_path: str,
         is_reverse_complement: bool = False,
@@ -146,7 +112,7 @@ class RNAToIndexImporter:
                 logging.info(
                     f"Detected gzip file: {file_path}. Reading in compressed format..."
                 )
-                return self._add_rna_data_to_list(
+                return self._add_rna_data_to_index(
                     rna_data_gzipped, is_reverse_complement
                 )
             except gzip.BadGzipFile:
@@ -158,7 +124,7 @@ class RNAToIndexImporter:
                 )
 
         with open(file_path, "rt", encoding="utf-8") as rna_data:
-            return self._add_rna_data_to_list(rna_data, is_reverse_complement)
+            return self._add_rna_data_to_index(rna_data, is_reverse_complement)
 
     @profile
     def import_files_to_index(
@@ -194,7 +160,6 @@ class RNAToIndexImporter:
             raise ValueError(error_message)
 
         for index, file_path in enumerate(file_paths):
-            self._fill_reads_list_from_file(file_path, index == 1)
+            self._fill_index_from_file(file_path, index == 1)
 
-        self._construct_index()
         return self.kmer_index
