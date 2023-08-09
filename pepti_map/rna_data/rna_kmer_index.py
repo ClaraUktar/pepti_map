@@ -5,9 +5,11 @@ from typing import List, Tuple
 
 class RNAKmerIndex:
     kmer_index: "defaultdict[str, List[Tuple[str, int, int]]]"
+    kmer_length: int
 
-    def __init__(self):
+    def __init__(self, kmer_length: int = 7):
         self.kmer_index = defaultdict(list)
+        self.kmer_length = kmer_length
 
     def clear(self) -> None:
         self.kmer_index.clear()
@@ -32,14 +34,18 @@ class RNAKmerIndex:
                 index_file.write(file_entry)
                 index_file.write("\n")
 
-    def load_index_from_file(self, file_path: str) -> "RNAKmerIndex":
-        self.clear()
+    @classmethod
+    def load_index_from_file(cls, file_path: str) -> "RNAKmerIndex":
+        kmer_index: cls
         with gzip.open(file_path, "rt", encoding="utf-8") as index_file:
+            kmer_length = len(index_file.readline().split(sep="\t")[0])
+            kmer_index = cls(kmer_length)
+            index_file.seek(0)
             for line in index_file:
                 kmer, values = line.split(sep="\t")
                 for value in values.split(sep=";"):
                     sequence_id, frame, position = value.split(sep=",")
-                    self.appendToEntryForKmer(
+                    kmer_index.appendToEntryForKmer(
                         kmer, (sequence_id, int(frame), int(position))
                     )
-        return self
+        return kmer_index

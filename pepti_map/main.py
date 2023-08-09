@@ -89,7 +89,7 @@ def main(
     # TODO: Also need to read in the RNA file to access original sequences via id
     kmer_index: RNAKmerIndex
     if index_file != "" and isfile(index_file):
-        kmer_index = RNAKmerIndex().load_index_from_file(index_file)
+        kmer_index = RNAKmerIndex.load_index_from_file(index_file)
     else:
         rna_files = [rna_file]
         if paired_end_file != "":
@@ -106,8 +106,8 @@ def main(
 
     matched_peptides = PeptideToRNAMatcher(
         peptides_data
-    ).find_rna_read_matches_for_peptides(kmer_index, kmer_length)
-    kmer_index.clear()
+    ).find_rna_read_matches_for_peptides(kmer_index)
+    del kmer_index
 
 
 if __name__ == "__main__":

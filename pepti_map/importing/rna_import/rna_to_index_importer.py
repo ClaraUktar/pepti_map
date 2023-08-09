@@ -20,7 +20,7 @@ class RNAToIndexImporter:
         amino acids.
         """
         self.kmer_length = kmer_length
-        self.kmer_index = RNAKmerIndex()
+        self.kmer_index = RNAKmerIndex(kmer_length)
 
     def reset(self) -> None:
         self._cutoff = -1
