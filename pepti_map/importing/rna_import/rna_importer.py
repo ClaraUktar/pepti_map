@@ -8,19 +8,18 @@ from pepti_map.util.three_frame_translation import get_three_frame_translations
 
 
 class RNAImporter:
-    kmer_length: int
-    _cutoff: int
-    # TODO: Use objects for values instead? (Better readability)
-    _rna_dict: Dict[str, Tuple[List[str], str, int]] = {}
-    _rna_dict_translated: Dict[str, Tuple[List[str], str, int, List[int]]] = {}
-
     def __init__(self, kmer_length: int = 6):
         """
         :param int kmer_length: The k-mer size used during the mapping of peptides to
         RNA. As the RNA is 3-frame translated for the mapping, the k-mer size refers to
         amino acids.
         """
-        self.kmer_length = kmer_length
+        self.kmer_length: int = kmer_length
+        # TODO: Rather use cutoff only as parameter and pass through?
+        self._cutoff: int = -1
+        # TODO: Use objects for values instead? (Better readability)
+        self._rna_dict: Dict[str, Tuple[List[str], str, int]] = {}
+        self._rna_dict_translated: Dict[str, Tuple[List[str], str, int, List[int]]] = {}
 
     def reset(self) -> None:
         self._rna_dict = {}

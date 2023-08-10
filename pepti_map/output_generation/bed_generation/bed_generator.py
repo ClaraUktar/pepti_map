@@ -3,27 +3,20 @@ from typing import List
 
 
 class BEDEntry:
-    chrom: str
-    chromStart: int
-    chromEnd: int
-    name: str
-
     def __init__(self, chrom: str, chromStart: int, chromEnd: int, name: str):
-        self.chrom = chrom
-        self.chromStart = chromStart
-        self.chromEnd = chromEnd
-        self.name = name
+        self.chrom: str = chrom
+        self.chromStart: int = chromStart
+        self.chromEnd: int = chromEnd
+        self.name: str = name
 
     def columnsToWritableList(self) -> List[str]:
         return [self.chrom, str(self.chromStart), str(self.chromEnd), self.name]
 
 
 class BEDGenerator:
-    entries: List[BEDEntry]
-
     # TODO: Is the list copied here? -> Optimize
     def __init__(self, entries: List[BEDEntry]):
-        self.entries = entries
+        self.entries: List[BEDEntry] = entries
 
     def writeEntriesToFile(self, output_filepath: str) -> None:
         with open(output_filepath, "w", newline="") as output_file:

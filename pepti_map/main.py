@@ -6,6 +6,7 @@ from memory_profiler import LogFile
 from os.path import isfile
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
+from pepti_map.matching.peptide_to_rna_matcher import PeptideToRNAMatcher
 from pepti_map.rna_data.rna_kmer_index import RNAKmerIndex
 
 
@@ -98,7 +99,7 @@ def main(
     # TODO: Also need to read in the RNA file to access original sequences via id
     kmer_index: RNAKmerIndex
     if index_file != "" and isfile(index_file):
-        kmer_index = RNAKmerIndex().load_index_from_file(index_file)
+        kmer_index = RNAKmerIndex.load_index_from_file(index_file)
     else:
         rna_files = [rna_file]
         if paired_end_file != "":
@@ -115,6 +116,11 @@ def main(
             kmer_index.dump_index_to_file(index_file)
 
     # peptides_data = PeptideImporter().import_file(peptide_file)
+
+    matched_peptides = PeptideToRNAMatcher(
+        peptides_data
+    ).find_rna_read_matches_for_peptides(kmer_index)
+    del kmer_index
 
 
 if __name__ == "__main__":

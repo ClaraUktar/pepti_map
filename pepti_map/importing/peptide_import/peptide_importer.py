@@ -4,10 +4,8 @@ import pandas as pd
 
 
 class PeptideImporter:
-    _peptide_dict: Dict[str, Tuple[List[int], str, int]]
-
     def __init__(self):
-        self._peptide_dict = {}
+        self._peptide_dict: Dict[str, Tuple[List[int], str, int]] = {}
 
     def reset(self) -> None:
         self._peptide_dict = {}
@@ -15,7 +13,7 @@ class PeptideImporter:
     # TODO: Add support for custom format
     # TODO: Add support for MZTab
     # TODO: Use numpy instead?
-    def import_file(self, file_path: str) -> pd.DataFrame:
+    def import_file_with_deduplication(self, file_path: str) -> pd.DataFrame:
         """
         Reads the file given and transforms it into a pandas DataFrame,
         with columns `ids`, `sequence` and `count`.
@@ -49,4 +47,20 @@ class PeptideImporter:
         ).astype(dtype={"ids": "object", "sequence": "string", "count": "uint32"})
         # print(peptide_df)
         # print(peptide_df.info(verbose=True))
+        return peptide_df
+
+    # TODO: Still save the peptide data in separate class, similar to the rna data?
+    def import_file(self, file_path: str) -> pd.DataFrame:
+        """
+        TODO
+        """
+        peptides = []
+        with open(file_path, "rt", encoding="utf-8") as peptide_file:
+            for line in peptide_file:
+                peptides.append(line.strip())
+        peptide_df = pd.DataFrame(peptides, columns=["sequence"]).astype(
+            dtype={"sequence": "string"}
+        )
+        print(peptide_df)
+        print(peptide_df.info(verbose=True))
         return peptide_df

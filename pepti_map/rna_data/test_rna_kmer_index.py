@@ -18,8 +18,6 @@ class TestRNAKmerIndex:
         temp_directory.mkdir()
         file_path = temp_directory.as_posix() + "/index.txt"
         kmer_index.dump_index_to_file(file_path)
-        kmer_index.clear()
-        assert kmer_index.kmer_index == {}
 
-        kmer_index.load_index_from_file(file_path)
-        assert kmer_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END
+        new_kmer_index = RNAKmerIndex.load_index_from_file(file_path)
+        assert new_kmer_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END
