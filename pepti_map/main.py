@@ -117,9 +117,9 @@ def main(
 
     # peptides_data = PeptideImporter().import_file(peptide_file)
 
-    matched_peptides = PeptideToRNAMatcher(
-        peptides_data
-    ).find_rna_read_matches_for_peptides(kmer_index)
+    # matched_peptides = PeptideToRNAMatcher(
+    #     peptides_data
+    # ).find_rna_read_matches_for_peptides(kmer_index)
     del kmer_index
 
 
