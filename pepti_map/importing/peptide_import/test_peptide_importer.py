@@ -74,3 +74,8 @@ class TestPeptideSimpleFormatImport:
     def test_basic_import(self):
         result_df = self.peptide_importer.import_file("path/to/file")
         pd.testing.assert_frame_equal(result_df, self.expected_result_basic)
+
+
+class TestPeptideToIndexImporter:
+    # TODO
+    pass

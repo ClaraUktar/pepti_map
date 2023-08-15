@@ -88,6 +88,7 @@ def main(
 
     # TODO: Also need to read in the RNA file to access original sequences via id
     kmer_index: RNAKmerIndex
+    # TODO: Improve checking whether index file already exists, or use two options
     if index_file != "" and isfile(index_file):
         kmer_index = RNAKmerIndex.load_index_from_file(index_file)
     else:
