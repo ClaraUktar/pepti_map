@@ -7,6 +7,8 @@ class PeptideKmerIndex:
     def __init__(self, kmer_length: int = 7):
         self.kmer_index: "defaultdict[str, List[int]]" = defaultdict(list)
         self.kmer_length: int = kmer_length
+        # TODO: Do this in a prettier way
+        self.number_of_peptides: int = -1
 
     def clear(self) -> None:
         self.kmer_index.clear()

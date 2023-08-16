@@ -14,6 +14,7 @@ class PeptideToIndexImporter:
         # TODO: Should reset not happen automatically
         # to enable import of multiple files
         self.reset()
+        number_of_peptides = 0
 
         with open(file_path, "rt", encoding="utf-8") as peptide_file:
             for index, line in enumerate(peptide_file):
@@ -21,5 +22,10 @@ class PeptideToIndexImporter:
                 sequence = line.strip()
                 for kmer in split_into_kmer(sequence, self.kmer_length):
                     self.kmer_index.appendToEntryForKmer(kmer[0], index)
+                if sequence != "":
+                    number_of_peptides += 1
+
+        # TODO: Do this in a prettier way
+        self.kmer_index.number_of_peptides = number_of_peptides
 
         return self.kmer_index

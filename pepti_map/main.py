@@ -1,14 +1,12 @@
 import logging
 import click
 from os.path import isfile
-from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
 )
-from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
-from pepti_map.matching.peptide_to_rna_matcher import PeptideToRNAMatcher
+from pepti_map.importing.rna_import.rna_reader import RNAReader
+from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
-from pepti_map.rna_data.rna_kmer_index import RNAKmerIndex
 
 
 def _setup():
@@ -104,6 +102,16 @@ def main(
         if index_file != "":
             kmer_index.dump_index_to_file(index_file)
 
+    rna_files = [rna_file]
+    if paired_end_file != "":
+        rna_files.append(paired_end_file)
+
+    matcher = RNAToPeptideMatcher(kmer_index, kmer_index.number_of_peptides)
+    for sequence_id, sequence in RNAReader().read_lines(rna_files, cutoff):
+        matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+
+    # print(matcher.matches)
+
     # peptides_data = PeptideImporter().import_file(peptide_file)
 
     # rna_files = [rna_file]
@@ -113,7 +121,8 @@ def main(
     # matched_peptides = PeptideToRNAMatcher(
     #     peptides_data
     # ).find_rna_read_matches_for_peptides(kmer_index)
-    del kmer_index
+
+    # del kmer_index
 
 
 if __name__ == "__main__":
