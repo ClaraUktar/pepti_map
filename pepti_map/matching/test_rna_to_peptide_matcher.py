@@ -21,7 +21,7 @@ class TestRNAToPeptideMatcher:
         EXPECTED_MATCHING_RESULT[5].add("read1")
         EXPECTED_MATCHING_RESULT[8].add("read1")
 
-        self.matcher.add_peptide_matches_for_translated_rna_read(
+        self.matcher.add_peptide_matches_for_rna_read(
             "read1",
             "AGCTTTCACGCCGCATACGATGATGCACGAATTTAATCAGGGGGTCCGAGATCCAG",
         )
@@ -30,11 +30,11 @@ class TestRNAToPeptideMatcher:
     def test_add_multiple_matches(self):
         EXPECTED_MATCHING_RESULT = [set() for _ in range(0, 10)]
         # TODO Finish test
-        self.matcher.add_peptide_matches_for_translated_rna_read(
+        self.matcher.add_peptide_matches_for_rna_read(
             "read1",
             "AGCTTTCACGCCGCATACGATGATGCACGAATTTAATCAGGGGGTCCGAGATCCAG",
         )
-        self.matcher.add_peptide_matches_for_translated_rna_read(
+        self.matcher.add_peptide_matches_for_rna_read(
             "read2",
             "",
         )

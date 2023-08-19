@@ -80,7 +80,9 @@ class RNAReader:
                 ):
                     yield sequence_entry
 
-    def read_lines(self, file_paths: List[str], cutoff: int = -1):
+    def read_lines(
+        self, file_paths: List[str], cutoff: int = -1
+    ) -> Generator[Tuple[str, str], None, None]:
         self.cutoff = cutoff
 
         if len(file_paths) > 2 or len(file_paths) < 1:

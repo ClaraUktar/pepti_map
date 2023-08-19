@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from pepti_map.importing.rna_import.rna_importer import RNAImporter
+from pepti_map.importing.rna_import.rna_reader import RNAReader
 from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
 from pepti_map.importing.rna_import.testdata_rna_importer import (
     EXPECTED_RESULT_DF_PAIRED_END,
@@ -14,6 +15,9 @@ from pepti_map.importing.rna_import.testdata_rna_importer import (
     EXPECTED_RESULT_INDEX_SINGLE_END,
     EXPECTED_RESULT_INDEX_SINGLE_END_CUTOFF,
     EXPECTED_RESULT_INDEX_SINGLE_END_SHORT_KMERS,
+    EXPECTED_RESULT_LINES_PAIRED_END,
+    EXPECTED_RESULT_LINES_SINGLE_END,
+    EXPECTED_RESULT_LINES_SINGLE_END_CUTOFF,
     MOCK_FILE_1_CONTENT,
     MOCK_FILE_2_CONTENT,
 )
@@ -61,7 +65,9 @@ class TestRNAImporter:
 
 
 class TestRNAToIndexImporter:
-    rna_importer = RNAToIndexImporter(kmer_length=7)
+    @pytest.fixture(autouse=True)
+    def _init_rna_importer(self):
+        self.rna_importer = RNAToIndexImporter(kmer_length=7)
 
     def test_raises_error_when_no_file_given(self):
         with pytest.raises(ValueError):
@@ -104,6 +110,45 @@ class TestRNAToIndexImporter:
         assert (
             resulting_index.kmer_index == EXPECTED_RESULT_INDEX_SINGLE_END_SHORT_KMERS
         )
+
+
+class TestRNAReader:
+    @pytest.fixture(autouse=True)
+    def _init_rna_reader(self):
+        self.rna_reader = RNAReader()
+
+    def test_raises_error_when_no_file_given(self):
+        with pytest.raises(ValueError):
+            for _ in self.rna_reader.read_lines([]):
+                continue
+
+    def test_raises_error_when_more_than_two_files_given(self):
+        with pytest.raises(ValueError):
+            for _ in self.rna_reader.read_lines(["file1", "file2", "file3"]):
+                continue
+
+    @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
+    def test_read_single_end_file(self, _):
+        read_lines = list(self.rna_reader.read_lines(["path/to/file"]))
+        assert read_lines == EXPECTED_RESULT_LINES_SINGLE_END
+
+    @patch(
+        "gzip.open",
+        side_effect=[
+            StringIO(MOCK_FILE_1_CONTENT),
+            StringIO(MOCK_FILE_2_CONTENT),
+        ],
+    )
+    def test_read_paired_end_file(self, _):
+        read_lines = list(
+            self.rna_reader.read_lines(["path/to/file1", "path/to/file2"])
+        )
+        assert read_lines == EXPECTED_RESULT_LINES_PAIRED_END
+
+    @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
+    def test_read_single_end_file_cutoff(self, _):
+        read_lines = list(self.rna_reader.read_lines(["path/to/file"], cutoff=10))
+        assert read_lines == EXPECTED_RESULT_LINES_SINGLE_END_CUTOFF
 
 
 # TODO: Test gzip vs uncompressed?
