@@ -17,7 +17,7 @@ class RNAToPeptideMatcher:
             for kmer in split_into_kmer(translation[0], self.kmer_index.kmer_length):
                 yield kmer[0]
 
-    def add_peptide_matches_for_rna_read(
+    def add_peptide_matches_for_translated_rna_read(
         self, rna_read_id: str, rna_read_sequence: str
     ) -> None:
         for kmer in self._process_rna_read_to_kmers(rna_read_sequence):

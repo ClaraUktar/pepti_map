@@ -45,33 +45,40 @@ class RNAReader:
 
             line_count_for_current_sequence = line_count_for_current_sequence + 1
 
-    def _read_file_in_correct_format(
-        self, file_path: str, is_reverse_complement: bool = False
-    ) -> Generator[Tuple[str, str], None, None]:
+    def _is_gzip(self, file_path: str) -> bool:
         with gzip.open(file_path, "rt", encoding="utf-8") as rna_data_gzipped:
             try:
                 rna_data_gzipped.read(1)
-                rna_data_gzipped.seek(0)
-                logging.info(
-                    f"Detected gzip file: {file_path}. Reading in compressed format..."
-                )
+                is_gzip = True
+            except gzip.BadGzipFile:
+                is_gzip = False
+
+        return is_gzip
+
+    def _read_file_in_correct_format(
+        self, file_path: str, is_reverse_complement: bool = False
+    ) -> Generator[Tuple[str, str], None, None]:
+        if self._is_gzip(file_path):
+            logging.info(
+                f"Detected gzip file: {file_path}. Reading in compressed format..."
+            )
+            with gzip.open(file_path, "rt", encoding="utf-8") as rna_data_gzipped:
                 for sequence_entry in self._get_ids_and_sequences(
                     rna_data_gzipped, is_reverse_complement
                 ):
                     yield sequence_entry
-            except gzip.BadGzipFile:
-                logging.info(
-                    (
-                        f"File {file_path} is not a gzip file. "
-                        "Trying to read as uncompressed file..."
-                    )
+        else:
+            logging.info(
+                (
+                    f"File {file_path} is not a gzip file. "
+                    "Trying to read as uncompressed file..."
                 )
-
-        with open(file_path, "rt", encoding="utf-8") as rna_data:
-            for sequence_entry in self._get_ids_and_sequences(
-                rna_data, is_reverse_complement
-            ):
-                yield sequence_entry
+            )
+            with open(file_path, "rt", encoding="utf-8") as rna_data:
+                for sequence_entry in self._get_ids_and_sequences(
+                    rna_data, is_reverse_complement
+                ):
+                    yield sequence_entry
 
     def read_lines(self, file_paths: List[str], cutoff: int = -1):
         self.cutoff = cutoff

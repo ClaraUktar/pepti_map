@@ -108,21 +108,10 @@ def main(
 
     matcher = RNAToPeptideMatcher(kmer_index, kmer_index.number_of_peptides)
     for sequence_id, sequence in RNAReader().read_lines(rna_files, cutoff):
-        matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+        matcher.add_peptide_matches_for_translated_rna_read(sequence_id, sequence)
 
-    # print(matcher.matches)
-
-    # peptides_data = PeptideImporter().import_file(peptide_file)
-
-    # rna_files = [rna_file]
-    # if paired_end_file != "":
-    #     rna_files.append(paired_end_file)
-
-    # matched_peptides = PeptideToRNAMatcher(
-    #     peptides_data
-    # ).find_rna_read_matches_for_peptides(kmer_index)
-
-    # del kmer_index
+    del kmer_index
+    print(matcher.matches)
 
 
 if __name__ == "__main__":
