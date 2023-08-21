@@ -1,10 +1,11 @@
 import logging
+from pathlib import Path
 import click
 from os.path import isfile
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
 )
-from pepti_map.importing.rna_import.rna_reader import RNAReader
+from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
 
@@ -102,12 +103,12 @@ def main(
         if index_file != "":
             kmer_index.dump_index_to_file(index_file)
 
-    rna_files = [rna_file]
+    rna_files = [Path(rna_file)]
     if paired_end_file != "":
-        rna_files.append(paired_end_file)
+        rna_files.append(Path(paired_end_file))
 
     matcher = RNAToPeptideMatcher(kmer_index, kmer_index.number_of_peptides)
-    for sequence_id, sequence in RNAReader().read_lines(rna_files, cutoff):
+    for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
         matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
 
     del kmer_index

@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 from pepti_map.importing.rna_import.rna_importer import RNAImporter
-from pepti_map.importing.rna_import.rna_reader import RNAReader
 from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
 from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
 from pepti_map.importing.rna_import.testdata_rna_importer import (
@@ -114,45 +113,6 @@ class TestRNAToIndexImporter:
         )
 
 
-class TestRNAReader:
-    @pytest.fixture(autouse=True)
-    def _init_rna_reader(self):
-        self.rna_reader = RNAReader()
-
-    def test_raises_error_when_no_file_given(self):
-        with pytest.raises(ValueError):
-            for _ in self.rna_reader.read_lines([]):
-                continue
-
-    def test_raises_error_when_more_than_two_files_given(self):
-        with pytest.raises(ValueError):
-            for _ in self.rna_reader.read_lines(["file1", "file2", "file3"]):
-                continue
-
-    @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
-    def test_read_single_end_file(self, _):
-        read_lines = list(self.rna_reader.read_lines(["path/to/file"]))
-        assert read_lines == EXPECTED_RESULT_LINES_SINGLE_END
-
-    @patch(
-        "gzip.open",
-        side_effect=[
-            StringIO(MOCK_FILE_1_CONTENT),
-            StringIO(MOCK_FILE_2_CONTENT),
-        ],
-    )
-    def test_read_paired_end_file(self, _):
-        read_lines = list(
-            self.rna_reader.read_lines(["path/to/file1", "path/to/file2"])
-        )
-        assert read_lines == EXPECTED_RESULT_LINES_PAIRED_END
-
-    @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
-    def test_read_single_end_file_cutoff(self, _):
-        read_lines = list(self.rna_reader.read_lines(["path/to/file"], cutoff=10))
-        assert read_lines == EXPECTED_RESULT_LINES_SINGLE_END_CUTOFF
-
-
 class TestLazyRNAReader:
     def test_raises_error_when_no_file_given(self):
         with pytest.raises(ValueError):
@@ -164,10 +124,10 @@ class TestLazyRNAReader:
             for _ in LazyRNAReader([Path("file1"), Path("file2"), Path("file3")]):
                 continue
 
-    @patch("builtins.open", mock_open(read_data=MOCK_FILE_1_CONTENT))
-    def test_read_single_end_file(self):
+    @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
+    def test_read_single_end_file_gzipped(self, _):
         read_lines = []
-        for line in LazyRNAReader([Path("path/to/file")]):
+        for line in LazyRNAReader([Path("path/to/file.gz")]):
             read_lines.append(line)
         assert read_lines == EXPECTED_RESULT_LINES_SINGLE_END
 
@@ -190,6 +150,3 @@ class TestLazyRNAReader:
         for line in LazyRNAReader([Path("path/to/file")], cutoff=10):
             read_lines.append(line)
         assert read_lines == EXPECTED_RESULT_LINES_SINGLE_END_CUTOFF
-
-
-# TODO: Test gzip vs uncompressed?

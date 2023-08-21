@@ -30,14 +30,7 @@ class LazyRNAReader(object):
 
     @staticmethod
     def _is_gzip(filepath: Path) -> bool:
-        with gzip.open(filepath, "rt", encoding="utf-8") as rna_data_gzipped:
-            try:
-                rna_data_gzipped.read(1)
-                is_gzip = True
-            except gzip.BadGzipFile:
-                is_gzip = False
-
-        return is_gzip
+        return filepath.name.endswith(".gz")
 
     def _process_line(
         self, line: str, is_reverse_complement: bool
@@ -61,10 +54,7 @@ class LazyRNAReader(object):
         # Always read 4 lines per sequence, as per FASTQ format
         # For now skip quality info (line 4), getting cutoff value supplied by user
         elif self._line_count_for_current_sequence == 3:
-            # yield (sequence_id, sequence)
             self._line_count_for_current_sequence = 0
-            # sequence_id = ""
-            # sequence = ""
             return (self._sequence_id, self._sequence)
 
         self._line_count_for_current_sequence = (
@@ -72,11 +62,21 @@ class LazyRNAReader(object):
         )
 
     def __iter__(self):
+        # TODO: Write logic for picking up where left off in file
         for index, filepath in enumerate(self._filepaths):
-            # if self._is_gzip(filepath):
-            #     self._open_filehandle = gzip.open(filepath, "rt", encoding="utf-8")
-            # else:
-            self._open_filehandle = open(filepath, "rt", encoding="utf-8")
+            if self._is_gzip(filepath):
+                logging.info(
+                    f"Detected gzip file: {filepath}. Reading in compressed format..."
+                )
+                self._open_filehandle = gzip.open(filepath, "rt", encoding="utf-8")
+            else:
+                logging.info(
+                    (
+                        f"File {filepath} is not a gzip file. "
+                        "Trying to read as uncompressed file..."
+                    )
+                )
+                self._open_filehandle = open(filepath, "rt", encoding="utf-8")
 
             for line in self._open_filehandle:
                 processed_line = self._process_line(line, index == 1)
