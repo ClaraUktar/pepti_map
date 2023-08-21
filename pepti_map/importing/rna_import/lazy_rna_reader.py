@@ -1,7 +1,7 @@
 import gzip
 import logging
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, TextIO, Tuple, Union
 
 from Bio.Seq import MutableSeq
 
@@ -18,10 +18,8 @@ class LazyRNAReader(object):
             logging.error(error_message)
             raise ValueError(error_message)
 
-        self._filepaths = filepaths
-
-        self._open_filehandle = None
-
+        self._filepaths: List[Path] = filepaths
+        self._open_filehandle: Union[TextIO, None] = None
         self._cutoff: int = cutoff
 
         self._line_count_for_current_sequence: int = 0

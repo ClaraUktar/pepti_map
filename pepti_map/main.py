@@ -88,6 +88,7 @@ def main(
     kmer_length: int,
 ):
     _setup()
+    # TODO: Delete all classes not needed here!
 
     # TODO: Also need to read in the RNA file to access original sequences via id
     kmer_index: PeptideKmerIndex
