@@ -1,7 +1,9 @@
 import logging
 from pathlib import Path
+import time
 import click
 from os.path import isfile
+from memory_profiler import profile
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
 )
@@ -79,6 +81,7 @@ def _setup():
         "the k-mer size refers to amino acids."
     ),
 )
+@profile
 def main(
     peptide_file: str,
     rna_file: str,
@@ -97,23 +100,37 @@ def main(
     if index_file != "" and isfile(index_file):
         kmer_index = PeptideKmerIndex.load_index_from_file(index_file)
     else:
+        start_index_creation = time.time()
         kmer_index = PeptideToIndexImporter(kmer_length).import_file_to_index(
             peptide_file
         )
+        end_index_creation = time.time()
+        logging.info(
+            (
+                "Time for index creation: "
+                f"{end_index_creation - start_index_creation} sec"
+            )
+        )
 
+        start_index_dump = time.time()
         if index_file != "":
             kmer_index.dump_index_to_file(index_file)
+        end_index_dump = time.time()
+        logging.info(f"Time for index dump: {end_index_dump - start_index_dump} sec")
 
     rna_files = [Path(rna_file)]
     if paired_end_file != "":
         rna_files.append(Path(paired_end_file))
 
+    start_matching = time.time()
     matcher = RNAToPeptideMatcher(kmer_index, kmer_index.number_of_peptides)
     for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
         matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+    end_matching = time.time()
+    logging.info(f"Time for matching: {end_matching - start_matching} sec")
 
     del kmer_index
-    print(matcher.matches)
+    # print(matcher.matches)
 
 
 if __name__ == "__main__":
