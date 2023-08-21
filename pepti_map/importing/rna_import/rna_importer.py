@@ -104,16 +104,16 @@ class RNAImporter:
 
     def _fill_dict_from_file(
         self,
-        file_path: str,
+        filepath: str,
         is_reverse_complement: bool = False,
         should_translate: bool = True,
     ) -> None:
-        with gzip.open(file_path, "rt", encoding="utf-8") as rna_data_gzipped:
+        with gzip.open(filepath, "rt", encoding="utf-8") as rna_data_gzipped:
             try:
                 rna_data_gzipped.read(1)
                 rna_data_gzipped.seek(0)
                 logging.info(
-                    f"Detected gzip file: {file_path}. Reading in compressed format..."
+                    f"Detected gzip file: {filepath}. Reading in compressed format..."
                 )
                 return self._add_rna_data_to_dict(
                     rna_data_gzipped, is_reverse_complement, should_translate
@@ -121,12 +121,12 @@ class RNAImporter:
             except gzip.BadGzipFile:
                 logging.info(
                     (
-                        f"File {file_path} is not a gzip file. "
+                        f"File {filepath} is not a gzip file. "
                         "Trying to read as uncompressed file..."
                     )
                 )
 
-        with open(file_path, "rt", encoding="utf-8") as rna_data:
+        with open(filepath, "rt", encoding="utf-8") as rna_data:
             return self._add_rna_data_to_dict(
                 rna_data, is_reverse_complement, should_translate
             )
@@ -134,13 +134,13 @@ class RNAImporter:
     # TODO: Use numpy instead?
     # TODO: Add documentation for should_translate (if kept)
     def import_files(
-        self, file_paths: List[str], cutoff: int = -1, should_translate: bool = True
+        self, filepaths: List[str], cutoff: int = -1, should_translate: bool = True
     ) -> pd.DataFrame:
         """
         Reads the file(s) given and transforms them into a pandas DataFrame,
         with columns `ids`, `sequence`, and `count`.
 
-        :param List[str] file_paths: A list containing the paths to the files that
+        :param List[str] filepaths: A list containing the paths to the files that
         should be imported. In case of single-end sequencing, only one file path
         is expected. In case of paired-end sequencing, two file paths are expected.
         For the reads from the second file, the reverse complement is constructed
@@ -159,18 +159,18 @@ class RNAImporter:
         self.reset()
         self._cutoff = cutoff
 
-        if len(file_paths) > 2 or len(file_paths) < 1:
+        if len(filepaths) > 2 or len(filepaths) < 1:
             error_message = (
                 "Only one file (single-read sequencing) "
                 "or two files (pairend-end sequencing) expected "
                 "for the RNA-seq data. "
-                f"Received {len(file_paths)} files."
+                f"Received {len(filepaths)} files."
             )
             logging.error(error_message)
             raise ValueError(error_message)
 
-        for index, file_path in enumerate(file_paths):
-            self._fill_dict_from_file(file_path, index == 1, should_translate)
+        for index, filepath in enumerate(filepaths):
+            self._fill_dict_from_file(filepath, index == 1, should_translate)
 
         rna_df: pd.DataFrame
         if should_translate:

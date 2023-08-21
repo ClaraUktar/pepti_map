@@ -10,13 +10,13 @@ class PeptideToIndexImporter:
     def reset(self) -> None:
         self.kmer_index.clear()
 
-    def import_file_to_index(self, file_path: str) -> PeptideKmerIndex:
+    def import_file_to_index(self, filepath: str) -> PeptideKmerIndex:
         # TODO: Should reset not happen automatically
         # to enable import of multiple files
         self.reset()
         number_of_peptides = 0
 
-        with open(file_path, "rt", encoding="utf-8") as peptide_file:
+        with open(filepath, "rt", encoding="utf-8") as peptide_file:
             for index, line in enumerate(peptide_file):
                 # TODO: Exchange all I for L?
                 sequence = line.strip()

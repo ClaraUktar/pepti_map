@@ -99,15 +99,15 @@ class RNAToIndexImporter:
 
     def _fill_index_from_file(
         self,
-        file_path: str,
+        filepath: str,
         is_reverse_complement: bool = False,
     ) -> None:
-        with gzip.open(file_path, "rt", encoding="utf-8") as rna_data_gzipped:
+        with gzip.open(filepath, "rt", encoding="utf-8") as rna_data_gzipped:
             try:
                 rna_data_gzipped.read(1)
                 rna_data_gzipped.seek(0)
                 logging.info(
-                    f"Detected gzip file: {file_path}. Reading in compressed format..."
+                    f"Detected gzip file: {filepath}. Reading in compressed format..."
                 )
                 return self._add_rna_data_to_index(
                     rna_data_gzipped, is_reverse_complement
@@ -115,22 +115,22 @@ class RNAToIndexImporter:
             except gzip.BadGzipFile:
                 logging.info(
                     (
-                        f"File {file_path} is not a gzip file. "
+                        f"File {filepath} is not a gzip file. "
                         "Trying to read as uncompressed file..."
                     )
                 )
 
-        with open(file_path, "rt", encoding="utf-8") as rna_data:
+        with open(filepath, "rt", encoding="utf-8") as rna_data:
             return self._add_rna_data_to_index(rna_data, is_reverse_complement)
 
     def import_files_to_index(
-        self, file_paths: List[str], cutoff: int = -1
+        self, filepaths: List[str], cutoff: int = -1
     ) -> RNAKmerIndex:
         """
         Reads the FASTQ file(s) given and constructs a k-mer index (n-gram index)
         from them.
 
-        :param List[str] file_paths: A list containing the paths to the files that
+        :param List[str] filepaths: A list containing the paths to the files that
         should be imported. In case of single-end sequencing, only one file path
         is expected. In case of paired-end sequencing, two file paths are expected.
         For the reads from the second file, the reverse complement is constructed
@@ -145,17 +145,17 @@ class RNAToIndexImporter:
         self.reset()
         self._cutoff = cutoff
 
-        if len(file_paths) > 2 or len(file_paths) < 1:
+        if len(filepaths) > 2 or len(filepaths) < 1:
             error_message = (
                 "Only one file (single-read sequencing) "
                 "or two files (pairend-end sequencing) expected "
                 "for the RNA-seq data. "
-                f"Received {len(file_paths)} files."
+                f"Received {len(filepaths)} files."
             )
             logging.error(error_message)
             raise ValueError(error_message)
 
-        for index, file_path in enumerate(file_paths):
-            self._fill_index_from_file(file_path, index == 1)
+        for index, filepath in enumerate(filepaths):
+            self._fill_index_from_file(filepath, index == 1)
 
         return self.kmer_index
