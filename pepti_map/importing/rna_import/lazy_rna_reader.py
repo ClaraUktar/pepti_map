@@ -8,34 +8,35 @@ from Bio.Seq import MutableSeq
 
 class LazyRNAReader(object):
     def __init__(self, filepaths: List[Path], cutoff: int = -1):
-        if len(filepaths) > 2 or len(filepaths) < 1:
-            error_message = (
-                "Only one file (single-read sequencing) "
-                "or two files (pairend-end sequencing) expected "
-                "for the RNA-seq data. "
-                f"Received {len(filepaths)} files."
-            )
-            logging.error(error_message)
-            raise ValueError(error_message)
-
         self._filepaths: List[Path] = filepaths
         self._open_filehandle: Union[TextIO, None] = None
         self._cutoff: int = cutoff
 
+        if len(self._filepaths) > 2 or len(self._filepaths) < 1:
+            error_message = (
+                "Only one file (single-end sequencing) "
+                "or two files (pairend-end sequencing) expected "
+                "for the RNA-seq data. "
+                f"Received {len(self._filepaths)} files."
+            )
+            logging.error(error_message)
+            raise ValueError(error_message)
+
         self._line_count_for_current_sequence: int = 0
-        self._sequence_id: str = ""
         self._sequence: str = ""
 
     @staticmethod
     def _is_gzip(filepath: Path) -> bool:
         return filepath.name.endswith(".gz")
 
+    @staticmethod
+    def _construct_shortened_id(line_index: int, is_reverse_complement: bool) -> int:
+        return int(f"{str((line_index // 4) + 1)}{str(int(is_reverse_complement) + 1)}")
+
     def _process_line(
-        self, line: str, is_reverse_complement: bool
-    ) -> Union[Tuple[str, str], None]:
-        if self._line_count_for_current_sequence == 0:
-            self._sequence_id = line.strip()
-        elif self._line_count_for_current_sequence == 1:
+        self, line: str, line_index: int, is_reverse_complement: bool
+    ) -> Union[Tuple[int, str], None]:
+        if self._line_count_for_current_sequence == 1:
             self._sequence = line.strip()
 
             # TODO: Exchange all T for U? (inplace?)
@@ -53,7 +54,10 @@ class LazyRNAReader(object):
         # For now skip quality info (line 4), getting cutoff value supplied by user
         elif self._line_count_for_current_sequence == 3:
             self._line_count_for_current_sequence = 0
-            return (self._sequence_id, self._sequence)
+            return (
+                self._construct_shortened_id(line_index, is_reverse_complement),
+                self._sequence,
+            )
 
         self._line_count_for_current_sequence = (
             self._line_count_for_current_sequence + 1
@@ -61,7 +65,7 @@ class LazyRNAReader(object):
 
     def __iter__(self):
         # TODO: Write logic for picking up where left off in file
-        for index, filepath in enumerate(self._filepaths):
+        for file_index, filepath in enumerate(self._filepaths):
             if self._is_gzip(filepath):
                 logging.info(
                     f"Detected gzip file: {filepath}. Reading in compressed format..."
@@ -76,8 +80,8 @@ class LazyRNAReader(object):
                 )
                 self._open_filehandle = open(filepath, "rt", encoding="utf-8")
 
-            for line in self._open_filehandle:
-                processed_line = self._process_line(line, index == 1)
+            for line_index, line in enumerate(self._open_filehandle):
+                processed_line = self._process_line(line, line_index, file_index == 1)
                 if processed_line is not None:
                     yield processed_line
 

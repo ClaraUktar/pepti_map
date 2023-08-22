@@ -8,7 +8,7 @@ from pepti_map.util.three_frame_translation import get_three_frame_translations
 class RNAToPeptideMatcher:
     def __init__(self, kmer_index: PeptideKmerIndex, number_of_peptides: int):
         self.kmer_index: PeptideKmerIndex = kmer_index
-        self.matches: List[Set[str]] = [set() for _ in range(0, number_of_peptides)]
+        self.matches: List[Set[int]] = [set() for _ in range(0, number_of_peptides)]
 
     def _process_rna_read_to_kmers(self, sequence: str) -> Generator[str, None, None]:
         # TODO: Exchange all T for U? (inplace?)
@@ -18,7 +18,7 @@ class RNAToPeptideMatcher:
                 yield kmer[0]
 
     def add_peptide_matches_for_rna_read(
-        self, rna_read_id: str, rna_read_sequence: str
+        self, rna_read_id: int, rna_read_sequence: str
     ) -> None:
         for kmer in self._process_rna_read_to_kmers(rna_read_sequence):
             peptide_matches = self.kmer_index.getEntryForKmer(kmer)
