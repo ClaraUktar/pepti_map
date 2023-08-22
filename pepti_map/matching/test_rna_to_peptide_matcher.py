@@ -17,25 +17,31 @@ class TestRNAToPeptideMatcher:
 
     def test_add_single_match(self):
         EXPECTED_MATCHING_RESULT = [set() for _ in range(0, 10)]
-        EXPECTED_MATCHING_RESULT[4].add("read1")
-        EXPECTED_MATCHING_RESULT[5].add("read1")
-        EXPECTED_MATCHING_RESULT[8].add("read1")
+        EXPECTED_MATCHING_RESULT[4].add(1)
+        EXPECTED_MATCHING_RESULT[5].add(1)
+        EXPECTED_MATCHING_RESULT[8].add(1)
 
         self.matcher.add_peptide_matches_for_rna_read(
-            "read1",
+            1,
             "AGCTTTCACGCCGCATACGATGATGCACGAATTTAATCAGGGGGTCCGAGATCCAG",
         )
         assert self.matcher.matches == EXPECTED_MATCHING_RESULT
 
     def test_add_multiple_matches(self):
         EXPECTED_MATCHING_RESULT = [set() for _ in range(0, 10)]
-        # TODO Finish test
+        EXPECTED_MATCHING_RESULT[4].add(1)
+        EXPECTED_MATCHING_RESULT[5].add(1)
+        EXPECTED_MATCHING_RESULT[8].add(1)
+        EXPECTED_MATCHING_RESULT[1].add(2)
+        EXPECTED_MATCHING_RESULT[4].add(2)
+        EXPECTED_MATCHING_RESULT[8].add(2)
+
         self.matcher.add_peptide_matches_for_rna_read(
-            "read1",
+            1,
             "AGCTTTCACGCCGCATACGATGATGCACGAATTTAATCAGGGGGTCCGAGATCCAG",
         )
         self.matcher.add_peptide_matches_for_rna_read(
-            "read2",
-            "",
+            2,
+            "GATGTAAGTTGATATCGTAGACCGGCATCGCAAGGCACAACCCTGGCGTGAACCGA",
         )
         assert self.matcher.matches == EXPECTED_MATCHING_RESULT
