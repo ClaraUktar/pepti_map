@@ -12,6 +12,7 @@ class TestPeptideKmerIndex:
         assert kmer_index.kmer_index == {}
 
         kmer_index.kmer_index = defaultdict(list, EXPECTED_RESULT_INDEX.copy())
+        kmer_index.number_of_peptides = 10
         temp_directory: Path = tmp_path / "kmer_index"
         temp_directory.mkdir()
         filepath = temp_directory.as_posix() + "/index.txt"
@@ -19,3 +20,4 @@ class TestPeptideKmerIndex:
 
         new_kmer_index = PeptideKmerIndex.load_index_from_file(filepath)
         assert new_kmer_index.kmer_index == EXPECTED_RESULT_INDEX
+        assert new_kmer_index.number_of_peptides == 10

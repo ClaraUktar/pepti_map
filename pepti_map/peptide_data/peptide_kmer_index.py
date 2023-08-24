@@ -24,6 +24,7 @@ class PeptideKmerIndex:
 
     def dump_index_to_file(self, filepath: str) -> None:
         with gzip.open(filepath, "wt", encoding="utf-8") as index_file:
+            index_file.write(f"# n_peptides={self.number_of_peptides}\n")
             for item in self.kmer_index.items():
                 file_entry = f"{item[0]}\t"
                 for index, value in enumerate(item[1]):
@@ -37,9 +38,13 @@ class PeptideKmerIndex:
     def load_index_from_file(cls, filepath: str) -> "PeptideKmerIndex":
         kmer_index: cls
         with gzip.open(filepath, "rt", encoding="utf-8") as index_file:
+            number_of_peptides = int(index_file.readline().replace("# n_peptides=", ""))
             kmer_length = len(index_file.readline().split(sep="\t")[0])
             kmer_index = cls(kmer_length)
+            kmer_index.number_of_peptides = number_of_peptides
             index_file.seek(0)
+            next(index_file)
+
             for line in index_file:
                 kmer, values = line.split(sep="\t")
                 kmer_index.extendEntryForKmer(

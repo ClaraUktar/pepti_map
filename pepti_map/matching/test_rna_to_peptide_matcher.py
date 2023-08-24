@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import List, Set, Union
 import pytest
 from pepti_map.importing.peptide_import.testdata_peptide_importer import (
     EXPECTED_RESULT_INDEX,
@@ -16,10 +17,12 @@ class TestRNAToPeptideMatcher:
         self.matcher = RNAToPeptideMatcher(self.kmer_index, 10)
 
     def test_add_single_match(self):
-        EXPECTED_MATCHING_RESULT = [set() for _ in range(0, 10)]
-        EXPECTED_MATCHING_RESULT[4].add(1)
-        EXPECTED_MATCHING_RESULT[5].add(1)
-        EXPECTED_MATCHING_RESULT[8].add(1)
+        EXPECTED_MATCHING_RESULT: List[Union[Set[int], None]] = [
+            None for _ in range(0, 10)
+        ]
+        EXPECTED_MATCHING_RESULT[4] = set([1])
+        EXPECTED_MATCHING_RESULT[5] = set([1])
+        EXPECTED_MATCHING_RESULT[8] = set([1])
 
         self.matcher.add_peptide_matches_for_rna_read(
             1,
@@ -28,13 +31,14 @@ class TestRNAToPeptideMatcher:
         assert self.matcher.matches == EXPECTED_MATCHING_RESULT
 
     def test_add_multiple_matches(self):
-        EXPECTED_MATCHING_RESULT = [set() for _ in range(0, 10)]
-        EXPECTED_MATCHING_RESULT[4].add(1)
-        EXPECTED_MATCHING_RESULT[5].add(1)
-        EXPECTED_MATCHING_RESULT[8].add(1)
-        EXPECTED_MATCHING_RESULT[1].add(2)
-        EXPECTED_MATCHING_RESULT[4].add(2)
-        EXPECTED_MATCHING_RESULT[8].add(2)
+        EXPECTED_MATCHING_RESULT: List[Union[Set[int], None]] = [
+            None for _ in range(0, 10)
+        ]
+
+        EXPECTED_MATCHING_RESULT[1] = set([2])
+        EXPECTED_MATCHING_RESULT[4] = set([1, 2])
+        EXPECTED_MATCHING_RESULT[5] = set([1])
+        EXPECTED_MATCHING_RESULT[8] = set([1, 2])
 
         self.matcher.add_peptide_matches_for_rna_read(
             1,
