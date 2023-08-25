@@ -1,3 +1,4 @@
+from pepti_map.util.jaccard_index import jaccard_index
 from pepti_map.util.k_mer import split_into_kmer
 from pepti_map.util.three_frame_translation import get_three_frame_translations
 
@@ -38,3 +39,30 @@ class TestKmerSplitting:
             ("SARFFG", 11),
         ]
         assert list(split_into_kmer(test_sequence, 6)) == expected_result
+
+
+class TestJaccardIndex:
+    def test_jaccard_index_empty_set(self):
+        set1 = set()
+        set2 = {1, 2, 3}
+        assert jaccard_index(set1, set2) == 0.0
+        assert jaccard_index(set2, set1) == 0.0
+
+    def test_jaccard_index_overlap(self):
+        set1 = {1, 2, 3, 4, 5}
+        set2 = {3, 4, 5, 6}
+        set3 = {3, 4, 5, 6, 7}
+        set4 = {1}
+        assert jaccard_index(set1, set2) == 0.5
+        assert jaccard_index(set2, set3) == 4 / 5
+        assert jaccard_index(set1, set4) == 1 / 5
+
+    def test_jaccard_index_identical_sets(self):
+        set1 = {2, 4, 6, 8}
+        set2 = {8, 6, 4, 2}
+        assert jaccard_index(set1, set2) == 1.0
+
+    def test_jaccard_index_no_overlap(self):
+        set1 = {1, 3, 5, 7}
+        set2 = {2, 4, 6, 8}
+        assert jaccard_index(set1, set2) == 0.0
