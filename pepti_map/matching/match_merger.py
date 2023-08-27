@@ -5,7 +5,7 @@ from pepti_map.util.jaccard_index import jaccard_index
 
 class MatchMerger:
     def __init__(
-        self, matches: List[Union[Set[int], None]], jaccard_index_threshold: float = 0.8
+        self, matches: List[Union[Set[int], None]], jaccard_index_threshold: float = 0.7
     ):
         # TODO: Want to delete matches after merging
         self.matches = matches
@@ -14,9 +14,7 @@ class MatchMerger:
         self._merge_indications: List[List[int]] = [
             [] for _ in range(0, len(self.matches))
         ]
-        self.peptide_mappings: List[List[int]] = [
-            [] for _ in range(0, len(self.matches))
-        ]
+        self.peptide_mappings: List[List[int]] = []
         self.merged_matches: List[Set[int]] = []
 
     def _process_match_entry(
@@ -33,14 +31,12 @@ class MatchMerger:
                 < self.jaccard_index_threshold
             ):
                 continue
-            # TODO: Original index or new index?
-            # original_index = set_index + entry_index + 1
             sets_to_merge.append(set_index)
 
         entry_merge_indications = self._merge_indications.pop(0)
         if len(entry_merge_indications) == 0:
             self.merged_matches.append(match_entry)
-            self.peptide_mappings[entry_index].append(len(self.merged_matches) - 1)
+            self.peptide_mappings.append([entry_index])
             for set_to_merge in sets_to_merge:
                 self._merge_indications[set_to_merge].append(
                     len(self.merged_matches) - 1
@@ -48,7 +44,7 @@ class MatchMerger:
         else:
             for merge_indication in entry_merge_indications:
                 self.merged_matches[merge_indication].update(match_entry)
-                self.peptide_mappings[entry_index].append(merge_indication)
+                self.peptide_mappings[merge_indication].append(entry_index)
                 for set_to_merge in sets_to_merge:
                     self._merge_indications[set_to_merge].append(merge_indication)
 
