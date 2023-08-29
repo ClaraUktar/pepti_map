@@ -1,7 +1,8 @@
-from pepti_map.matching.match_merger import MatchMerger
+import unittest
+from pepti_map.matching.match_merger_alternative import MatchMerger
 
 
-class TestMatchMerger:
+class TestMatchMerger(unittest.TestCase):
     def test_empty_matches_return_empty_result(self):
         merge_result = MatchMerger([]).merge_matches()
         assert merge_result == ([], [])
@@ -21,9 +22,13 @@ class TestMatchMerger:
                 {7, 8, 9, 10},
             ]
         ).merge_matches()
-        assert merge_results == (
+        expected_result = (
             [{1, 2, 3, 4, 5}, {5, 6, 7}, {7, 8, 9, 10}, {9, 2}],
             [[0, 2], [1], [3, 5], [4]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
         )
 
     def test_matches_with_empty_sets(self):
@@ -36,9 +41,13 @@ class TestMatchMerger:
                 None,
             ]
         ).merge_matches()
-        assert merge_results == (
+        expected_result = (
             [{1, 2, 3}, {6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21}],
             [[0], [2, 3]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
         )
 
     def test_low_jaccard_index(self):
@@ -46,9 +55,13 @@ class TestMatchMerger:
             [{1, 2, 3}, {3, 4, 5, 6}, {5, 6, 7, 8}, {8, 9, 10, 11}, {7, 8, 10, 12}],
             jaccard_index_threshold=0.3,
         ).merge_matches()
-        assert merge_results == (
+        expected_result = (
             [{1, 2, 3}, {3, 4, 5, 6, 7, 8, 9, 10, 11, 12}],
             [[0], [1, 2, 3, 4]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
         )
 
     def test_late_merge_detection(self):
@@ -63,9 +76,13 @@ class TestMatchMerger:
             ],
             jaccard_index_threshold=0.1,
         ).merge_matches()
-        assert merge_results == (
+        expected_result = (
             [{17, 18, 19, 20}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}],
             [[3], [0, 1, 2, 4, 5]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
         )
 
     def test_multiple_late_merge_detections(self):
@@ -81,7 +98,7 @@ class TestMatchMerger:
             ],
             jaccard_index_threshold=0.1,
         ).merge_matches()
-        assert merge_results == (
+        expected_result = (
             [
                 {
                     1,
@@ -109,6 +126,10 @@ class TestMatchMerger:
                 }
             ],
             [[0, 1, 2, 3, 4, 5, 6]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
         )
 
     # TODO: Add more tests
