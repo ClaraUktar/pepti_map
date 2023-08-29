@@ -35,14 +35,7 @@ class MatchMerger:
             sets_to_merge.append(set_index)
 
         entry_merge_indications = self._merge_indications.pop(0)
-        if len(entry_merge_indications) == 0:
-            self.merged_matches.append(match_entry)
-            self.peptide_mappings.append([entry_index])
-            for set_to_merge in sets_to_merge:
-                self._merge_indications[set_to_merge].append(
-                    len(self.merged_matches) - 1
-                )
-        elif len(entry_merge_indications) == 1:
+        if len(entry_merge_indications) == 1:
             merge_indication = entry_merge_indications[0]
             merge_indication = self._moved_merge_indications.get(
                 merge_indication, merge_indication
@@ -52,7 +45,6 @@ class MatchMerger:
             for set_to_merge in sets_to_merge:
                 self._merge_indications[set_to_merge].append(merge_indication)
         else:
-            # TODO: refactor with same part above
             self.merged_matches.append(match_entry)
             self.peptide_mappings.append([entry_index])
             for set_to_merge in sets_to_merge:
@@ -61,10 +53,11 @@ class MatchMerger:
                 )
             # TODO: Do these merge indications also need to be looked up
             # in the moved merge indications?
-            for merge_indication in entry_merge_indications:
-                self._moved_merge_indications[merge_indication] = (
-                    len(self.merged_matches) - 1
-                )
+            if len(entry_merge_indications) != 0:
+                for merge_indication in entry_merge_indications:
+                    self._moved_merge_indications[merge_indication] = (
+                        len(self.merged_matches) - 1
+                    )
 
     def _construct_final_merge_result(self) -> None:
         set_index = 0
