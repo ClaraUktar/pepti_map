@@ -18,6 +18,14 @@ class MatchMerger:
         self.peptide_mappings: List[List[int]] = []
         self.merged_matches: List[Set[int]] = []
 
+    def _get_free_moved_merge_indication(self, merge_indication: int) -> int:
+        if merge_indication not in self._moved_merge_indications:
+            return merge_indication
+
+        return self._get_free_moved_merge_indication(
+            self._moved_merge_indications[merge_indication]
+        )
+
     def _process_match_entry(
         self, match_entry: Union[Set[int], None], entry_index: int
     ) -> None:
@@ -55,15 +63,15 @@ class MatchMerger:
             # in the moved merge indications?
             if len(entry_merge_indications) != 0:
                 for merge_indication in entry_merge_indications:
-                    self._moved_merge_indications[merge_indication] = (
-                        len(self.merged_matches) - 1
-                    )
+                    self._moved_merge_indications[
+                        self._get_free_moved_merge_indication(merge_indication)
+                    ] = (len(self.merged_matches) - 1)
 
     def _construct_final_merge_result(self) -> None:
         set_index = 0
         offset = 0
         while set_index < len(self.merged_matches):
-            original_set_index = set_index - offset
+            original_set_index = set_index + offset
             if original_set_index not in self._moved_merge_indications:
                 set_index += 1
                 continue
@@ -77,7 +85,6 @@ class MatchMerger:
             self.merged_matches[merge_into_index].update(set_to_merge)
             self.peptide_mappings[merge_into_index].extend(peptide_mapping_to_merge)
             self.peptide_mappings[merge_into_index].sort()
-            set_index += 1
 
     def merge_matches(self) -> Tuple[List[Set[int]], List[List[int]]]:
         entry_index = 0
