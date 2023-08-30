@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple, Union
+from typing import Dict, List, Set, Tuple, Union
 
 from pepti_map.util.jaccard_index import jaccard_index
 
@@ -15,6 +15,7 @@ class MatchMerger:
         ]
         self.peptide_mappings: List[List[int]] = []
         self.merged_matches: List[Set[int]] = []
+        self._updated_indexes: Dict[int, int] = {}
 
     def _process_match_entry(
         self, match_entry: Union[Set[int], None], entry_index: int
@@ -30,35 +31,40 @@ class MatchMerger:
                 jaccard_index(match_entry, set_to_compare)
                 >= self.jaccard_index_threshold
             ):
+                self._merge_indications[entry_index].append(set_index)
                 self._merge_indications[set_index].append(entry_index)
 
+    def _update_set_with_merges(
+        self, set_to_update: set, set_index: int, previous_indexes: List[int]
+    ) -> Tuple[Set, List[int]]:
+        merge_indications = self._merge_indications[set_index]
+        previous_indexes.append(set_index)
+        self.matches[set_index] = None
+        if len(merge_indications) == 0:
+            return (set_to_update, previous_indexes)
+        for index_to_merge in merge_indications:
+            set_to_merge = self.matches[index_to_merge]
+            if set_to_merge is None:
+                continue
+            updated_set, previous_indexes = self._update_set_with_merges(
+                set_to_merge, index_to_merge, previous_indexes
+            )
+            set_to_update.update(updated_set)
+        return (set_to_update, previous_indexes)
+
     def _construct_final_merge_result(self) -> None:
-        current_set_index = 0
-        offset = 0
-        while len(self.matches) > 0:
-            current_set = self.matches.pop(0)
+        for current_index, current_set in enumerate(self.matches):
             if current_set is None:
                 continue
 
-            current_peptide_mappings = [current_set_index]
-
-            for merge_indication in self._merge_indications[current_set_index]:
-                set_to_merge = self.merged_matches.pop(merge_indication - offset)
-                peptide_mappings_to_merge = self.peptide_mappings.pop(
-                    merge_indication - offset
-                )
-                offset += 1
-                current_set.update(set_to_merge)
-                current_peptide_mappings.extend(peptide_mappings_to_merge)
-                current_peptide_mappings.sort()
-
-            self.merged_matches.append(current_set)
-            self.peptide_mappings.append(current_peptide_mappings)
-
-            current_set_index += 1
+            merged_set, merged_indexes = self._update_set_with_merges(
+                current_set, current_index, []
+            )
+            merged_indexes.sort()
+            self.merged_matches.append(merged_set)
+            self.peptide_mappings.append(merged_indexes)
 
     def merge_matches(self) -> Tuple[List[Set[int]], List[List[int]]]:
-        entry_index = 0
         for entry_index, match_entry in enumerate(self.matches):
             self._process_match_entry(match_entry, entry_index)
 
