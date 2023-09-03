@@ -2,6 +2,8 @@ from typing import Dict, List, Set, Tuple, Union
 
 from pepti_map.util.jaccard_index import jaccard_index
 
+# TODO: Move/delete
+
 
 class MatchMerger:
     def __init__(

@@ -79,6 +79,8 @@ def main(
 
     # TODO: Recreate clean version of requirements.txt
 
+    # TODO: Add full docstrings for all relevant methods
+
     kmer_index = PeptideToIndexImporter(kmer_length).import_file_to_index(peptide_file)
 
     rna_files = [Path(rna_file)]

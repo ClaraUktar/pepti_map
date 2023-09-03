@@ -1,6 +1,8 @@
 import unittest
 from pepti_map.matching.match_merger_alternative import MatchMerger
 
+# TODO: Use new match merger
+
 
 class TestMatchMerger(unittest.TestCase):
     def test_empty_matches_return_empty_result(self):

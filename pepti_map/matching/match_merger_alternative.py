@@ -3,6 +3,9 @@ from typing import Dict, List, Set, Tuple, Union
 from pepti_map.util.jaccard_index import jaccard_index
 
 
+# TODO: Move/delete
+
+
 class MatchMerger:
     def __init__(
         self, matches: List[Union[Set[int], None]], jaccard_index_threshold: float = 0.7

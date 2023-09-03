@@ -1,6 +1,8 @@
 from typing import List, Literal, Set, Tuple, Union
 from datasketch import LeanMinHash, MinHash
 
+from pepti_map.matching.merging_methods.merging_method import IMergingMethod
+
 NUM_BYTES_FOR_MIN_HASH_VALUES = 4
 
 
@@ -28,7 +30,16 @@ class MatchMerger:
             )
             self.min_hashes.append(LeanMinHash(min_hash))
 
+    def _generate_merged_result_from_indexes(
+        self, merged_indexes: List[Set[int]]
+    ) -> Tuple[List[Set[int]], List[List[int]]]:
+        # TODO
+        pass
+
     def merge_matches(
         self, method: Literal["agglomerative-clustering", "distance-matrix", "simple"]
     ) -> Tuple[List[Set[int]], List[List[int]]]:
-        pass
+        merged_indexes = IMergingMethod.initialize_method(
+            method, self.min_hashes, self.jaccard_index_threshold
+        ).generate_merged_indexes()
+        return self._generate_merged_result_from_indexes(merged_indexes)
