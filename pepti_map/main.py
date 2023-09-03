@@ -75,6 +75,10 @@ def main(
 
     # TODO: Also need to read in the RNA file to access original sequences via id
 
+    # TODO: Add progress indications
+
+    # TODO: Recreate clean version of requirements.txt
+
     kmer_index = PeptideToIndexImporter(kmer_length).import_file_to_index(peptide_file)
 
     rna_files = [Path(rna_file)]
