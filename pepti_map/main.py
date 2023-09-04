@@ -81,6 +81,8 @@ def main(
 
     # TODO: Add full docstrings for all relevant methods
 
+    # TODO: Use numpy arrays everywhere?
+
     kmer_index = PeptideToIndexImporter(kmer_length).import_file_to_index(peptide_file)
 
     rna_files = [Path(rna_file)]

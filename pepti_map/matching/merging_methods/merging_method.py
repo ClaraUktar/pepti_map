@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Set
+from typing import List, Set, Tuple
 
 from datasketch import LeanMinHash
 
@@ -15,10 +15,11 @@ class IMergingMethod(ABC):
         self.jaccard_index_threshold = jaccard_index_threshold
 
     @abstractmethod
-    def generate_merged_indexes(self) -> List[Set[int]]:
+    def generate_merged_result(
+        self, peptide_indexes: List[int], matches: List[Set[int]]
+    ) -> Tuple[List[Set[int]], List[List[int]]]:
         """
-        Returns a list of merged sets containing the indexes corresponding to
-        the original sets/MinHashes
-        (= peptide indexes)
+        Returns a list of merged sets plus a list of corresponding
+        peptide indexes per merged set.
         """
         raise NotImplementedError

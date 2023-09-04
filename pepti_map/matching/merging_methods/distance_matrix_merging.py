@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Set, Tuple
 from pepti_map.matching.merging_methods.merging_method import IMergingMethod
 
 from datasketch import LeanMinHash
@@ -14,5 +14,7 @@ class DistanceMatrixMergingMethod(IMergingMethod):
             min_hashes, jaccard_index_threshold
         )
 
-    def generate_merged_indexes(self) -> List[Set[int]]:
+    def generate_merged_result(
+        self, peptide_indexes: List[int], matches: List[Set[int]]
+    ) -> Tuple[List[Set[int]], List[List[int]]]:
         raise NotImplementedError

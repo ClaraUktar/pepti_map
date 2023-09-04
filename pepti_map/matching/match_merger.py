@@ -39,30 +39,30 @@ class MatchMerger:
             )
             self.min_hashes.append(LeanMinHash(min_hash))
 
-    def _generate_merged_result_from_indexes(
-        self, merged_indexes: List[Set[int]]
-    ) -> Tuple[List[Set[int]], List[List[int]]]:
-        merged_matches = []
-        peptide_mappings = []
-        for merged_index_set in merged_indexes:
-            current_set = set()
-            current_peptides = []
+    # def _generate_merged_result_from_indexes(
+    #     self, merged_indexes: List[Set[int]]
+    # ) -> Tuple[List[Set[int]], List[List[int]]]:
+    #     # TODO: Should the methods do this themselves instead?
+    #     merged_matches = []
+    #     peptide_mappings = []
+    #     for merged_index_set in merged_indexes:
+    #         current_set = set()
+    #         current_peptides = []
 
-            for peptide_id in merged_index_set:
-                true_peptide_id = self.peptide_indexes[peptide_id]
-                set_to_merge = self.matches[true_peptide_id]
-                current_set.update(set_to_merge)
-                current_peptides.append(true_peptide_id)
+    #         for peptide_id in merged_index_set:
+    #             true_peptide_id = self.peptide_indexes[peptide_id]
+    #             set_to_merge = self.matches[true_peptide_id]
+    #             current_set.update(set_to_merge)
+    #             current_peptides.append(true_peptide_id)
 
-            merged_matches.append(current_set)
-            peptide_mappings.append(current_peptides)
+    #         merged_matches.append(current_set)
+    #         peptide_mappings.append(current_peptides)
 
-        return (merged_matches, peptide_mappings)
+    #     return (merged_matches, peptide_mappings)
 
     def merge_matches(
         self, method: Literal["agglomerative-clustering", "distance-matrix", "simple"]
     ) -> Tuple[List[Set[int]], List[List[int]]]:
-        merged_indexes = get_merging_method(
+        return get_merging_method(
             method, self.min_hashes, self.jaccard_index_threshold
-        ).generate_merged_indexes()
-        return self._generate_merged_result_from_indexes(merged_indexes)
+        ).generate_merged_result(self.peptide_indexes, self.matches)
