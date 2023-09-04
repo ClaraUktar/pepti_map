@@ -61,8 +61,9 @@ class MatchMerger:
     #     return (merged_matches, peptide_mappings)
 
     def merge_matches(
-        self, method: Literal["agglomerative-clustering", "distance-matrix", "simple"]
+        self, method: Literal["agglomerative-clustering", "matrix", "simple"]
     ) -> Tuple[List[Set[int]], List[List[int]]]:
+        # TODO: Add options to parameterize methods?
         return get_merging_method(
             method, self.min_hashes, self.jaccard_index_threshold
         ).generate_merged_result(self.peptide_indexes, self.matches)
