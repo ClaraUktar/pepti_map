@@ -1,4 +1,4 @@
-from typing import List, Literal, Union
+from typing import List, Literal
 from datasketch import LeanMinHash
 
 from pepti_map.matching.merging_methods.agglomerative_clustering_merging import (
@@ -13,7 +13,7 @@ from pepti_map.matching.merging_methods.simple_merging import SimpleMergingMetho
 
 def get_merging_method(
     method: Literal["agglomerative-clustering", "distance-matrix", "simple"],
-    min_hashes: List[Union[LeanMinHash, None]],
+    min_hashes: List[LeanMinHash],
     jaccard_index_threshold: float = 0.7,
 ) -> IMergingMethod:
     if method == "agglomerative-clustering":

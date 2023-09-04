@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Set, Union
+from typing import List, Set
 
 from datasketch import LeanMinHash
 
@@ -8,10 +8,10 @@ class IMergingMethod(ABC):
     @abstractmethod
     def __init__(
         self,
-        min_hashes: List[Union[LeanMinHash, None]],
+        min_hashes: List[LeanMinHash],
         jaccard_index_threshold: float = 0.7,
     ):
-        self.min_hashes: List[Union[LeanMinHash, None]] = min_hashes
+        self.min_hashes: List[LeanMinHash] = min_hashes
         self.jaccard_index_threshold = jaccard_index_threshold
 
     @abstractmethod

@@ -11,16 +11,25 @@ class MatchMerger:
         self, matches: List[Union[Set[int], None]], jaccard_index_threshold: float = 0.7
     ):
         # TODO: Want to delete matches after merging
-        self.matches: List[Union[Set[int], None]] = matches
         self.jaccard_index_threshold: float = jaccard_index_threshold
-        self.min_hashes: List[Union[LeanMinHash, None]] = []
+        self.peptide_indexes: List[int] = []
+        self.matches: List[Set[int]] = []
+        self._postprocess_matches(matches)
+
+        self.min_hashes: List[LeanMinHash] = []
         self._create_min_hashes_from_matches()
+
+    def _postprocess_matches(
+        self, uncleaned_matches: List[Union[Set[int], None]]
+    ) -> None:
+        for peptide_index, uncleaned_match in enumerate(uncleaned_matches):
+            if uncleaned_match is None:
+                continue
+            self.matches.append(uncleaned_match)
+            self.peptide_indexes.append(peptide_index)
 
     def _create_min_hashes_from_matches(self) -> None:
         for match in self.matches:
-            if match is None:
-                self.min_hashes.append(None)
-                continue
             min_hash = MinHash()
             min_hash.update_batch(
                 [
@@ -40,11 +49,10 @@ class MatchMerger:
             current_peptides = []
 
             for peptide_id in merged_index_set:
-                set_to_merge = self.matches[peptide_id]
-                if set_to_merge is None:
-                    raise AssertionError("Expected a set to be merged, but was None.")
+                true_peptide_id = self.peptide_indexes[peptide_id]
+                set_to_merge = self.matches[true_peptide_id]
                 current_set.update(set_to_merge)
-                current_peptides.append(peptide_id)
+                current_peptides.append(true_peptide_id)
 
             merged_matches.append(current_set)
             peptide_mappings.append(current_peptides)
