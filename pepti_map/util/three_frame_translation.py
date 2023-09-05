@@ -2,7 +2,7 @@ from typing import Generator, Tuple
 from Bio.Seq import translate
 
 
-def translate_for_frame(sequence: str, frame: int) -> str:
+def translate_for_frame(sequence: str, frame: int, replace_isoleucine=True) -> str:
     def shorten_sequence_to_translatable_len(sequence: str) -> str:
         mod = len(sequence) % 3
         if mod == 0:
@@ -12,11 +12,13 @@ def translate_for_frame(sequence: str, frame: int) -> str:
     # TODO: Exchange all I for L?
     translation = translate(shorten_sequence_to_translatable_len(sequence[frame:]))
     assert isinstance(translation, str)
+    if replace_isoleucine:
+        translation = translation.replace("I", "L")
     return translation
 
 
 def get_three_frame_translations(
-    sequence: str,
+    sequence: str, replace_isoleucine=True
 ) -> Generator[Tuple[str, int], None, None]:
     """
     For the given nucleic acid sequence, performs a 3-frame translation
@@ -28,4 +30,4 @@ def get_three_frame_translations(
     :rtype Generator[Tuple[str, int], None, None]
     """
     for i in range(3):
-        yield (translate_for_frame(sequence, i), i)
+        yield (translate_for_frame(sequence, i, replace_isoleucine), i)
