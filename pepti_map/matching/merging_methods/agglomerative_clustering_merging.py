@@ -1,3 +1,4 @@
+import logging
 from typing import List, Set, Tuple
 
 import numpy as np
@@ -69,6 +70,20 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
     def generate_merged_result(
         self, peptide_indexes: List[int], matches: List[Set[int]]
     ) -> Tuple[List[Set[int]], List[List[int]]]:
+        if len(peptide_indexes) != len(matches):
+            error_message = (
+                "The length of the given peptide_indexes and matches were expected "
+                "to be the same, but differed (len(peptide_indexes) == "
+                f"{len(peptide_indexes)}, len(matches) == {len(matches)})."
+            )
+            logging.error(error_message)
+            raise ValueError(error_message)
+        if len(peptide_indexes) < 2:
+            peptide_mappings = []
+            for peptide in peptide_indexes:
+                peptide_mappings.append([peptide])
+            return (matches, peptide_mappings)
+
         self._generate_distance_matrix()
         clustering = AgglomerativeClustering(
             metric="precomputed",
