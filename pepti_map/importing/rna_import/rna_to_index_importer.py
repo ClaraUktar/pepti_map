@@ -44,7 +44,8 @@ class RNAToIndexImporter:
         if is_reverse_complement:
             sequence = str(MutableSeq(sequence).reverse_complement(inplace=True))
 
-        translations = get_three_frame_translations(sequence)
+        # TODO: If used in the end, need to change it to actually replace all I with L
+        translations = get_three_frame_translations(sequence, False)
         return list(
             itertools.chain.from_iterable(
                 [

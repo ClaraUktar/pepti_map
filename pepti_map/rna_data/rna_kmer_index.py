@@ -2,6 +2,8 @@ from collections import defaultdict
 import gzip
 from typing import List, Tuple
 
+# TODO: Delete
+
 
 class RNAKmerIndex:
     def __init__(self, kmer_length: int = 7):

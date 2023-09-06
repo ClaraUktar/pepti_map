@@ -7,6 +7,7 @@ from pepti_map.util.three_frame_translation import get_three_frame_translations
 
 class RNAToPeptideMatcher:
     def __init__(self, kmer_index: PeptideKmerIndex, number_of_peptides: int):
+        # TODO: We probably want to delete the kmer index after the matching
         self.kmer_index: PeptideKmerIndex = kmer_index
         self.matches: List[Union[Set[int], None]] = [
             None for _ in range(0, number_of_peptides)

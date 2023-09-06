@@ -9,7 +9,7 @@ from pepti_map.importing.peptide_import.peptide_to_index_importer import (
 from pepti_map.importing.peptide_import.testdata_peptide_importer import (
     EXPECTED_RESULT_DF_BASIC,
     EXPECTED_RESULT_DF_DEDUPLICATED,
-    EXPECTED_RESULT_INDEX,
+    EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED,
     MOCK_FILE_CONTENT,
 )
 
@@ -39,4 +39,4 @@ class TestPeptideToIndexImporter:
     @patch("builtins.open", mock_open(read_data=MOCK_FILE_CONTENT))
     def test_import_file_to_index(self):
         resulting_index = PeptideToIndexImporter().import_file_to_index("path/to/file")
-        assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX
+        assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED

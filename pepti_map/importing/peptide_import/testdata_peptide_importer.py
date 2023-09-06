@@ -206,3 +206,7 @@ EXPECTED_RESULT_INDEX = {
     "WMFSMDD": [9],
     "MFSMDDH": [9],
 }
+
+EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED = dict(
+    [(kmer.replace("I", "L"), ids) for kmer, ids in EXPECTED_RESULT_INDEX.items()]
+)

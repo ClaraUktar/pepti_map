@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import List, Set, Union
 import pytest
 from pepti_map.importing.peptide_import.testdata_peptide_importer import (
-    EXPECTED_RESULT_INDEX,
+    EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED,
 )
 
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
@@ -13,7 +13,9 @@ class TestRNAToPeptideMatcher:
     @pytest.fixture(autouse=True)
     def _init_matcher(self):
         self.kmer_index = PeptideKmerIndex()
-        self.kmer_index.kmer_index = defaultdict(list, EXPECTED_RESULT_INDEX.copy())
+        self.kmer_index.kmer_index = defaultdict(
+            list, EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED.copy()
+        )
         self.matcher = RNAToPeptideMatcher(self.kmer_index, 10)
 
     def test_add_single_match(self):

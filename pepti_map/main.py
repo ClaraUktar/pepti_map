@@ -3,15 +3,11 @@ from pathlib import Path
 
 # import time
 import click
-from os.path import isfile
-
-# from memory_profiler import profile
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
 )
 from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
-from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
 
 
 def _setup():
@@ -40,20 +36,6 @@ def _setup():
         "The path to the second RNA file in case of paired-end sequencing. "
         'If none is given, the RNA file given with the "-r" option '
         "is assumed to result from single-end sequencing."
-    ),
-)
-@click.option(
-    "-i",
-    "--index-file",
-    required=False,
-    type=str,
-    default="",
-    show_default=False,
-    help=(
-        "The path to an index file for an already constructed "
-        "k-mer index based on RNA reads. Alternatively, if the file "
-        "for the given path does not yet exist, the k-mer index is constructed "
-        "based on the given RNA file(s) and saved under this path."
     ),
 )
 @click.option(
@@ -88,7 +70,6 @@ def main(
     peptide_file: str,
     rna_file: str,
     paired_end_file: str,
-    index_file: str,
     cutoff: int,
     kmer_length: int,
 ):
@@ -96,29 +77,16 @@ def main(
     # TODO: Delete all classes not needed here!
 
     # TODO: Also need to read in the RNA file to access original sequences via id
-    kmer_index: PeptideKmerIndex
-    # TODO: Improve checking whether index file already exists, or use two options
-    # Only necessary if peptide file is big
-    if index_file != "" and isfile(index_file):
-        kmer_index = PeptideKmerIndex.load_index_from_file(index_file)
-    else:
-        # start_index_creation = time.time()
-        kmer_index = PeptideToIndexImporter(kmer_length).import_file_to_index(
-            peptide_file
-        )
-        # end_index_creation = time.time()
-        # logging.info(
-        #     (
-        #         "Time for index creation: "
-        #         f"{end_index_creation - start_index_creation} sec"
-        #     )
-        # )
 
-        # start_index_dump = time.time()
-        if index_file != "":
-            kmer_index.dump_index_to_file(index_file)
-        # end_index_dump = time.time()
-        # logging.info(f"Time for index dump: {end_index_dump - start_index_dump} sec")
+    # TODO: Add progress indications
+
+    # TODO: Recreate clean version of requirements.txt
+
+    # TODO: Add full docstrings for all relevant methods
+
+    # TODO: Use numpy arrays everywhere?
+
+    kmer_index = PeptideToIndexImporter(kmer_length).import_file_to_index(peptide_file)
 
     rna_files = [Path(rna_file)]
     if paired_end_file != "":
