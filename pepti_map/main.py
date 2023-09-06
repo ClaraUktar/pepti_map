@@ -105,9 +105,11 @@ def main(
 
     number_none_entries = 0
     sum_set_elements = 0
-    for match in matcher.matches:
+    unmatched_peptide_indexes = []
+    for match_index, match in enumerate(matcher.matches):
         if match is None:
             number_none_entries += 1
+            unmatched_peptide_indexes.append(match_index)
             continue
         sum_set_elements += len(match)
     logging.info(f"Total number of peptides: {number_peptides}")
@@ -121,6 +123,13 @@ def main(
             f"{sum_set_elements / (number_peptides - number_none_entries)}"
         )
     )
+    unmatched_peptides = []
+    with open(peptide_file, "rt", encoding="utf-8") as peptides:
+        for index, line in enumerate(peptides):
+            if index in unmatched_peptide_indexes:
+                unmatched_peptides.append(line)
+    with open("./unmatches-peptides.txt", "wt", encoding="utf-8") as output_file:
+        output_file.writelines(unmatched_peptides)
 
 
 if __name__ == "__main__":
