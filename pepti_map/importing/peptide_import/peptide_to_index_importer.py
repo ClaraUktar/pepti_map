@@ -25,6 +25,10 @@ class PeptideToIndexImporter:
     def _process_simple_peptide_file(
         self, filepath: str, replace_isoleucine=True
     ) -> None:
+        # TODO: We could throw out the too short peptides here as well
+        # Then need to adapt count of peptides
+        # and how they are treated during matching!
+        # e.g. write mapping id -> internal index to file?
         number_of_peptides = 0
         with open(filepath, "rt", encoding="utf-8") as peptide_file:
             for index, line in enumerate(peptide_file):
@@ -48,7 +52,14 @@ class PeptideToIndexImporter:
         with open(filepath, "rt", encoding="utf-8") as peptide_file:
             for index, line in enumerate(peptide_file):
                 peptide, protein_group = line.split("\t")
-                protein_group = sha256(protein_group.encode("utf-8")).hexdigest()
+                peptide = peptide.strip()
+                # TODO: Should even too short peptides be taken into account later on
+                # if their protein group matches other peptides that are long enough?
+                if len(peptide) < self.kmer_length:
+                    continue
+                protein_group = sha256(
+                    protein_group.strip().encode("utf-8")
+                ).hexdigest()
                 if protein_group in protein_group_cluster_index:
                     cluster_id = protein_group_cluster_index[protein_group]
                 else:
@@ -57,7 +68,6 @@ class PeptideToIndexImporter:
                     protein_group_cluster_index[protein_group] = cluster_id
                 cluster_mappings[cluster_id].append(index)
 
-                peptide = peptide.strip()
                 if replace_isoleucine:
                     peptide = peptide.replace("I", "L")
                 for kmer in split_into_kmer(peptide, self.kmer_length):
