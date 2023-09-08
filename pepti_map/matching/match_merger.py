@@ -40,7 +40,8 @@ class MatchMerger:
             self.min_hashes.append(LeanMinHash(min_hash))
 
     def merge_matches(
-        self, method: Literal["agglomerative-clustering", "matrix"]
+        self,
+        method: Literal["agglomerative-clustering", "full-matrix", "symmetric-matrix"],
     ) -> Tuple[List[Set[int]], List[List[int]]]:
         # TODO: Add options to parameterize methods?
         return get_merging_method(
