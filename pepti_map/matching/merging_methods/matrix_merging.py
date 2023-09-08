@@ -1,4 +1,5 @@
-from typing import Any, List, Set, Tuple
+import logging
+from typing import Any, List, Set, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -41,12 +42,50 @@ class MatrixMergingMethod(IMergingMethod):
         self,
         min_hashes: List[LeanMinHash],
         jaccard_index_threshold: float = 0.7,
+        use_standard_numpy_array=True,
     ):
         super(MatrixMergingMethod, self).__init__(min_hashes, jaccard_index_threshold)
-        self.merge_indication_matrix = SymmetricMatrix(size=len(min_hashes), dtype=bool)
+        self._merge_indication_matrix: Union[npt.NDArray[np.bool_], SymmetricMatrix]
+        if use_standard_numpy_array:
+            self._merge_indication_matrix = np.empty(
+                shape=(len(min_hashes), len(min_hashes)), dtype=bool
+            )
+        else:
+            self._merge_indication_matrix = SymmetricMatrix(
+                size=len(min_hashes), dtype=bool
+            )
 
-    def _fill_matrix_row(self, current_index: int) -> None:
-        self.merge_indication_matrix.set_entry(
+    def _should_merge_sets(
+        self,
+        current_index: int,
+        current_min_hash: LeanMinHash,
+        index_to_compare: int,
+        min_hash_to_compare: LeanMinHash,
+    ) -> bool:
+        if current_index == index_to_compare:
+            return True
+        if index_to_compare < current_index:
+            return self._merge_indication_matrix[index_to_compare][  # type: ignore
+                current_index
+            ]
+        return (
+            current_min_hash.jaccard(min_hash_to_compare) > self.jaccard_index_threshold
+        )
+
+    def _fill_matrix_row_np(self, current_index: int) -> None:
+        current_min_hash = self.min_hashes[current_index]
+        self._merge_indication_matrix[current_index] = np.array(  # type: ignore
+            [
+                self._should_merge_sets(
+                    current_index, current_min_hash, min_hash_index, min_hash
+                )
+                for min_hash_index, min_hash in enumerate(self.min_hashes)
+            ],
+            dtype=np.float16,
+        )
+
+    def _fill_matrix_row_symmetric(self, current_index: int) -> None:
+        self._merge_indication_matrix.set_entry(  # type: ignore
             current_index, current_index, True
         )  # TODO: Is this line needed?
         current_min_hash = self.min_hashes[current_index]
@@ -55,25 +94,44 @@ class MatrixMergingMethod(IMergingMethod):
                 current_min_hash.jaccard(self.min_hashes[index_to_compare])
                 > self.jaccard_index_threshold
             ):
-                self.merge_indication_matrix.set_entry(
+                self._merge_indication_matrix.set_entry(  # type: ignore
                     current_index, index_to_compare, True
                 )
                 continue
-            self.merge_indication_matrix.set_entry(
+            self._merge_indication_matrix.set_entry(  # type: ignore
                 current_index, index_to_compare, False
             )
 
-    def _fill_merge_indication_matrix(self) -> None:
+    def _fill_merge_indication_matrix_np(self) -> None:
         for current_index in range(0, len(self.min_hashes)):
-            self._fill_matrix_row(current_index)
+            self._fill_matrix_row_np(current_index)
+
+    def _fill_merge_indication_matrix_symmetric(self) -> None:
+        for current_index in range(0, len(self.min_hashes)):
+            self._fill_matrix_row_symmetric(current_index)
 
     def _generate_result_from_matrix(
         self, peptide_indexes: List[int], matches: List[Set[int]]
     ) -> Tuple[List[Set[int]], List[List[int]]]:
+        # TODO
         raise NotImplementedError
 
     def generate_merged_result(
         self, peptide_indexes: List[int], matches: List[Set[int]]
     ) -> Tuple[List[Set[int]], List[List[int]]]:
-        self._fill_merge_indication_matrix()
+        # TODO: Not super beautiful
+        # Is there a better implementation option?
+        # Are both variants even needed?
+        if isinstance(self._merge_indication_matrix, np.ndarray):
+            self._fill_merge_indication_matrix_np()
+        elif isinstance(self._merge_indication_matrix, SymmetricMatrix):
+            self._fill_merge_indication_matrix_symmetric()
+        else:
+            assertion_error = (
+                "Merge indication matrix is neither a numpy.ndarray "
+                "nor a SymmetricMatrix instance."
+            )
+            logging.error(assertion_error)
+            raise AssertionError(assertion_error)
+
         return self._generate_result_from_matrix(peptide_indexes, matches)

@@ -39,27 +39,6 @@ class MatchMerger:
             )
             self.min_hashes.append(LeanMinHash(min_hash))
 
-    # def _generate_merged_result_from_indexes(
-    #     self, merged_indexes: List[Set[int]]
-    # ) -> Tuple[List[Set[int]], List[List[int]]]:
-    #     # TODO: Should the methods do this themselves instead?
-    #     merged_matches = []
-    #     peptide_mappings = []
-    #     for merged_index_set in merged_indexes:
-    #         current_set = set()
-    #         current_peptides = []
-
-    #         for peptide_id in merged_index_set:
-    #             true_peptide_id = self.peptide_indexes[peptide_id]
-    #             set_to_merge = self.matches[true_peptide_id]
-    #             current_set.update(set_to_merge)
-    #             current_peptides.append(true_peptide_id)
-
-    #         merged_matches.append(current_set)
-    #         peptide_mappings.append(current_peptides)
-
-    #     return (merged_matches, peptide_mappings)
-
     def merge_matches(
         self, method: Literal["agglomerative-clustering", "matrix"]
     ) -> Tuple[List[Set[int]], List[List[int]]]:

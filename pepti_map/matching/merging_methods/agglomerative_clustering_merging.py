@@ -20,7 +20,7 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
         super(AgglomerativeClusteringMergingMethod, self).__init__(
             min_hashes, jaccard_index_threshold
         )
-        self.distance_matrix: npt.NDArray[np.float16] = np.empty(
+        self._distance_matrix: npt.NDArray[np.float16] = np.empty(
             shape=(len(min_hashes), len(min_hashes)), dtype=np.float16
         )
 
@@ -34,12 +34,12 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
         if current_index == index_to_compare:
             return 0.0
         if index_to_compare < current_index:
-            return self.distance_matrix[index_to_compare][current_index]
-        return current_min_hash.jaccard(min_hash_to_compare)
+            return self._distance_matrix[index_to_compare][current_index]
+        return 1.0 - current_min_hash.jaccard(min_hash_to_compare)
 
     def _generate_row_for_index(self, current_index: int) -> None:
         current_min_hash = self.min_hashes[current_index]
-        self.distance_matrix[current_index] = np.array(
+        self._distance_matrix[current_index] = np.array(
             [
                 self._get_jaccard_index_approximation(
                     current_index, current_min_hash, min_hash_index, min_hash
@@ -92,7 +92,7 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
             distance_threshold=(1.0 - self.jaccard_index_threshold),
             linkage="single",
         )
-        clustering.fit(self.distance_matrix)
+        clustering.fit(self._distance_matrix)
         return self._generate_result_from_labels(
             clustering.n_clusters_, clustering.labels_, peptide_indexes, matches
         )
