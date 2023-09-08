@@ -61,7 +61,7 @@ class MatchMerger:
     #     return (merged_matches, peptide_mappings)
 
     def merge_matches(
-        self, method: Literal["agglomerative-clustering", "matrix", "simple"]
+        self, method: Literal["agglomerative-clustering", "matrix"]
     ) -> Tuple[List[Set[int]], List[List[int]]]:
         # TODO: Add options to parameterize methods?
         return get_merging_method(
