@@ -22,9 +22,9 @@ class TestRNAToPeptideMatcher:
         EXPECTED_MATCHING_RESULT: List[Union[Set[int], None]] = [
             None for _ in range(0, 10)
         ]
-        EXPECTED_MATCHING_RESULT[4] = set([1])
+        EXPECTED_MATCHING_RESULT[2] = set([1])
+        EXPECTED_MATCHING_RESULT[3] = set([1])
         EXPECTED_MATCHING_RESULT[5] = set([1])
-        EXPECTED_MATCHING_RESULT[8] = set([1])
 
         self.matcher.add_peptide_matches_for_rna_read(
             1,
@@ -37,10 +37,10 @@ class TestRNAToPeptideMatcher:
             None for _ in range(0, 10)
         ]
 
-        EXPECTED_MATCHING_RESULT[1] = set([2])
-        EXPECTED_MATCHING_RESULT[4] = set([1, 2])
-        EXPECTED_MATCHING_RESULT[5] = set([1])
-        EXPECTED_MATCHING_RESULT[8] = set([1, 2])
+        EXPECTED_MATCHING_RESULT[0] = set([2])
+        EXPECTED_MATCHING_RESULT[2] = set([1, 2])
+        EXPECTED_MATCHING_RESULT[3] = set([1])
+        EXPECTED_MATCHING_RESULT[5] = set([1, 2])
 
         self.matcher.add_peptide_matches_for_rna_read(
             1,

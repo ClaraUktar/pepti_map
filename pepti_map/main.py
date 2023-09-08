@@ -83,7 +83,9 @@ def main(
 
     # TODO: Use numpy arrays everywhere?
 
-    kmer_index = PeptideToIndexImporter(kmer_length).import_file_to_index(peptide_file)
+    kmer_index = PeptideToIndexImporter(kmer_length).import_file_to_index(
+        Path(peptide_file)
+    )
 
     rna_files = [Path(rna_file)]
     if paired_end_file != "":
