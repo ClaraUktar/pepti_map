@@ -9,6 +9,9 @@ from datasketch import LeanMinHash
 
 # TODO: Would it be enough to have a list of lists here instead?
 # (with every list being shorter than the previous one)
+# Yes, but how possible in numpy?
+# Maybe instead list of np arrays?
+# TODO: Scrap this method completely?
 class SymmetricMatrix:
     def __init__(self, size: int, dtype: npt.DTypeLike):
         self.matrix = np.empty(

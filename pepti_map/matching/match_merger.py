@@ -41,7 +41,7 @@ class MatchMerger:
 
     def merge_matches(
         self,
-        method: Literal["agglomerative-clustering", "full-matrix", "symmetric-matrix"],
+        method: Literal["agglomerative-clustering", "full-matrix"],
     ) -> Tuple[List[Set[int]], List[List[int]]]:
         # TODO: Add options to parameterize methods?
         return get_merging_method(
