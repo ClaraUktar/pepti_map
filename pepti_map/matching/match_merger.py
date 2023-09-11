@@ -1,5 +1,6 @@
 from typing import List, Literal, Set, Tuple, Union
 from datasketch import LeanMinHash, MinHash
+import numpy.typing as npt
 
 from pepti_map.matching.merging_methods.merging_method_helper import get_merging_method
 
@@ -8,14 +9,18 @@ NUM_BYTES_FOR_MIN_HASH_VALUES = 4
 
 class MatchMerger:
     def __init__(
-        self, matches: List[Union[Set[int], None]], jaccard_index_threshold: float = 0.7
+        self,
+        matches: List[Union[Set[int], None]],
+        jaccard_index_threshold: float = 0.7,
+        precomputed_intersections: Union[npt.NDArray, None] = None,
     ):
         # TODO: Want to delete matches after merging
         self.jaccard_index_threshold: float = jaccard_index_threshold
         self.peptide_indexes: List[int] = []
         self.matches: List[Set[int]] = []
         self._postprocess_matches(matches)
-
+        # TODO: Also postprocess precomputed intersections to remove entries
+        # corresponding with the None entries
         self.min_hashes: List[LeanMinHash] = []
         self._create_min_hashes_from_matches()
 
