@@ -1,5 +1,6 @@
 from typing import List, Literal, Set, Tuple, Union
 from datasketch import LeanMinHash, MinHash
+import numpy as np
 import numpy.typing as npt
 from pepti_map.matching.jaccard_index_calculation.jaccard_index_calculator import (
     IJaccardIndexCalculator,
@@ -24,25 +25,40 @@ class MatchMerger:
         self.jaccard_index_threshold: float = jaccard_index_threshold
         self.peptide_indexes: List[int] = []
         self.matches: List[Set[int]] = []
-        self._postprocess_matches(matches)
-        # TODO: Also postprocess precomputed intersections to remove entries
-        # corresponding with the None entries
+        deleted_indexes = self._postprocess_matches(matches)
         self.jaccard_calculator: IJaccardIndexCalculator
         if precomputed_intersections is not None:
-            self._create_exact_jaccard_calculator()
+            precomputed_intersections = self._postprocess_precomputed_intersections(
+                precomputed_intersections, deleted_indexes
+            )
+            self._create_exact_jaccard_calculator(precomputed_intersections)
         else:
             self._create_min_hash_calculator()
 
     def _postprocess_matches(
         self, uncleaned_matches: List[Union[Set[int], None]]
-    ) -> None:
+    ) -> List[int]:
+        deleted_indexes = []
         for peptide_index, uncleaned_match in enumerate(uncleaned_matches):
             if uncleaned_match is None:
+                deleted_indexes.append(peptide_index)
                 continue
             self.matches.append(uncleaned_match)
             self.peptide_indexes.append(peptide_index)
+        return deleted_indexes
 
-    def _create_exact_jaccard_calculator(self) -> None:
+    def _postprocess_precomputed_intersections(
+        self, precomputed_intersections: npt.NDArray, deleted_indexes: List[int]
+    ) -> npt.NDArray:
+        return np.delete(
+            np.delete(precomputed_intersections, deleted_indexes, axis=0),
+            deleted_indexes,
+            axis=1,
+        )
+
+    def _create_exact_jaccard_calculator(
+        self, precomputed_intersections: npt.NDArray
+    ) -> None:
         # TODO
         pass
 
