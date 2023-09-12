@@ -2,6 +2,9 @@ from typing import List, Literal, Set, Tuple, Union
 from datasketch import LeanMinHash, MinHash
 import numpy as np
 import numpy.typing as npt
+from pepti_map.matching.jaccard_index_calculation.exact_jaccard_calculator import (
+    ExactJaccardCalculator,
+)
 from pepti_map.matching.jaccard_index_calculation.jaccard_index_calculator import (
     IJaccardIndexCalculator,
 )
@@ -59,8 +62,16 @@ class MatchMerger:
     def _create_exact_jaccard_calculator(
         self, precomputed_intersections: npt.NDArray
     ) -> None:
-        # TODO
-        pass
+        set_sizes = np.array([len(match) for match in self.matches], dtype=np.uint32)
+        row_index, column_index = np.ix_(
+            np.arange(precomputed_intersections.shape[0]),
+            np.arange(precomputed_intersections.shape[1]),
+        )
+        # Broadcasted cell-wise Jaccard-Index computation
+        precomputed_intersections = precomputed_intersections / (
+            set_sizes[row_index] + set_sizes[column_index] - precomputed_intersections
+        )
+        self.jaccard_calculator = ExactJaccardCalculator(precomputed_intersections)
 
     def _create_min_hash_calculator(self) -> None:
         min_hashes: List[LeanMinHash] = []
