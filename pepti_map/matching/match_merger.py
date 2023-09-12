@@ -1,6 +1,12 @@
 from typing import List, Literal, Set, Tuple, Union
 from datasketch import LeanMinHash, MinHash
 import numpy.typing as npt
+from pepti_map.matching.jaccard_index_calculation.jaccard_index_calculator import (
+    IJaccardIndexCalculator,
+)
+from pepti_map.matching.jaccard_index_calculation.min_hash_calculator import (
+    MinHashCalculator,
+)
 
 from pepti_map.matching.merging_methods.merging_method_helper import get_merging_method
 
@@ -21,8 +27,11 @@ class MatchMerger:
         self._postprocess_matches(matches)
         # TODO: Also postprocess precomputed intersections to remove entries
         # corresponding with the None entries
-        self.min_hashes: List[LeanMinHash] = []
-        self._create_min_hashes_from_matches()
+        self.jaccard_calculator: IJaccardIndexCalculator
+        if precomputed_intersections is not None:
+            self._create_exact_jaccard_calculator()
+        else:
+            self._create_min_hash_calculator()
 
     def _postprocess_matches(
         self, uncleaned_matches: List[Union[Set[int], None]]
@@ -33,7 +42,12 @@ class MatchMerger:
             self.matches.append(uncleaned_match)
             self.peptide_indexes.append(peptide_index)
 
-    def _create_min_hashes_from_matches(self) -> None:
+    def _create_exact_jaccard_calculator(self) -> None:
+        # TODO
+        pass
+
+    def _create_min_hash_calculator(self) -> None:
+        min_hashes: List[LeanMinHash] = []
         for match in self.matches:
             min_hash = MinHash()
             min_hash.update_batch(
@@ -42,7 +56,9 @@ class MatchMerger:
                     for element_to_add in match
                 ]
             )
-            self.min_hashes.append(LeanMinHash(min_hash))
+            min_hashes.append(LeanMinHash(min_hash))
+
+        self.jaccard_calculator = MinHashCalculator(min_hashes)
 
     def merge_matches(
         self,
@@ -50,5 +66,5 @@ class MatchMerger:
     ) -> Tuple[List[Set[int]], List[List[int]]]:
         # TODO: Add options to parameterize methods?
         return get_merging_method(
-            method, self.min_hashes, self.jaccard_index_threshold
+            method, self.jaccard_calculator, self.jaccard_index_threshold
         ).generate_merged_result(self.peptide_indexes, self.matches)

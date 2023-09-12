@@ -3,55 +3,34 @@ from typing import List, Set, Tuple
 
 import numpy as np
 import numpy.typing as npt
+from pepti_map.matching.jaccard_index_calculation.jaccard_index_calculator import (
+    IJaccardIndexCalculator,
+)
 from pepti_map.matching.merging_methods.merging_method import IMergingMethod
 
-from datasketch import LeanMinHash
 from sklearn.cluster import AgglomerativeClustering
 
 # TODO: Is using numpy.float16 sufficient?
+# Already has some rounding problems at second decimal
+# Better to use float32 or int (as first digit will always be 0 or 1)
 
 
 class AgglomerativeClusteringMergingMethod(IMergingMethod):
     def __init__(
         self,
-        min_hashes: List[LeanMinHash],
+        jaccard_calculator: IJaccardIndexCalculator,
         jaccard_index_threshold: float = 0.7,
     ):
+        self._distance_matrix: npt.NDArray[np.float16]
         super(AgglomerativeClusteringMergingMethod, self).__init__(
-            min_hashes, jaccard_index_threshold
-        )
-        self._distance_matrix: npt.NDArray[np.float16] = np.empty(
-            shape=(len(min_hashes), len(min_hashes)), dtype=np.float16
+            jaccard_calculator, jaccard_index_threshold
         )
 
-    def _get_jaccard_index_approximation(
-        self,
-        current_index: int,
-        current_min_hash: LeanMinHash,
-        index_to_compare: int,
-        min_hash_to_compare: LeanMinHash,
-    ) -> float:
-        if current_index == index_to_compare:
-            return 0.0
-        if index_to_compare < current_index:
-            return self._distance_matrix[index_to_compare][current_index]
-        return 1.0 - current_min_hash.jaccard(min_hash_to_compare)
-
-    def _generate_row_for_index(self, current_index: int) -> None:
-        current_min_hash = self.min_hashes[current_index]
-        self._distance_matrix[current_index] = np.array(
-            [
-                self._get_jaccard_index_approximation(
-                    current_index, current_min_hash, min_hash_index, min_hash
-                )
-                for min_hash_index, min_hash in enumerate(self.min_hashes)
-            ],
-            dtype=np.float16,
-        )
-
-    def _generate_distance_matrix(self) -> None:
-        for current_index in range(0, len(self.min_hashes)):
-            self._generate_row_for_index(current_index)
+    def _process_jaccard_calculator(
+        self, jaccard_calculator: IJaccardIndexCalculator
+    ) -> None:
+        # TODO: Does this result in two matrices?
+        self._distance_matrix = 1.0 - jaccard_calculator.get_jaccard_index_matrix()
 
     def _generate_result_from_labels(
         self,
@@ -84,7 +63,6 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
                 peptide_mappings.append([peptide])
             return (matches, peptide_mappings)
 
-        self._generate_distance_matrix()
         clustering = AgglomerativeClustering(
             metric="precomputed",
             compute_full_tree=True,
