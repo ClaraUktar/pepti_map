@@ -11,6 +11,8 @@ from pepti_map.matching.merging_methods.full_matrix_merging import (
     FullMatrixMergingMethod,
 )
 
+# TODO: Refactor to reduce code duplication between test classes
+
 
 class TestAgglomerativeClusteringMergingMethod(unittest.TestCase):
     def test_empty_matches_return_empty_result(self):
@@ -231,6 +233,130 @@ class TestFullMatrixMergingMethod(unittest.TestCase):
         expected_result = (
             [{1, 2, 3, 4, 5}, {5, 6, 7}, {7, 8, 9, 10}, {9, 2}],
             [[0, 2], [1], [3, 5], [4]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
+        )
+
+    def test_low_jaccard_index(self):
+        jaccard_calculator = ExactJaccardCalculator(
+            np.array(
+                [
+                    [1.0, 1 / 6, 0.0, 0.0, 0.0],
+                    [1 / 6, 1.0, 1 / 3, 0.0, 0.0],
+                    [0.0, 1 / 3, 1.0, 1 / 7, 1 / 3],
+                    [0.0, 0.0, 1 / 7, 1.0, 1 / 3],
+                    [0.0, 0.0, 1 / 3, 1 / 3, 1.0],
+                ]
+            )
+        )
+        merge_results = FullMatrixMergingMethod(
+            jaccard_calculator, jaccard_index_threshold=0.3
+        ).generate_merged_result(
+            [0, 1, 2, 3, 4],
+            [{1, 2, 3}, {3, 4, 5, 6}, {5, 6, 7, 8}, {8, 9, 10, 11}, {7, 8, 10, 12}],
+        )
+        expected_result = (
+            [{1, 2, 3}, {3, 4, 5, 6, 7, 8, 9, 10, 11, 12}],
+            [[0], [1, 2, 3, 4]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
+        )
+
+    def test_late_merge_detection(self):
+        jaccard_calculator = ExactJaccardCalculator(
+            np.array(
+                [
+                    [1.0, 0.0, 1 / 7, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 1 / 7, 0.0, 0.0, 1 / 7],
+                    [1 / 7, 1 / 7, 1.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 1.0, 1 / 7],
+                    [0.0, 1 / 7, 0.0, 0.0, 1 / 7, 1.0],
+                ]
+            )
+        )
+        merge_results = FullMatrixMergingMethod(
+            jaccard_calculator, jaccard_index_threshold=0.1
+        ).generate_merged_result(
+            [0, 1, 2, 3, 4, 5],
+            [
+                {1, 2, 3, 4},
+                {5, 6, 7, 8},
+                {1, 5, 9, 10},
+                {17, 18, 19, 20},
+                {11, 12, 13, 14},
+                {8, 11, 15, 16},
+            ],
+        )
+        expected_result = (
+            [{17, 18, 19, 20}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}],
+            [[3], [0, 1, 2, 4, 5]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
+        )
+
+    def test_multiple_late_merge_detections(self):
+        jaccard_calculator = ExactJaccardCalculator(
+            np.array(
+                [
+                    [1.0, 0.0, 0.0, 0.0, 1 / 7, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 1 / 7, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 1 / 7, 0.0, 0.0, 1 / 7],
+                    [0.0, 1 / 7, 1 / 7, 1.0, 1 / 7, 0.0, 0.0],
+                    [1 / 7, 0.0, 0.0, 1 / 7, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1 / 7],
+                    [0.0, 0.0, 1 / 7, 0.0, 0.0, 1 / 7, 1.0],
+                ]
+            )
+        )
+        merge_results = FullMatrixMergingMethod(
+            jaccard_calculator, jaccard_index_threshold=0.1
+        ).generate_merged_result(
+            [0, 1, 2, 3, 4, 5, 6],
+            [
+                {19, 20, 21, 22},
+                {1, 2, 3, 4},
+                {5, 6, 7, 8},
+                {1, 5, 9, 10},
+                {17, 18, 19, 10},
+                {11, 12, 13, 14},
+                {8, 11, 15, 16},
+            ],
+        )
+        expected_result = (
+            [
+                {
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                }
+            ],
+            [[0, 1, 2, 3, 4, 5, 6]],
         )
         self.assertCountEqual(
             zip(merge_results[0], merge_results[1]),
