@@ -7,6 +7,9 @@ from pepti_map.matching.jaccard_index_calculation.exact_jaccard_calculator impor
 from pepti_map.matching.merging_methods.agglomerative_clustering_merging import (
     AgglomerativeClusteringMergingMethod,
 )
+from pepti_map.matching.merging_methods.full_matrix_merging import (
+    FullMatrixMergingMethod,
+)
 
 
 class TestAgglomerativeClusteringMergingMethod(unittest.TestCase):
@@ -177,6 +180,57 @@ class TestAgglomerativeClusteringMergingMethod(unittest.TestCase):
                 }
             ],
             [[0, 1, 2, 3, 4, 5, 6]],
+        )
+        self.assertCountEqual(
+            zip(merge_results[0], merge_results[1]),
+            zip(expected_result[0], expected_result[1]),
+        )
+
+
+class TestFullMatrixMergingMethod(unittest.TestCase):
+    def test_empty_matches_return_empty_result(self):
+        jaccard_calculator = ExactJaccardCalculator(np.array([]))
+        merge_results = FullMatrixMergingMethod(
+            jaccard_calculator
+        ).generate_merged_result([], [])
+        assert merge_results == ([], [])
+
+    def test_single_match(self):
+        jaccard_calculator = ExactJaccardCalculator(np.array([[1.0]]))
+        merge_results = FullMatrixMergingMethod(
+            jaccard_calculator
+        ).generate_merged_result([0], [{11, 12, 13, 14}])
+        assert merge_results == ([{11, 12, 13, 14}], [[0]])
+
+    def test_multiple_matches(self):
+        jaccard_calculator = ExactJaccardCalculator(
+            np.array(
+                [
+                    [1.0, 0.0, 0.8, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 1 / 7, 0.0, 0.0, 1 / 6],
+                    [0.8, 1 / 7, 1.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0, 0.25, 0.75],
+                    [0.0, 0.0, 0.0, 0.25, 1.0, 0.2],
+                    [0.0, 1 / 6, 0.0, 0.75, 0.2, 1.0],
+                ]
+            )
+        )
+        merge_results = FullMatrixMergingMethod(
+            jaccard_calculator
+        ).generate_merged_result(
+            [0, 1, 2, 3, 4, 5],
+            [
+                {1, 2, 3, 4},
+                {5, 6, 7},
+                {1, 2, 3, 4, 5},
+                {8, 9, 10},
+                {9, 2},
+                {7, 8, 9, 10},
+            ],
+        )
+        expected_result = (
+            [{1, 2, 3, 4, 5}, {5, 6, 7}, {7, 8, 9, 10}, {9, 2}],
+            [[0, 2], [1], [3, 5], [4]],
         )
         self.assertCountEqual(
             zip(merge_results[0], merge_results[1]),

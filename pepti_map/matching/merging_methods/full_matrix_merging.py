@@ -40,14 +40,19 @@ class FullMatrixMergingMethod(IMergingMethod):
         )[0]
         previous_indexes.append(peptide_indexes[set_index])
         matches[set_index].clear()
-        if len(merge_indications) == 0:
+        # There will always be at least one merge indication for itself
+        if len(merge_indications) <= 1:
             return (set_to_update, previous_indexes)
         for index_to_merge in merge_indications:
             set_to_merge = matches[index_to_merge]
             if len(set_to_merge) == 0:
                 continue
             updated_set, previous_indexes = self._update_set_with_merges(
-                set_to_merge, index_to_merge, previous_indexes, peptide_indexes, matches
+                set_to_merge.copy(),
+                index_to_merge,
+                previous_indexes,
+                peptide_indexes,
+                matches,
             )
             set_to_update.update(updated_set)
         return (set_to_update, previous_indexes)
@@ -59,7 +64,7 @@ class FullMatrixMergingMethod(IMergingMethod):
         peptide_mappings: List[List[int]] = []
         for current_index, current_set in enumerate(matches):
             merged_set, merged_indexes = self._update_set_with_merges(
-                current_set, current_index, [], peptide_indexes, matches
+                current_set.copy(), current_index, [], peptide_indexes, matches
             )
             merged_indexes.sort()
             merged_matches.append(merged_set)
