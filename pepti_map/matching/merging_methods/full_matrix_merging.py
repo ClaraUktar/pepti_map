@@ -63,6 +63,8 @@ class FullMatrixMergingMethod(IMergingMethod):
         merged_matches: List[Set[int]] = []
         peptide_mappings: List[List[int]] = []
         for current_index, current_set in enumerate(matches):
+            if len(current_set) == 0:
+                continue
             merged_set, merged_indexes = self._update_set_with_merges(
                 current_set.copy(), current_index, [], peptide_indexes, matches
             )
