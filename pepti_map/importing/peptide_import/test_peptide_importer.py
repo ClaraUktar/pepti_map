@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 import pandas as pd
 import pytest
 
@@ -42,23 +42,32 @@ class TestPeptideSimpleFormatImport:
 
 class TestPeptideToIndexImporter:
     @patch("builtins.open", mock_open(read_data=MOCK_FILE_CONTENT))
-    def test_import_file_to_index(self):
-        PeptideToIndexImporter._write_peptide_to_cluster_mapping_file = MagicMock()
+    @patch(
+        (
+            "pepti_map.importing.peptide_import.peptide_to_index_importer"
+            ".PeptideToIndexImporter._write_peptide_to_cluster_mapping_file"
+        )
+    )
+    def test_import_file_to_index(self, mock_write_peptide_to_cluster_mapping_file):
         resulting_index = PeptideToIndexImporter().import_file_to_index(
             Path("path/to/file")
         )
         assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED
         assert resulting_index.number_of_peptides == 7
-        # fmt: off
-        PeptideToIndexImporter._write_peptide_to_cluster_mapping_file \
-            .assert_called_once_with(
-                EXPECTED_PEPTIDE_MAPPING
-            )
-        # fmt: on
+        mock_write_peptide_to_cluster_mapping_file.assert_called_once_with(
+            EXPECTED_PEPTIDE_MAPPING
+        )
 
     @patch("builtins.open", mock_open(read_data=PROTEIN_GROUPS_MOCK_FILE_CONTENT))
-    def test_import_file_to_index_with_protein_groups(self):
-        PeptideToIndexImporter._write_peptide_to_cluster_mapping_file = MagicMock()
+    @patch(
+        (
+            "pepti_map.importing.peptide_import.peptide_to_index_importer"
+            ".PeptideToIndexImporter._write_peptide_to_cluster_mapping_file"
+        )
+    )
+    def test_import_file_to_index_with_protein_groups(
+        self, mock_write_peptide_to_cluster_mapping_file
+    ):
         resulting_index = PeptideToIndexImporter().import_file_to_index(
             Path("path/to/file")
         )
@@ -67,9 +76,6 @@ class TestPeptideToIndexImporter:
             == EXPECTED_RESULT_INDEX_PROTEIN_GROUPS_ISOLEUCINE_REPLACED
         )
         assert resulting_index.number_of_peptides == 5
-        # fmt: off
-        PeptideToIndexImporter._write_peptide_to_cluster_mapping_file \
-            .assert_called_once_with(
-                EXPECTED_PEPTIDE_MAPPING_PROTEIN_GROUPS
-            )
-        # fmt: on
+        mock_write_peptide_to_cluster_mapping_file.assert_called_once_with(
+            EXPECTED_PEPTIDE_MAPPING_PROTEIN_GROUPS
+        )
