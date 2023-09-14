@@ -16,13 +16,7 @@ class PeptideKmerIndex:
     def getEntryForKmer(self, kmer: str) -> List[int]:
         return self.kmer_index[kmer]
 
-    def appendToEntryForKmer(
-        self, kmer: str, entry: int, check_for_duplicates=False
-    ) -> None:
-        # TODO: Is there a better option for dedplication? Use sets instead?
-        if check_for_duplicates:
-            if entry in self.kmer_index[kmer]:
-                return
+    def appendToEntryForKmer(self, kmer: str, entry: int) -> None:
         self.kmer_index[kmer].append(entry)
 
     # TODO: This does not check for duplicates at the moment! Should it?

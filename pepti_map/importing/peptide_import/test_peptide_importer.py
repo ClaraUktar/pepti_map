@@ -13,7 +13,6 @@ from pepti_map.importing.peptide_import.testdata_peptide_importer import (
     EXPECTED_RESULT_DF_BASIC,
     EXPECTED_RESULT_DF_DEDUPLICATED,
     EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED,
-    EXPECTED_RESULT_INDEX_PROTEIN_GROUPS_ISOLEUCINE_REPLACED,
     MOCK_FILE_CONTENT,
     PROTEIN_GROUPS_MOCK_FILE_CONTENT,
 )
@@ -49,7 +48,7 @@ class TestPeptideToIndexImporter:
         )
     )
     def test_import_file_to_index(self, mock_write_peptide_to_cluster_mapping_file):
-        resulting_index = PeptideToIndexImporter().import_file_to_index(
+        resulting_index, _ = PeptideToIndexImporter().import_file_to_index(
             Path("path/to/file")
         )
         assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED
@@ -68,13 +67,10 @@ class TestPeptideToIndexImporter:
     def test_import_file_to_index_with_protein_groups(
         self, mock_write_peptide_to_cluster_mapping_file
     ):
-        resulting_index = PeptideToIndexImporter().import_file_to_index(
+        resulting_index, _ = PeptideToIndexImporter().import_file_to_index(
             Path("path/to/file")
         )
-        assert (
-            resulting_index.kmer_index
-            == EXPECTED_RESULT_INDEX_PROTEIN_GROUPS_ISOLEUCINE_REPLACED
-        )
+        assert resulting_index.kmer_index == EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED
         assert resulting_index.number_of_peptides == 5
         mock_write_peptide_to_cluster_mapping_file.assert_called_once_with(
             EXPECTED_PEPTIDE_MAPPING_PROTEIN_GROUPS
