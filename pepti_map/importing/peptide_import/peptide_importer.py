@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import pandas as pd
@@ -50,17 +51,12 @@ class PeptideImporter:
         return peptide_df
 
     # TODO: Still save the peptide data in separate class, similar to the rna data?
-    def import_file(self, filepath: str) -> pd.DataFrame:
+    def import_file(self, filepath: Path) -> List[str]:
         """
         TODO
         """
         peptides = []
         with open(filepath, "rt", encoding="utf-8") as peptide_file:
             for line in peptide_file:
-                peptides.append(line.strip())
-        peptide_df = pd.DataFrame(peptides, columns=["sequence"]).astype(
-            dtype={"sequence": "string"}
-        )
-        print(peptide_df)
-        print(peptide_df.info(verbose=True))
-        return peptide_df
+                peptides.append(line.split("\t")[0].strip())
+        return peptides

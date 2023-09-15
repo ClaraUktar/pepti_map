@@ -1,33 +1,97 @@
+import csv
+import logging
+from pathlib import Path
 from typing import Generator, List, Set, Union
 
 from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
 from pepti_map.util.k_mer import split_into_kmer
 from pepti_map.util.three_frame_translation import get_three_frame_translations
 
+PEPTIDE_READ_QUANT_FILENAME = "peptide_read_quant.tsv"
+
 
 class RNAToPeptideMatcher:
-    def __init__(self, kmer_index: PeptideKmerIndex, number_of_peptides: int):
+    def __init__(
+        self,
+        kmer_index: PeptideKmerIndex,
+        number_of_clusters: int,
+        peptide_to_cluster_mapping: List[int],
+    ):
         # TODO: We probably want to delete the kmer index after the matching
-        self.kmer_index: PeptideKmerIndex = kmer_index
+        self._kmer_index: PeptideKmerIndex = kmer_index
         self.matches: List[Union[Set[int], None]] = [
-            None for _ in range(0, number_of_peptides)
+            None for _ in range(0, number_of_clusters)
+        ]
+        self._peptide_to_cluster_mapping = peptide_to_cluster_mapping
+        # TODO: Use numpy array instead?
+        self._matches_per_peptide: List[int] = [
+            0 for _ in range(0, len(peptide_to_cluster_mapping))
         ]
 
     def _process_rna_read_to_kmers(self, sequence: str) -> Generator[str, None, None]:
         # TODO: Exchange all T for U? (inplace?)
         # TODO: Construct reverse complement here or during file reading?
         for translation in get_three_frame_translations(sequence):
-            for kmer in split_into_kmer(translation[0], self.kmer_index.kmer_length):
+            for kmer in split_into_kmer(translation[0], self._kmer_index.kmer_length):
                 yield kmer[0]
 
     def add_peptide_matches_for_rna_read(
         self, rna_read_id: int, rna_read_sequence: str
     ) -> None:
+        matched_peptides = set()
         for kmer in self._process_rna_read_to_kmers(rna_read_sequence):
-            peptide_matches = self.kmer_index.getEntryForKmer(kmer)
+            peptide_matches = self._kmer_index.getEntryForKmer(kmer)
             for match in peptide_matches:
-                if self.matches[match] is None:
-                    self.matches[match] = set()
-                self.matches[match].add(  # pyright: ignore[reportOptionalMemberAccess]
+                cluster_match = self._peptide_to_cluster_mapping[match]
+                if self.matches[cluster_match] is None:
+                    self.matches[cluster_match] = set()
+                self.matches[
+                    cluster_match
+                ].add(  # pyright: ignore[reportOptionalMemberAccess]
                     rna_read_id
+                )
+                matched_peptides.add(match)
+        for match in matched_peptides:
+            self._matches_per_peptide[match] += 1
+
+    def write_peptide_read_quant_file(
+        self, dirpath: Path, peptide_sequences: List[str]
+    ) -> None:
+        try:
+            assert len(peptide_sequences) == len(self._peptide_to_cluster_mapping)
+        except AssertionError as assertion_error:
+            logging.error(
+                (
+                    "Expected the number of given peptide sequences to be the same "
+                    "as used for the mapping, but was different."
+                )
+            )
+            raise assertion_error
+        with open(
+            dirpath / PEPTIDE_READ_QUANT_FILENAME, "wt", encoding="utf-8"
+        ) as peptide_quant_file:
+            writer = csv.writer(peptide_quant_file, delimiter="\t", lineterminator="\n")
+            writer.writerow(
+                ["peptide_sequence", "group_id", "n_reads_peptide", "n_reads_group"]
+            )
+            for peptide_index, peptide_sequence in enumerate(peptide_sequences):
+                n_cluster_matches = (
+                    len(
+                        self.matches[
+                            self._peptide_to_cluster_mapping[peptide_index]
+                        ]  # pyright: ignore[reportGeneralTypeIssues]
+                    )
+                    if (
+                        self.matches[self._peptide_to_cluster_mapping[peptide_index]]
+                        is not None
+                    )
+                    else 0
+                )
+                writer.writerow(
+                    [
+                        peptide_sequence,
+                        self._peptide_to_cluster_mapping[peptide_index],
+                        self._matches_per_peptide[peptide_index],
+                        n_cluster_matches,
+                    ]
                 )

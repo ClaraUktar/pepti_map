@@ -10,9 +10,9 @@ from pepti_map.importing.peptide_import.peptide_to_index_importer import (
 from pepti_map.importing.peptide_import.testdata_peptide_importer import (
     EXPECTED_PEPTIDE_MAPPING,
     EXPECTED_PEPTIDE_MAPPING_PROTEIN_GROUPS,
-    EXPECTED_RESULT_DF_BASIC,
     EXPECTED_RESULT_DF_DEDUPLICATED,
     EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED,
+    EXPECTED_RESULT_LIST,
     MOCK_FILE_CONTENT,
     PROTEIN_GROUPS_MOCK_FILE_CONTENT,
 )
@@ -35,8 +35,8 @@ class TestPeptideSimpleFormatImport:
 
     @patch("builtins.open", mock_open(read_data=MOCK_FILE_CONTENT))
     def test_basic_import(self):
-        result_df = self.peptide_importer.import_file("path/to/file")
-        pd.testing.assert_frame_equal(result_df, EXPECTED_RESULT_DF_BASIC)
+        result_list = self.peptide_importer.import_file(Path("path/to/file"))
+        assert result_list == EXPECTED_RESULT_LIST
 
 
 class TestPeptideToIndexImporter:
