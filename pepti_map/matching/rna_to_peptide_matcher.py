@@ -82,7 +82,10 @@ class RNAToPeptideMatcher:
                         ]  # pyright: ignore[reportGeneralTypeIssues]
                     )
                     if (
-                        self.matches[self._peptide_to_cluster_mapping[peptide_index]]
+                        self._peptide_to_cluster_mapping[peptide_index] >= 0
+                        and self.matches[
+                            self._peptide_to_cluster_mapping[peptide_index]
+                        ]
                         is not None
                     )
                     else 0
