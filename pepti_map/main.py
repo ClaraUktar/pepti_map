@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import time
 import click
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
@@ -92,10 +93,12 @@ def main(
     # TODO: Add full docstrings for all relevant methods
 
     # TODO: Use numpy arrays everywhere?
-
+    start_p = time.time()
     kmer_index, peptide_to_cluster_mapping = PeptideToIndexImporter(
         kmer_length
     ).import_file_to_index(Path(peptide_file))
+    end_p = time.time()
+    logging.info(f"Time for peptide to index import: {end_p - start_p} sec")
 
     rna_files = [Path(rna_file)]
     if paired_end_file != "":
@@ -104,13 +107,19 @@ def main(
     matcher = RNAToPeptideMatcher(
         kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
     )
+    start_m = time.time()
     for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
         matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+    end_m = time.time()
+    logging.info(f"Time for matching: {end_m - start_m} sec")
     del kmer_index
+    start_f = time.time()
     matcher.write_peptide_read_quant_file(
         Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
     )
-    print(matcher.matches)
+    end_f = time.time()
+    logging.info(f"Time for generating peptide quant file: {end_f - start_f} sec")
+    # print(matcher.matches)
 
 
 if __name__ == "__main__":
