@@ -22,8 +22,7 @@ class MatchMerger:
         self,
         matches: List[Union[Set[int], None]],
         jaccard_index_threshold: float = 0.7,
-        # TODO: Add array dtype?
-        precomputed_intersections: Union[npt.NDArray, None] = None,
+        precomputed_intersections: Union[npt.NDArray[np.uint32], None] = None,
     ):
         # TODO: Want to delete matches after merging
         self.jaccard_index_threshold: float = jaccard_index_threshold
@@ -52,8 +51,10 @@ class MatchMerger:
         return deleted_indexes
 
     def _postprocess_precomputed_intersections(
-        self, precomputed_intersections: npt.NDArray, deleted_indexes: List[int]
-    ) -> npt.NDArray:
+        self,
+        precomputed_intersections: npt.NDArray[np.uint32],
+        deleted_indexes: List[int],
+    ) -> npt.NDArray[np.uint32]:
         return np.delete(
             np.delete(precomputed_intersections, deleted_indexes, axis=0),
             deleted_indexes,
@@ -69,9 +70,14 @@ class MatchMerger:
             np.arange(precomputed_intersections.shape[1]),
         )
         # Broadcasted cell-wise Jaccard-Index computation
-        # TODO: Change dtype?
-        precomputed_intersections = precomputed_intersections / (
-            set_sizes[row_index] + set_sizes[column_index] - precomputed_intersections
+        precomputed_intersections = np.divide(
+            precomputed_intersections,
+            (
+                set_sizes[row_index]
+                + set_sizes[column_index]
+                - precomputed_intersections
+            ),
+            dtype=np.float16,
         )
         self.jaccard_calculator = ExactJaccardCalculator(precomputed_intersections)
 

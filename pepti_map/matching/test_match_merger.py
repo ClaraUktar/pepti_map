@@ -115,7 +115,8 @@ class TestMatchMerger:
                 [2, 0, 0, 4, 1, 0],
                 [0, 0, 0, 1, 4, 0],
                 [0, 0, 0, 0, 0, 0],
-            ]
+            ],
+            dtype=np.uint32,
         )
         expected_jaccard_indexes = np.array(
             [
@@ -123,7 +124,8 @@ class TestMatchMerger:
                 [0.0, 1.0, 0.0, 0.0],
                 [1 / 3, 0.0, 1.0, 1 / 7],
                 [0.0, 0.0, 1 / 7, 1.0],
-            ]
+            ],
+            dtype=np.float16,
         )
         MatchMerger(test_matches, 0.7, test_precomputed_intersections)
         mock_exact_jaccard_calculator_init.assert_called_once()
