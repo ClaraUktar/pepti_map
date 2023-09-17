@@ -19,7 +19,7 @@ class RNAToPeptideMatcher:
     ):
         # TODO: We probably want to delete the kmer index after the matching
         self._kmer_index: PeptideKmerIndex = kmer_index
-        self.matches: List[Union[Set[int], None]] = [
+        self._matches: List[Union[Set[int], None]] = [
             None for _ in range(0, number_of_clusters)
         ]
         self._peptide_to_cluster_mapping = peptide_to_cluster_mapping
@@ -43,9 +43,9 @@ class RNAToPeptideMatcher:
             peptide_matches = self._kmer_index.getEntryForKmer(kmer)
             for match in peptide_matches:
                 cluster_match = self._peptide_to_cluster_mapping[match]
-                if self.matches[cluster_match] is None:
-                    self.matches[cluster_match] = set()
-                self.matches[
+                if self._matches[cluster_match] is None:
+                    self._matches[cluster_match] = set()
+                self._matches[
                     cluster_match
                 ].add(  # pyright: ignore[reportOptionalMemberAccess]
                     rna_read_id
@@ -53,6 +53,9 @@ class RNAToPeptideMatcher:
                 matched_peptides.add(match)
         for match in matched_peptides:
             self._matches_per_peptide[match] += 1
+
+    def get_matches(self) -> List[Union[Set[int], None]]:
+        return self._matches
 
     def write_peptide_read_quant_file(
         self, dirpath: Path, peptide_sequences: List[str]
@@ -77,13 +80,13 @@ class RNAToPeptideMatcher:
             for peptide_index, peptide_sequence in enumerate(peptide_sequences):
                 n_cluster_matches = (
                     len(
-                        self.matches[
+                        self._matches[
                             self._peptide_to_cluster_mapping[peptide_index]
                         ]  # pyright: ignore[reportGeneralTypeIssues]
                     )
                     if (
                         self._peptide_to_cluster_mapping[peptide_index] >= 0
-                        and self.matches[
+                        and self._matches[
                             self._peptide_to_cluster_mapping[peptide_index]
                         ]
                         is not None

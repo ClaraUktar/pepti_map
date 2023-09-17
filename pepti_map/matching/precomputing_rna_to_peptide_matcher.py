@@ -1,4 +1,8 @@
 from typing import List
+from itertools import combinations
+import numpy as np
+import numpy.typing as npt
+
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
 
@@ -13,7 +17,9 @@ class PrecomputingRNAToPeptideMatcher(RNAToPeptideMatcher):
         super(PrecomputingRNAToPeptideMatcher, self).__init__(
             kmer_index, number_of_clusters, peptide_to_cluster_mapping
         )
-        # TOOD: Init precomputed intersections array
+        self._precomputed_intersections = np.zeros(
+            shape=(number_of_clusters, number_of_clusters), dtype=np.uint32
+        )
 
     def add_peptide_matches_for_rna_read(
         self, rna_read_id: int, rna_read_sequence: str
@@ -24,9 +30,9 @@ class PrecomputingRNAToPeptideMatcher(RNAToPeptideMatcher):
             peptide_matches = self._kmer_index.getEntryForKmer(kmer)
             for match in peptide_matches:
                 cluster_match = self._peptide_to_cluster_mapping[match]
-                if self.matches[cluster_match] is None:
-                    self.matches[cluster_match] = set()
-                self.matches[
+                if self._matches[cluster_match] is None:
+                    self._matches[cluster_match] = set()
+                self._matches[
                     cluster_match
                 ].add(  # pyright: ignore[reportOptionalMemberAccess]
                     rna_read_id
@@ -35,6 +41,20 @@ class PrecomputingRNAToPeptideMatcher(RNAToPeptideMatcher):
                 matched_clusters.add(cluster_match)
         for match in matched_peptides:
             self._matches_per_peptide[match] += 1
-        # TODO: Process matched_clusters for precomputed intersections
-        # TODO: Leave out symmetrical entries (e.g. (1, 1)
-        # and process later by adding set size?)
+        for intersecting_set_pair in list(combinations(matched_clusters, 2)):
+            # TODO: Can this be improved to not set both entries?
+            self._precomputed_intersections[intersecting_set_pair[0]][
+                intersecting_set_pair[1]
+            ] += 1
+            self._precomputed_intersections[intersecting_set_pair[1]][
+                intersecting_set_pair[0]
+            ] += 1
+
+    def get_precomputed_intersections(self) -> npt.NDArray[np.uint32]:
+        for cluster_index in range(0, self._precomputed_intersections.shape[0]):
+            if self._matches[cluster_index] is None:
+                continue
+            self._precomputed_intersections[cluster_index][cluster_index] = len(
+                self._matches[cluster_index]  # pyright: ignore[reportGeneralTypeIssues]
+            )
+        return self._precomputed_intersections

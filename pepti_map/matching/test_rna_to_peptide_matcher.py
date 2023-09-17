@@ -38,7 +38,7 @@ class TestRNAToPeptideMatcher:
             1,
             "AGCTTTCACGCCGCATACGATGATGCACGAATTTAATCAGGGGGTCCGAGATCCAG",
         )
-        assert self.matcher.matches == EXPECTED_MATCHING_RESULT
+        assert self.matcher.get_matches() == EXPECTED_MATCHING_RESULT
 
     def test_add_multiple_matches(self):
         EXPECTED_MATCHING_RESULT: List[Union[Set[int], None]] = [
@@ -58,7 +58,7 @@ class TestRNAToPeptideMatcher:
             2,
             "GATGTAAGTTGATATCGTAGACCGGCATCGCAAGGCACAACCCTGGCGTGAACCGA",
         )
-        assert self.matcher.matches == EXPECTED_MATCHING_RESULT
+        assert self.matcher.get_matches() == EXPECTED_MATCHING_RESULT
 
     def test_peptide_quant_file(self, tmp_path):
         # TODO: Move to data file?

@@ -69,6 +69,7 @@ class MatchMerger:
             np.arange(precomputed_intersections.shape[1]),
         )
         # Broadcasted cell-wise Jaccard-Index computation
+        # TODO: Change dtype?
         precomputed_intersections = precomputed_intersections / (
             set_sizes[row_index] + set_sizes[column_index] - precomputed_intersections
         )

@@ -110,7 +110,7 @@ def main(
     matcher.write_peptide_read_quant_file(
         Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
     )
-    print(matcher.matches)
+    print(matcher.get_matches())
 
 
 if __name__ == "__main__":
