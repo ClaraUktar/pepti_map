@@ -22,6 +22,7 @@ class MatchMerger:
         self,
         matches: List[Union[Set[int], None]],
         jaccard_index_threshold: float = 0.7,
+        # TODO: Add array dtype?
         precomputed_intersections: Union[npt.NDArray, None] = None,
     ):
         # TODO: Want to delete matches after merging
