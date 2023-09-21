@@ -2,12 +2,16 @@ from collections import defaultdict
 import csv
 from pathlib import Path
 from typing import List, Set, Union
+import numpy as np
 import pytest
 from pepti_map.importing.peptide_import.testdata_peptide_importer import (
     EXPECTED_PEPTIDE_MAPPING,
     EXPECTED_PEPTIDE_MAPPING_PROTEIN_GROUPS,
     EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED,
     EXPECTED_RESULT_LIST,
+)
+from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
+    PrecomputingRNAToPeptideMatcher,
 )
 
 from pepti_map.matching.rna_to_peptide_matcher import (
@@ -136,3 +140,81 @@ class TestRNAToPeptideMatcher:
             for row in reader:
                 file_entries.append(row)
         assert file_entries == EXPECTED_FILE_CONTENTS
+
+
+class TestPrecomputingRNAToPeptideMatcher:
+    @pytest.fixture(autouse=True)
+    def _init_matcher(self):
+        self.kmer_index = PeptideKmerIndex()
+        self.kmer_index.kmer_index = defaultdict(
+            list, EXPECTED_RESULT_INDEX_ISOLEUCINE_REPLACED.copy()
+        )
+        self.matcher = PrecomputingRNAToPeptideMatcher(
+            self.kmer_index, 7, EXPECTED_PEPTIDE_MAPPING
+        )
+
+    def test_add_single_match_with_precomputation(self):
+        EXPECTED_MATCHING_RESULT: List[Union[Set[int], None]] = [
+            None for _ in range(0, 7)
+        ]
+        EXPECTED_MATCHING_RESULT[2] = set([1])
+        EXPECTED_MATCHING_RESULT[3] = set([1])
+        EXPECTED_MATCHING_RESULT[5] = set([1])
+        expected_precomputed_intersections = np.array(
+            [
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 1, 1, 0, 1, 0],
+                [0, 0, 1, 1, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 1, 1, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+            ],
+            dtype=np.uint32,
+        )
+
+        self.matcher.add_peptide_matches_for_rna_read(
+            1,
+            "AGCTTTCACGCCGCATACGATGATGCACGAATTTAATCAGGGGGTCCGAGATCCAG",
+        )
+        assert self.matcher.get_matches() == EXPECTED_MATCHING_RESULT
+        np.testing.assert_array_equal(
+            self.matcher.get_precomputed_intersections(),
+            expected_precomputed_intersections,
+        )
+
+    def test_add_multiple_matches_wth_precomputation(self):
+        EXPECTED_MATCHING_RESULT: List[Union[Set[int], None]] = [
+            None for _ in range(0, 7)
+        ]
+
+        EXPECTED_MATCHING_RESULT[0] = set([2])
+        EXPECTED_MATCHING_RESULT[2] = set([1, 2])
+        EXPECTED_MATCHING_RESULT[3] = set([1])
+        EXPECTED_MATCHING_RESULT[5] = set([1, 2])
+        expected_precomputed_intersections = np.array(
+            [
+                [1, 0, 1, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [1, 0, 2, 1, 0, 2, 0],
+                [0, 0, 1, 1, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [1, 0, 2, 1, 0, 2, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+            ],
+            dtype=np.uint32,
+        )
+
+        self.matcher.add_peptide_matches_for_rna_read(
+            1,
+            "AGCTTTCACGCCGCATACGATGATGCACGAATTTAATCAGGGGGTCCGAGATCCAG",
+        )
+        self.matcher.add_peptide_matches_for_rna_read(
+            2,
+            "GATGTAAGTTGATATCGTAGACCGGCATCGCAAGGCACAACCCTGGCGTGAACCGA",
+        )
+        assert self.matcher.get_matches() == EXPECTED_MATCHING_RESULT
+        np.testing.assert_array_equal(
+            self.matcher.get_precomputed_intersections(),
+            expected_precomputed_intersections,
+        )
