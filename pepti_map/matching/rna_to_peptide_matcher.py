@@ -2,6 +2,7 @@ import csv
 import logging
 from pathlib import Path
 from typing import Generator, List, Set, Union
+from pepti_map.constants import PATH_TO_MATCHING_RESULT
 
 from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
 from pepti_map.util.k_mer import split_into_kmer
@@ -56,6 +57,23 @@ class RNAToPeptideMatcher:
 
     def get_matches(self) -> List[Union[Set[int], None]]:
         return self._matches
+
+    def _get_file_entry_for_match(self, match_index: int) -> str:
+        match = self._matches[match_index]
+        if match is None:
+            return ""
+        return ",".join([str(match_elem) for match_elem in match])
+
+    def save_matches(self) -> None:
+        with open(
+            PATH_TO_MATCHING_RESULT, "wt", encoding="utf-8"
+        ) as matching_result_file:
+            matching_result_file.writelines(
+                [
+                    self._get_file_entry_for_match(match_index)
+                    for match_index in range(0, len(self._matches))
+                ]
+            )
 
     def write_peptide_read_quant_file(
         self, dirpath: Path, peptide_sequences: List[str]

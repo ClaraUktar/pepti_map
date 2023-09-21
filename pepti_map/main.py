@@ -112,6 +112,7 @@ def main(
     matcher.write_peptide_read_quant_file(
         Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
     )
+    matcher.save_matches()
     print(matcher.get_matches())
     shutil.rmtree(PATH_TO_TEMP_FILES)
 
