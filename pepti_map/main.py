@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
+import shutil
 import click
+from pepti_map.constants import PATH_TO_TEMP_FILES
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
@@ -111,6 +113,7 @@ def main(
         Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
     )
     print(matcher.get_matches())
+    shutil.rmtree(PATH_TO_TEMP_FILES)
 
 
 if __name__ == "__main__":

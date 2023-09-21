@@ -1,11 +1,10 @@
 from pathlib import Path
 from typing import Dict, List, Tuple
 from hashlib import sha256
+from pepti_map.constants import PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE
 
 from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
 from pepti_map.util.k_mer import split_into_kmer
-
-PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE = Path("./temp/peptide_to_cluster_mapping.txt")
 
 
 class PeptideToIndexImporter:
