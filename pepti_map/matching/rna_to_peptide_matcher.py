@@ -37,10 +37,13 @@ class RNAToPeptideMatcher:
 
     def add_peptide_matches_for_rna_read(
         self, rna_read_id: int, rna_read_sequence: str
-    ) -> None:
+    ) -> bool:
+        found_match = False
         matched_peptides = set()
         for kmer in self._process_rna_read_to_kmers(rna_read_sequence):
             peptide_matches = self._kmer_index.getEntryForKmer(kmer)
+            if len(peptide_matches) != 0:
+                found_match = True
             for match in peptide_matches:
                 cluster_match = self._peptide_to_cluster_mapping[match]
                 if self.matches[cluster_match] is None:
@@ -53,6 +56,7 @@ class RNAToPeptideMatcher:
                 matched_peptides.add(match)
         for match in matched_peptides:
             self._matches_per_peptide[match] += 1
+        return found_match
 
     def write_peptide_read_quant_file(
         self, dirpath: Path, peptide_sequences: List[str]

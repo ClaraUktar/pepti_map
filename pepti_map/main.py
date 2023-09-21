@@ -108,11 +108,18 @@ def main(
         kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
     )
     start_m = time.time()
+    n_sequences = 0
+    n_matched_sequences = 0
     for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
-        matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+        found_match = matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+        n_sequences += 1
+        if found_match:
+            n_matched_sequences += 1
     end_m = time.time()
     logging.info(f"Time for matching: {end_m - start_m} sec")
     del kmer_index
+    logging.info(f"Number of RNA reads: {n_sequences}")
+    logging.info(f"Number of matched RNA reads: {n_matched_sequences}")
     start_f = time.time()
     matcher.write_peptide_read_quant_file(
         Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
