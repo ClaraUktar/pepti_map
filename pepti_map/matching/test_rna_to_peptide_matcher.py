@@ -141,6 +141,8 @@ class TestRNAToPeptideMatcher:
                 file_entries.append(row)
         assert file_entries == EXPECTED_FILE_CONTENTS
 
+    # TODO: Test matches file saving
+
 
 class TestPrecomputingRNAToPeptideMatcher:
     @pytest.fixture(autouse=True)
@@ -218,3 +220,5 @@ class TestPrecomputingRNAToPeptideMatcher:
             self.matcher.get_precomputed_intersections(),
             expected_precomputed_intersections,
         )
+
+    # TODO: Test precomputed intersections file saving

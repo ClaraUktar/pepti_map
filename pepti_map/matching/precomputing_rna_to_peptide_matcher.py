@@ -2,6 +2,7 @@ from typing import List
 from itertools import combinations
 import numpy as np
 import numpy.typing as npt
+from pepti_map.constants import PATH_TO_PRECOMPUTED_INTERSECTIONS
 
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
@@ -58,3 +59,8 @@ class PrecomputingRNAToPeptideMatcher(RNAToPeptideMatcher):
                 self._matches[cluster_index]  # pyright: ignore[reportGeneralTypeIssues]
             )
         return self._precomputed_intersections
+
+    def save_precomputed_intersections(self) -> None:
+        np.savez_compressed(
+            PATH_TO_PRECOMPUTED_INTERSECTIONS, a=self._precomputed_intersections
+        )

@@ -8,6 +8,9 @@ from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
 )
 from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
+from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
+    PrecomputingRNAToPeptideMatcher,
+)
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 
 
@@ -74,6 +77,15 @@ def _setup():
     default="./",
     help="The path to the output directory for all generated files.",
 )
+@click.option(
+    "-pi",
+    "--precompute-intersections",
+    is_flag=True,
+    help=(
+        "If used, the intersection sizes for the Jaccard Index "
+        "calculation are precomputed during the matching phase."
+    ),
+)
 def main(
     peptide_file: str,
     rna_file: str,
@@ -81,6 +93,7 @@ def main(
     cutoff: int,
     kmer_length: int,
     output_dir: str,
+    precompute_intersections: bool,
 ):
     _setup()
     # TODO: Delete all classes not needed here!
@@ -103,9 +116,14 @@ def main(
     if paired_end_file != "":
         rna_files.append(Path(paired_end_file))
 
-    matcher = RNAToPeptideMatcher(
-        kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
-    )
+    if precompute_intersections:
+        matcher = PrecomputingRNAToPeptideMatcher(
+            kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
+        )
+    else:
+        matcher = RNAToPeptideMatcher(
+            kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
+        )
     for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
         matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
     del kmer_index
@@ -113,6 +131,8 @@ def main(
         Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
     )
     matcher.save_matches()
+    if isinstance(matcher, PrecomputingRNAToPeptideMatcher):
+        matcher.save_precomputed_intersections()
     print(matcher.get_matches())
     shutil.rmtree(PATH_TO_TEMP_FILES)
 
