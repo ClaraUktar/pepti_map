@@ -58,11 +58,14 @@ class RNAToPeptideMatcher:
     def get_matches(self) -> List[Union[Set[int], None]]:
         return self._matches
 
-    def _get_file_entry_for_match(self, match_index: int) -> str:
+    def _get_file_entry_for_match(self, match_index: int, is_last: bool) -> str:
         match = self._matches[match_index]
-        if match is None:
-            return ""
-        return ",".join([str(match_elem) for match_elem in match])
+        entry = ""
+        if match is not None:
+            entry = ",".join([str(match_elem) for match_elem in match])
+        if not is_last:
+            entry += "\n"
+        return entry
 
     def save_matches(self) -> None:
         with open(
@@ -70,7 +73,9 @@ class RNAToPeptideMatcher:
         ) as matching_result_file:
             matching_result_file.writelines(
                 [
-                    self._get_file_entry_for_match(match_index)
+                    self._get_file_entry_for_match(
+                        match_index, match_index == len(self._matches) - 1
+                    )
                     for match_index in range(0, len(self._matches))
                 ]
             )
