@@ -80,6 +80,19 @@ class RNAToPeptideMatcher:
                 ]
             )
 
+    @staticmethod
+    def load_matches() -> List[Union[Set[int], None]]:
+        matches: List[Union[Set[int], None]] = []
+        with open(
+            PATH_TO_MATCHING_RESULT, "wt", encoding="utf-8"
+        ) as matching_result_file:
+            for line in matching_result_file:
+                if line == "":
+                    matches.append(None)
+                    continue
+                matches.append(set([int(match_elem) for match_elem in line.split(",")]))
+        return matches
+
     def write_peptide_read_quant_file(
         self, dirpath: Path, peptide_sequences: List[str]
     ) -> None:

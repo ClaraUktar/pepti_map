@@ -62,5 +62,10 @@ class PrecomputingRNAToPeptideMatcher(RNAToPeptideMatcher):
 
     def save_precomputed_intersections(self) -> None:
         np.savez_compressed(
-            PATH_TO_PRECOMPUTED_INTERSECTIONS, a=self._precomputed_intersections
+            PATH_TO_PRECOMPUTED_INTERSECTIONS,
+            intersections=self._precomputed_intersections,
         )
+
+    @staticmethod
+    def load_precomputed_intersections() -> npt.NDArray[np.uint32]:
+        return np.load(PATH_TO_PRECOMPUTED_INTERSECTIONS)["intersections"]
