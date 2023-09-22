@@ -27,7 +27,7 @@ def _setup():
     help="The path to the peptide file.",
 )
 @click.option(
-    "-r", "--rna-file", required=True, type=str, help="The path to the RNA file."
+    "-r", "--rna-file", required=True, type=str, help="The path to the RNA-seq file."
 )
 @click.option(
     "-pa",
@@ -37,8 +37,8 @@ def _setup():
     default="",
     show_default=False,
     help=(
-        "The path to the second RNA file in case of paired-end sequencing. "
-        'If none is given, the RNA file given with the "-r" option '
+        "The path to the second RNA-seq file in case of paired-end sequencing. "
+        'If none is given, the RNA-seq file given with the "-r" option '
         "is assumed to result from single-end sequencing."
     ),
 )
@@ -52,7 +52,7 @@ def _setup():
     help=(
         "The position of the last base in the reads "
         "after which a cutoff should be performed (starting at 1). "
-        "The cutoff is applied to all reads."
+        "The cutoff is applied to all reads. "
         "If the value is equal to or smaller than 0, no cutoff is performed."
     ),
 )
@@ -64,8 +64,8 @@ def _setup():
     default=7,
     show_default=True,
     help=(
-        "The k-mer size used during the mapping of peptides to RNA. "
-        "As the RNA is 3-frame translated for the mapping, "
+        "The k-mer size used during the mapping of peptides to RNA-seq reads. "
+        "As the RNA-seq reads are 3-frame translated for the mapping, "
         "the k-mer size refers to amino acids."
     ),
 )
