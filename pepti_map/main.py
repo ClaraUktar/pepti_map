@@ -16,6 +16,11 @@ from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 
 def _setup():
     logging.basicConfig(level=logging.DEBUG)
+    PATH_TO_TEMP_FILES.mkdir(exist_ok=True)
+
+
+def _teardown():
+    shutil.rmtree(PATH_TO_TEMP_FILES)
 
 
 @click.command()
@@ -134,7 +139,7 @@ def main(
     if isinstance(matcher, PrecomputingRNAToPeptideMatcher):
         matcher.save_precomputed_intersections()
     print(matcher.get_matches())
-    shutil.rmtree(PATH_TO_TEMP_FILES)
+    _teardown()
 
 
 if __name__ == "__main__":

@@ -23,14 +23,14 @@ class PeptideToIndexImporter:
     @staticmethod
     def _write_peptide_to_cluster_mapping_file(
         peptide_to_cluster_mapping: List[int],
+        mapping_file: Path = PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE,
     ) -> None:
-        PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE.parent.mkdir(exist_ok=True)
-        with open(
-            PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE, "wt", encoding="utf-8"
-        ) as peptide_to_cluster_file:
+        with open(mapping_file, "wt", encoding="utf-8") as peptide_to_cluster_file:
             peptide_to_cluster_file.writelines(
                 [str(cluster_id) + "\n" for cluster_id in peptide_to_cluster_mapping]
             )
+
+    # TODO: Add read of cluster mapping file
 
     def _process_simple_peptide_file(
         self, filepath: Path, replace_isoleucine=True

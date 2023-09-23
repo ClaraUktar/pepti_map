@@ -58,35 +58,29 @@ class RNAToPeptideMatcher:
     def get_matches(self) -> List[Union[Set[int], None]]:
         return self._matches
 
-    def _get_file_entry_for_match(self, match_index: int, is_last: bool) -> str:
+    def _get_file_entry_for_match(self, match_index: int) -> str:
         match = self._matches[match_index]
-        entry = ""
-        if match is not None:
-            entry = ",".join([str(match_elem) for match_elem in match])
-        if not is_last:
-            entry += "\n"
-        return entry
+        if match is None:
+            return "\n"
+        return ",".join([str(match_elem) for match_elem in match]) + "\n"
 
-    def save_matches(self) -> None:
-        with open(
-            PATH_TO_MATCHING_RESULT, "wt", encoding="utf-8"
-        ) as matching_result_file:
+    def save_matches(self, matches_path: Path = PATH_TO_MATCHING_RESULT) -> None:
+        with open(matches_path, "wt", encoding="utf-8") as matching_result_file:
             matching_result_file.writelines(
                 [
-                    self._get_file_entry_for_match(
-                        match_index, match_index == len(self._matches) - 1
-                    )
+                    self._get_file_entry_for_match(match_index)
                     for match_index in range(0, len(self._matches))
                 ]
             )
 
     @staticmethod
-    def load_matches() -> List[Union[Set[int], None]]:
+    def load_matches(
+        matches_path: Path = PATH_TO_MATCHING_RESULT,
+    ) -> List[Union[Set[int], None]]:
         matches: List[Union[Set[int], None]] = []
-        with open(
-            PATH_TO_MATCHING_RESULT, "wt", encoding="utf-8"
-        ) as matching_result_file:
+        with open(matches_path, "rt", encoding="utf-8") as matching_result_file:
             for line in matching_result_file:
+                line = line.strip()
                 if line == "":
                     matches.append(None)
                     continue

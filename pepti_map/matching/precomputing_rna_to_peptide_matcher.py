@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 from itertools import combinations
 import numpy as np
@@ -60,12 +61,16 @@ class PrecomputingRNAToPeptideMatcher(RNAToPeptideMatcher):
             )
         return self._precomputed_intersections
 
-    def save_precomputed_intersections(self) -> None:
+    def save_precomputed_intersections(
+        self, path_to_intersections: Path = PATH_TO_PRECOMPUTED_INTERSECTIONS
+    ) -> None:
         np.savez_compressed(
-            PATH_TO_PRECOMPUTED_INTERSECTIONS,
-            intersections=self._precomputed_intersections,
+            path_to_intersections,
+            intersections=self.get_precomputed_intersections(),
         )
 
     @staticmethod
-    def load_precomputed_intersections() -> npt.NDArray[np.uint32]:
-        return np.load(PATH_TO_PRECOMPUTED_INTERSECTIONS)["intersections"]
+    def load_precomputed_intersections(
+        path_to_intersections: Path = PATH_TO_PRECOMPUTED_INTERSECTIONS,
+    ) -> npt.NDArray[np.uint32]:
+        return np.load(path_to_intersections)["intersections"]
