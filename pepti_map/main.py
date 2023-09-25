@@ -1,8 +1,11 @@
 import logging
 from pathlib import Path
 import shutil
+from typing import List, Set, Tuple, Union
 import click
-from pepti_map.constants import PATH_TO_TEMP_FILES
+import numpy as np
+import numpy.typing as npt
+from pepti_map.constants import PATH_TO_LAST_STEP_FILE, PATH_TO_TEMP_FILES, Step
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
@@ -21,6 +24,74 @@ def _setup():
 
 def _teardown():
     shutil.rmtree(PATH_TO_TEMP_FILES)
+
+
+def _write_last_step(step: int):
+    with open(PATH_TO_LAST_STEP_FILE, "wt", encoding="utf-8") as last_step_file:
+        last_step_file.write(str(step))
+
+
+def _get_last_step() -> int:
+    try:
+        with open(PATH_TO_LAST_STEP_FILE, "rt", encoding="utf-8") as last_step_file:
+            return int(last_step_file.readline().strip())
+    except FileNotFoundError:
+        return -1
+
+
+def load_matches(
+    precompute_intersections: bool,
+) -> Tuple[List[Union[Set[int], None]], Union[npt.NDArray[np.uint32], None]]:
+    matches = RNAToPeptideMatcher.load_matches()
+    if precompute_intersections:
+        precomputed_intersections = (
+            PrecomputingRNAToPeptideMatcher.load_precomputed_intersections()
+        )
+    else:
+        precomputed_intersections = None
+    return matches, precomputed_intersections
+
+
+def compute_matches(
+    peptide_file: str,
+    rna_file: str,
+    paired_end_file: str,
+    cutoff: int,
+    kmer_length: int,
+    output_dir: str,
+    precompute_intersections: bool,
+) -> Tuple[List[Union[Set[int], None]], Union[npt.NDArray[np.uint32], None]]:
+    kmer_index, peptide_to_cluster_mapping = PeptideToIndexImporter(
+        kmer_length
+    ).import_file_to_index(Path(peptide_file))
+
+    rna_files = [Path(rna_file)]
+    if paired_end_file != "":
+        rna_files.append(Path(paired_end_file))
+
+    if precompute_intersections:
+        matcher = PrecomputingRNAToPeptideMatcher(
+            kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
+        )
+    else:
+        matcher = RNAToPeptideMatcher(
+            kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
+        )
+    for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
+        matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+    del kmer_index
+    matcher.write_peptide_read_quant_file(
+        Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
+    )
+    matcher.save_matches()
+    matches = matcher.get_matches()
+    if isinstance(matcher, PrecomputingRNAToPeptideMatcher):
+        matcher.save_precomputed_intersections()
+        precomputed_intersections = matcher.get_precomputed_intersections()
+    else:
+        precomputed_intersections = None
+    _write_last_step(Step.MATCHING.value)
+    return matches, precomputed_intersections
 
 
 @click.command()
@@ -113,32 +184,21 @@ def main(
 
     # TODO: Use numpy arrays everywhere?
 
-    kmer_index, peptide_to_cluster_mapping = PeptideToIndexImporter(
-        kmer_length
-    ).import_file_to_index(Path(peptide_file))
-
-    rna_files = [Path(rna_file)]
-    if paired_end_file != "":
-        rna_files.append(Path(paired_end_file))
-
-    if precompute_intersections:
-        matcher = PrecomputingRNAToPeptideMatcher(
-            kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
+    last_step = _get_last_step()
+    if last_step == Step.MATCHING.value:
+        matches, precomputed_intersections = load_matches(precompute_intersections)
+    elif last_step < Step.MATCHING.value:
+        matches, precomputed_intersections = compute_matches(
+            peptide_file,
+            rna_file,
+            paired_end_file,
+            cutoff,
+            kmer_length,
+            output_dir,
+            precompute_intersections,
         )
-    else:
-        matcher = RNAToPeptideMatcher(
-            kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
-        )
-    for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
-        matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
-    del kmer_index
-    matcher.write_peptide_read_quant_file(
-        Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
-    )
-    matcher.save_matches()
-    if isinstance(matcher, PrecomputingRNAToPeptideMatcher):
-        matcher.save_precomputed_intersections()
-    print(matcher.get_matches())
+
+    # TODO: Add next step - merging
     _teardown()
 
 
