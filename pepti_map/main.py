@@ -44,10 +44,12 @@ def load_matches(
     precompute_intersections: bool,
 ) -> Tuple[List[Union[Set[int], None]], Union[npt.NDArray[np.uint32], None]]:
     matches = RNAToPeptideMatcher.load_matches()
+    logging.info("Loaded matches.")
     if precompute_intersections:
         precomputed_intersections = (
             PrecomputingRNAToPeptideMatcher.load_precomputed_intersections()
         )
+        logging.info("Loaded precomputed intersections.")
     else:
         precomputed_intersections = None
     return matches, precomputed_intersections
@@ -65,6 +67,7 @@ def compute_matches(
     kmer_index, peptide_to_cluster_mapping = PeptideToIndexImporter(
         kmer_length
     ).import_file_to_index(Path(peptide_file))
+    logging.info("Imported peptides to index.")
 
     rna_files = [Path(rna_file)]
     if paired_end_file != "":
@@ -74,12 +77,15 @@ def compute_matches(
         matcher = PrecomputingRNAToPeptideMatcher(
             kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
         )
+        logging.info("Precomputing intersections during matching.")
     else:
         matcher = RNAToPeptideMatcher(
             kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
         )
+    logging.info("Matching RNA-seq reads to peptides...")
     for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
         matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+    logging.info("Generated all matches.")
     del kmer_index
     matcher.write_peptide_read_quant_file(
         Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
@@ -211,8 +217,10 @@ def main(
     matches = []
     precomputed_intersections = None
     if last_step == Step.MATCHING.value:
+        logging.info("Using already computed matches from last run.")
         matches, precomputed_intersections = load_matches(precompute_intersections)
     elif last_step < Step.MATCHING.value:
+        logging.info("Computing matches from the given files.")
         matches, precomputed_intersections = compute_matches(
             peptide_file,
             rna_file,
