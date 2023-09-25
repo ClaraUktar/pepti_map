@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 import shutil
-from typing import List, Set, Tuple, Union
+from typing import List, Literal, Set, Tuple, Union
 import click
 import numpy as np
 import numpy.typing as npt
@@ -11,6 +11,7 @@ from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
 )
 from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
+from pepti_map.matching.match_merger import MatchMerger
 from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
     PrecomputingRNAToPeptideMatcher,
 )
@@ -162,6 +163,25 @@ def compute_matches(
         "calculation are precomputed during the matching phase."
     ),
 )
+@click.option(
+    "-j",
+    "--jaccard-index-threshold",
+    required=False,
+    type=float,
+    default=0.7,
+    help=(
+        "Sets of matched RNA-seq reads per peptide will only be merged "
+        "together if their Jaccard Index has a value above the given threshold."
+    ),
+)
+@click.option(
+    "-m",
+    "--merging-method",
+    required=False,
+    type=click.Choice(["agglomerative-clustering", "full-matrix"]),
+    default="full-matrix",
+    help="Which merging method to use for sets of matched RNA-seq reads.",
+)
 def main(
     peptide_file: str,
     rna_file: str,
@@ -170,6 +190,8 @@ def main(
     kmer_length: int,
     output_dir: str,
     precompute_intersections: bool,
+    jaccard_index_threshold: float,
+    merging_method: Literal["agglomerative-clustering", "full-matrix"],
 ):
     _setup()
     # TODO: Delete all classes not needed here!
@@ -185,6 +207,9 @@ def main(
     # TODO: Use numpy arrays everywhere?
 
     last_step = _get_last_step()
+    # TODO: Make more beautiful?
+    matches = []
+    precomputed_intersections = None
     if last_step == Step.MATCHING.value:
         matches, precomputed_intersections = load_matches(precompute_intersections)
     elif last_step < Step.MATCHING.value:
@@ -198,7 +223,11 @@ def main(
             precompute_intersections,
         )
 
-    # TODO: Add next step - merging
+    merged_sets, peptide_indexes = MatchMerger(
+        matches, jaccard_index_threshold, precomputed_intersections
+    ).merge_matches(merging_method)
+    print(merged_sets)
+
     _teardown()
 
 
