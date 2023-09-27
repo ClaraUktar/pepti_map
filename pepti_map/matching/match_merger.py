@@ -69,16 +69,24 @@ class MatchMerger:
             np.arange(precomputed_intersections.shape[0]),
             np.arange(precomputed_intersections.shape[1]),
         )
+
         # Broadcasted cell-wise Jaccard-Index computation
-        precomputed_intersections = np.divide(
-            precomputed_intersections,
-            (
-                set_sizes[row_index]
-                + set_sizes[column_index]
-                - precomputed_intersections
-            ),
-            dtype=np.float16,
+        def get_jaccard_int_value(intersection_size, set1_size, set2_size):
+            return round(
+                (
+                    intersection_size
+                    * ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
+                )
+                / (set1_size + set2_size - intersection_size)
+            )
+
+        vectorized_jaccard_calculation = np.vectorize(
+            get_jaccard_int_value, otypes=[np.uint16]
         )
+        precomputed_intersections = vectorized_jaccard_calculation(
+            precomputed_intersections, set_sizes[row_index], set_sizes[column_index]
+        )
+
         self.jaccard_calculator = ExactJaccardCalculator(precomputed_intersections)
 
     def _create_min_hash_calculator(self) -> None:

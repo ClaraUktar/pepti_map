@@ -12,7 +12,10 @@ class IMergingMethod(ABC):
         jaccard_calculator: IJaccardIndexCalculator,
         jaccard_index_threshold: float = 0.7,
     ):
-        self.jaccard_index_threshold = jaccard_index_threshold
+        self.jaccard_index_threshold: int = round(
+            jaccard_index_threshold
+            * IJaccardIndexCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
+        )
         self._process_jaccard_calculator(jaccard_calculator)
 
     @abstractmethod

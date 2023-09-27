@@ -234,7 +234,7 @@ def main(
     merged_sets, peptide_indexes = MatchMerger(
         matches, jaccard_index_threshold, precomputed_intersections
     ).merge_matches(merging_method)
-    print(merged_sets)
+    print(peptide_indexes)
 
     _teardown()
 

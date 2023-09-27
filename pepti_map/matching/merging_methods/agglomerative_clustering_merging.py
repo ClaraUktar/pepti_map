@@ -21,7 +21,7 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
         jaccard_calculator: IJaccardIndexCalculator,
         jaccard_index_threshold: float = 0.7,
     ):
-        self._distance_matrix: npt.NDArray[np.float16]
+        self._distance_matrix: npt.NDArray[np.uint16]
         super(AgglomerativeClusteringMergingMethod, self).__init__(
             jaccard_calculator, jaccard_index_threshold
         )
@@ -30,7 +30,11 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
         self, jaccard_calculator: IJaccardIndexCalculator
     ) -> None:
         # TODO: Does this result in two matrices?
-        self._distance_matrix = 1.0 - jaccard_calculator.get_jaccard_index_matrix()
+        self._distance_matrix = np.subtract(
+            round(1.0 * IJaccardIndexCalculator.JACCARD_INT_MULTIPLICATION_FACTOR),
+            jaccard_calculator.get_jaccard_index_matrix(),
+            dtype=np.uint16,
+        )
 
     def _generate_result_from_labels(
         self,
@@ -67,7 +71,10 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
             metric="precomputed",
             compute_full_tree=True,
             n_clusters=None,
-            distance_threshold=(1.0 - self.jaccard_index_threshold),
+            distance_threshold=(
+                round(1.0 * IJaccardIndexCalculator.JACCARD_INT_MULTIPLICATION_FACTOR)
+                - self.jaccard_index_threshold
+            ),
             linkage="single",
         )
         clustering.fit(self._distance_matrix)

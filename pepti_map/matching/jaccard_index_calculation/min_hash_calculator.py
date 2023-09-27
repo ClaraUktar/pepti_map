@@ -24,14 +24,19 @@ class MinHashCalculator(IJaccardIndexCalculator):
         jaccard_index_matrix: npt.NDArray,
     ) -> float:
         if current_index == index_to_compare:
-            return 1.0
+            return round(
+                1.0 * IJaccardIndexCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
+            )
         if index_to_compare < current_index:
             return jaccard_index_matrix[index_to_compare][current_index]
-        return current_min_hash.jaccard(min_hash_to_compare)
+        return round(
+            current_min_hash.jaccard(min_hash_to_compare)
+            * IJaccardIndexCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
+        )
 
-    def get_jaccard_index_matrix(self) -> npt.NDArray[np.float16]:
+    def get_jaccard_index_matrix(self) -> npt.NDArray[np.uint16]:
         jaccard_index_matrix = np.empty(
-            shape=(len(self.min_hashes), len(self.min_hashes)), dtype=np.float16
+            shape=(len(self.min_hashes), len(self.min_hashes)), dtype=np.uint16
         )
         for row_index in range(0, len(self.min_hashes)):
             current_min_hash = self.min_hashes[row_index]
@@ -46,6 +51,6 @@ class MinHashCalculator(IJaccardIndexCalculator):
                     )
                     for min_hash_index, min_hash in enumerate(self.min_hashes)
                 ],
-                dtype=np.float16,
+                dtype=np.uint16,
             )
         return jaccard_index_matrix

@@ -30,9 +30,16 @@ class TestExactJaccardCalculator:
                 [0.0, 0.0, 1 / 7, 1.0],
             ]
         )
-        exact_jaccard_calculator = ExactJaccardCalculator(jaccard_indexes)
+        exact_jaccard_calculator = ExactJaccardCalculator(
+            np.round(
+                jaccard_indexes
+                * ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
+            ).astype(np.uint16)
+        )
         np.testing.assert_array_equal(
-            exact_jaccard_calculator.get_jaccard_index_matrix(), jaccard_indexes
+            exact_jaccard_calculator.get_jaccard_index_matrix()
+            / ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR,
+            np.round(jaccard_indexes, 4),
         )
 
     def test_get_single_value(self):
@@ -71,7 +78,8 @@ class TestMinHashCalculator:
         )
         min_hash_calculator = MinHashCalculator(test_min_hashes)
         np.testing.assert_allclose(
-            min_hash_calculator.get_jaccard_index_matrix(),
+            min_hash_calculator.get_jaccard_index_matrix()
+            / MinHashCalculator.JACCARD_INT_MULTIPLICATION_FACTOR,
             expected_jaccard_indexes,
             atol=0.015,
             rtol=0.0,

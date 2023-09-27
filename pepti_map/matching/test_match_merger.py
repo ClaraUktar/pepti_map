@@ -2,6 +2,9 @@ from typing import Set
 from unittest.mock import patch
 from datasketch import LeanMinHash, MinHash
 import numpy as np
+from pepti_map.matching.jaccard_index_calculation.jaccard_index_calculator import (
+    IJaccardIndexCalculator,
+)
 
 from pepti_map.matching.match_merger import NUM_BYTES_FOR_MIN_HASH_VALUES, MatchMerger
 
@@ -118,15 +121,17 @@ class TestMatchMerger:
             ],
             dtype=np.uint32,
         )
-        expected_jaccard_indexes = np.array(
-            [
-                [1.0, 0.0, 1 / 3, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [1 / 3, 0.0, 1.0, 1 / 7],
-                [0.0, 0.0, 1 / 7, 1.0],
-            ],
-            dtype=np.float16,
-        )
+        expected_jaccard_indexes = np.round(
+            np.array(
+                [
+                    [1.0, 0.0, 1 / 3, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [1 / 3, 0.0, 1.0, 1 / 7],
+                    [0.0, 0.0, 1 / 7, 1.0],
+                ],
+            )
+            * IJaccardIndexCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
+        ).astype(np.uint16)
         MatchMerger(test_matches, 0.7, test_precomputed_intersections)
         mock_exact_jaccard_calculator_init.assert_called_once()
         np.testing.assert_array_equal(
