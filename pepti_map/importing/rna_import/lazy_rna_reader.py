@@ -55,7 +55,9 @@ class LazyRNAReader(object):
         elif self._line_count_for_current_sequence == 3:
             self._line_count_for_current_sequence = 0
             return (
-                self._construct_shortened_id(line_index, is_reverse_complement),
+                LazyRNAReader._construct_shortened_id(
+                    line_index, is_reverse_complement
+                ),
                 self._sequence,
             )
 
@@ -66,7 +68,7 @@ class LazyRNAReader(object):
     def __iter__(self):
         # TODO: Write logic for picking up where left off in file
         for file_index, filepath in enumerate(self._filepaths):
-            if self._is_gzip(filepath):
+            if LazyRNAReader._is_gzip(filepath):
                 logging.info(
                     f"Detected gzip file: {filepath}. Reading in compressed format..."
                 )
