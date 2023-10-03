@@ -7,6 +7,7 @@ import pytest
 
 from pepti_map.importing.rna_import.rna_importer import RNAImporter
 from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
+from pepti_map.importing.rna_import.rna_reads_retriever import RNAReadsRetriever
 from pepti_map.importing.rna_import.rna_to_index_importer import RNAToIndexImporter
 from pepti_map.importing.rna_import.testdata_rna_importer import (
     EXPECTED_RESULT_DF_PAIRED_END,
@@ -150,3 +151,93 @@ class TestLazyRNAReader:
         for line in LazyRNAReader([Path("path/to/file")], cutoff=10):
             read_lines.append(line)
         assert read_lines == EXPECTED_RESULT_LINES_SINGLE_END_CUTOFF
+
+
+class TestRNAReadsRetriever:
+    def test_raises_error_when_no_file_given(self):
+        with pytest.raises(ValueError):
+            RNAReadsRetriever([])
+
+    def test_raises_error_when_more_than_two_files_given(self):
+        with pytest.raises(ValueError):
+            RNAReadsRetriever([Path("file1"), Path("file2"), Path("file3")])
+
+    @patch("gzip.open", return_value=StringIO(MOCK_FILE_1_CONTENT))
+    def test_single_end_file_gzipped(self, _):
+        reads_retriever = RNAReadsRetriever([Path("path/to/file.gz")])
+        expected_ids = [11, 41, 51]
+        expected_reads = [
+            (
+                "GCGTGTAATGTTATGATCTTATGCTTGTTTTAGTCCGCTAGGTTCTTT"
+                "GGTGTACTGCCACTTTTCGATGCCATGCGCATTCTTGGGACTAGGAAGTACGA"
+            ),
+            (
+                "GCGTGTAATGTTATGATCTTATGCTTGTTTTAGTCCGCTAGGTTCTTTGGTGT"
+                "ACTGCCACTTTTCGATGCCATGCGCATTCTTGGGACTAGGAAGTACGA"
+            ),
+            (
+                "ACCGCCACGCATCCTACCTTGTAAGAGGATATCAATGGCGATCGGT"
+                "GTACAAACAGAGCTGATGCCCACTATTTCACGTAAGTAGTGGGAGGGTCGCGTGC"
+            ),
+        ]
+        assert reads_retriever.get_read_sequences_for_ids([11, 41, 51]) == (
+            expected_ids,
+            expected_reads,
+        )
+
+    @patch(
+        "builtins.open",
+        side_effect=[
+            StringIO(MOCK_FILE_1_CONTENT),
+            StringIO(MOCK_FILE_2_CONTENT),
+        ],
+    )
+    def test_paired_end_file(self, _):
+        reads_retriever = RNAReadsRetriever(
+            [Path("path/to/file1"), Path("path/to/file2")]
+        )
+        expected_ids = [21, 31, 41, 12, 32, 52]
+        expected_reads = [
+            (
+                "ACCGCCACGCTTACCGTTTTGGCGCTATGCTTCCATTCTGTTGTCT"
+                "ACGAGGCGATAACAACACGATACGCTCTGTTCTTACTCAGACTTATTCCGAAGCC"
+            ),
+            (
+                "GGCCCTCGAGATACGCGCGGGAGTACGCTCCCAACTGTTTTATACCCCTGT"
+                "TTTCATCTTATAGCAACACCCCGGAGTAAGCGCACTCATCCTCTCCTATC"
+            ),
+            (
+                "GCGTGTAATGTTATGATCTTATGCTTGTTTTAGTCCGCTAGGTTCTTTGGTGT"
+                "ACTGCCACTTTTCGATGCCATGCGCATTCTTGGGACTAGGAAGTACGA"
+            ),
+            (
+                "GAGCTCGATTTGCAATGAGCCGCCCCTCTTCCATAAAATCTTGCAAATTC"
+                "CGCGTCTCGGGCTCTGTCCAACACGTATGCCTCCCTTCACGATGACTTAAG"
+            ),
+            (
+                "AGCACCTGGTGCATTACTTCCTACCAACATGGATACAAGATGGGCCTTGCG"
+                "CTCTTTAAGTCCGCTGAGATTGCTCTATTCACTAAATCGTACGTACTGGA"
+            ),
+            (
+                "GGCCCTCGAGATACGCGCGGGAGTACGCTCCCAACTGTTTTATACCCCTGTT"
+                "TTCATCTTATAGCAACACCCCGGAGTAAGCGCACTCATCCTCTCCTATC"
+            ),
+        ]
+        assert reads_retriever.get_read_sequences_for_ids([12, 21, 31, 32, 41, 52]) == (
+            expected_ids,
+            expected_reads,
+        )
+
+    @patch("builtins.open", mock_open(read_data=MOCK_FILE_1_CONTENT))
+    def test_cutoff(self):
+        reads_retriever = RNAReadsRetriever([Path("path/to/file")], cutoff=10)
+        expected_ids = [11, 41, 51]
+        expected_reads = [
+            "GCGTGTAATG",
+            "GCGTGTAATG",
+            "ACCGCCACGC",
+        ]
+        assert reads_retriever.get_read_sequences_for_ids([11, 41, 51]) == (
+            expected_ids,
+            expected_reads,
+        )

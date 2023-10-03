@@ -1,7 +1,7 @@
 import gzip
 import logging
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, TextIO, Tuple
 
 from Bio.Seq import MutableSeq
 
@@ -54,6 +54,27 @@ class RNAReadsRetriever:
             line = str(MutableSeq(line).reverse_complement(inplace=True))
         return line
 
+    def _append_sequences_for_file(
+        self,
+        read_ids_for_file: List[int],
+        rna_file: TextIO,
+        is_reverse_complement: bool,
+        sequences: List[str],
+    ) -> None:
+        current_read_id = read_ids_for_file.pop(0)
+        for line_index, line in enumerate(rna_file):
+            if (line_index // 4) + 1 != current_read_id:
+                continue
+
+            if line_index != (current_read_id - 1) * 4 + 1:
+                continue
+
+            sequences.append(self._process_line(line, is_reverse_complement))
+            try:
+                current_read_id = read_ids_for_file.pop(0)
+            except IndexError:
+                break
+
     def get_read_sequences_for_ids(
         self, read_ids: List[int]
     ) -> Tuple[List[int], List[str]]:
@@ -70,25 +91,16 @@ class RNAReadsRetriever:
             read_ids_for_file = sorted_read_ids[file_index]
             if len(read_ids_for_file) == 0:
                 continue
-            current_read_id = read_ids_for_file.pop(0)
 
             if RNAReadsRetriever._is_gzip(filepath):
-                opening_function = gzip.open
+                with gzip.open(filepath, "rt", encoding="utf-8") as rna_file:
+                    self._append_sequences_for_file(
+                        read_ids_for_file, rna_file, file_index == 1, sequences
+                    )
             else:
-                opening_function = open
-
-            with opening_function(filepath, "rt", encoding="utf-8") as rna_file:
-                for line_index, line in enumerate(rna_file):
-                    if (line_index // 4) + 1 != current_read_id:
-                        continue
-
-                    if line_index != (current_read_id - 1) * 4 + 1:
-                        continue
-
-                    sequences.append(self._process_line(line, file_index == 1))
-                    try:
-                        current_read_id = read_ids_for_file.pop(0)
-                    except IndexError:
-                        break
+                with open(filepath, "rt", encoding="utf-8") as rna_file:
+                    self._append_sequences_for_file(
+                        read_ids_for_file, rna_file, file_index == 1, sequences
+                    )
 
         return original_sorted_ids, sequences
