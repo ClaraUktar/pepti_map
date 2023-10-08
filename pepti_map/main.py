@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import shutil
+import time
 from typing import List, Literal, Set, Tuple, Union
 import click
 import numpy as np
@@ -83,9 +84,12 @@ def compute_matches(
             kmer_index, kmer_index.number_of_peptides, peptide_to_cluster_mapping
         )
     logging.info("Matching RNA-seq reads to peptides...")
+    start_matching = time.time()
     for sequence_id, sequence in LazyRNAReader(rna_files, cutoff):
         matcher.add_peptide_matches_for_rna_read(sequence_id, sequence)
+    end_matching = time.time()
     logging.info("Generated all matches.")
+    logging.info(f"Time for matching: {end_matching - start_matching} sec")
     del kmer_index
     matcher.write_peptide_read_quant_file(
         Path(output_dir), PeptideImporter().import_file(Path(peptide_file))
@@ -231,10 +235,18 @@ def main(
             precompute_intersections,
         )
 
+    n_matches = 0
+    for match in matches:
+        if match is not None:
+            n_matches += 1
+    logging.info(f"Number of (non-None) matches: {n_matches}")
+    start_merging = time.time()
     merged_sets, peptide_indexes = MatchMerger(
         matches, jaccard_index_threshold, precomputed_intersections
     ).merge_matches(merging_method)
-    print(peptide_indexes)
+    end_merging = time.time()
+    logging.info(f"Time for merging: {end_merging - start_merging} sec")
+    logging.info(f"Number of merged matches: {len(merged_sets)}")
 
     _teardown()
 
