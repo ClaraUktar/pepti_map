@@ -240,11 +240,13 @@ def main(
         if match is not None:
             n_matches += 1
     logging.info(f"Number of (non-None) matches: {n_matches}")
+    logging.info(f"Merging sets of matched RNA-seq reads with method: {merging_method}")
     start_merging = time.time()
     merged_sets, peptide_indexes = MatchMerger(
         matches, jaccard_index_threshold, precomputed_intersections
     ).merge_matches(merging_method)
     end_merging = time.time()
+    logging.info("Completed merging.")
     logging.info(f"Time for merging: {end_merging - start_merging} sec")
     logging.info(f"Number of merged matches: {len(merged_sets)}")
 
