@@ -231,9 +231,11 @@ def main(
             precompute_intersections,
         )
 
+    logging.info(f"Merging sets of matched RNA-seq reads with method: {merging_method}")
     merged_sets, peptide_indexes = MatchMerger(
         matches, jaccard_index_threshold, precomputed_intersections
     ).merge_matches(merging_method)
+    logging.info("Completed merging.")
     print(peptide_indexes)
 
     _teardown()
