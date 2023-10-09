@@ -5,12 +5,14 @@ from typing import List, Literal, Set, Tuple, Union
 import click
 import numpy as np
 import numpy.typing as npt
+from pepti_map.assembling.assembly_input_generator import AssemblyInputGenerator
 from pepti_map.constants import PATH_TO_LAST_STEP_FILE, PATH_TO_TEMP_FILES, Step
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
 )
 from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
+from pepti_map.importing.rna_import.rna_reads_retriever import RNAReadsRetriever
 from pepti_map.matching.match_merger import MatchMerger
 from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
     PrecomputingRNAToPeptideMatcher,
@@ -237,6 +239,20 @@ def main(
     ).merge_matches(merging_method)
     logging.info("Completed merging.")
     print(peptide_indexes)
+    print(merged_sets)
+
+    rna_files = [Path(rna_file)]
+    if paired_end_file != "":
+        rna_files.append(Path(paired_end_file))
+    rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
+    for set_index, merged_set in enumerate(merged_sets):
+        read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
+            list(merged_set)
+        )
+        AssemblyInputGenerator.write_fasta_with_sequences(
+            list(zip(read_ids, read_sequences)),
+            PATH_TO_TEMP_FILES / f"{str(set_index)}.fa",
+        )
 
     _teardown()
 
