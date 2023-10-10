@@ -63,5 +63,7 @@ class TrinityWrapper:
             command_to_run.append(f"/temp/{filename}")
         else:
             command_to_run.append((self._output_dir / filename).as_posix())
-        subprocess.run(command_to_run)
+        subprocess.run(
+            command_to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
         return self._get_results_from_trinity_output_file()
