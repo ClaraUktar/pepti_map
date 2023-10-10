@@ -1,4 +1,5 @@
 import logging
+from dotenv import load_dotenv
 from pathlib import Path
 import shutil
 from typing import List, Literal, Set, Tuple, Union
@@ -6,6 +7,7 @@ import click
 import numpy as np
 import numpy.typing as npt
 from pepti_map.assembling.assembly_input_generator import AssemblyInputGenerator
+from pepti_map.assembling.trinity_wrapper import TrinityWrapper
 from pepti_map.constants import PATH_TO_LAST_STEP_FILE, PATH_TO_TEMP_FILES, Step
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
@@ -23,6 +25,7 @@ from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 def _setup():
     logging.basicConfig(level=logging.DEBUG)
     PATH_TO_TEMP_FILES.mkdir(exist_ok=True)
+    load_dotenv()
 
 
 def _teardown():
@@ -245,14 +248,18 @@ def main(
     if paired_end_file != "":
         rna_files.append(Path(paired_end_file))
     rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
+    trinity_wrapper = TrinityWrapper(PATH_TO_TEMP_FILES)
     for set_index, merged_set in enumerate(merged_sets):
         read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
             list(merged_set)
         )
+        filename = f"{str(set_index)}.fa"
         AssemblyInputGenerator.write_fasta_with_sequences(
             list(zip(read_ids, read_sequences)),
-            PATH_TO_TEMP_FILES / f"{str(set_index)}.fa",
+            PATH_TO_TEMP_FILES / filename,
         )
+        trinity_wrapper.get_trinity_result_for_file(filename)
+        # TODO: Delete input fasta?
 
     _teardown()
 
