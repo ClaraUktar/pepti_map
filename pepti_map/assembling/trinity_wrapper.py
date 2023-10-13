@@ -17,12 +17,11 @@ class TrinityWrapper:
                     "run",
                     "--rm",
                     "-v",
-                    f"{output_dir.absolute().as_posix()}:/temp",
+                    f"{output_dir.absolute().as_posix()}:/{output_dir.as_posix()}",
                     "trinityrnaseq/trinityrnaseq",
                     "Trinity",
                 ]
             )
-            self._command.extend(["--output", "/temp/trinity_out_dir"])
         else:
             self._using_docker = False
             trinity_path = os.getenv("TRINITY_PATH")
@@ -34,9 +33,6 @@ class TrinityWrapper:
                     )
                 )
             self._command.append(trinity_path)
-            self._command.extend(
-                ["--output", (output_dir / "trinity_out_dir").as_posix()]
-            )
 
         self._command.extend(
             [
@@ -49,20 +45,52 @@ class TrinityWrapper:
                 "--full_cleanup",
                 "--min_contig_length",
                 "100",
-                "--single",
             ]
         )
 
-    def _get_results_from_trinity_output_file(self) -> List[str]:
+    def _get_results_from_trinity_output_file(
+        self, output_dir_for_file: Path
+    ) -> List[str]:
+        # TODO
+        with open(
+            output_dir_for_file / "trinity_out_dir.Trinity.fasta",
+            "rt",
+            encoding="utf-8",
+        ) as result_fasta:
+            print(result_fasta.readlines())
         return []
 
-    def get_trinity_result_for_file(self, filename: str) -> List[str]:
+    def get_trinity_result_for_file(self, relative_filepath: Path) -> List[str]:
         command_to_run = self._command.copy()
         if self._using_docker:
-            command_to_run.append(f"/temp/{filename}")
+            command_to_run.extend(
+                [
+                    "--output",
+                    "/"
+                    + (
+                        self._output_dir / relative_filepath.parent / "trinity_out_dir"
+                    ).as_posix(),
+                ]
+            )
+            command_to_run.extend(
+                ["--single", "/" + (self._output_dir / relative_filepath).as_posix()]
+            )
         else:
-            command_to_run.append((self._output_dir / filename).as_posix())
+            command_to_run.extend(
+                [
+                    "--output",
+                    (
+                        self._output_dir / relative_filepath.parent / "trinity_out_dir"
+                    ).as_posix(),
+                ]
+            )
+            command_to_run.extend(
+                ["--single", (self._output_dir / relative_filepath).as_posix()]
+            )
+
         subprocess.run(
             command_to_run, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
-        return self._get_results_from_trinity_output_file()
+        return self._get_results_from_trinity_output_file(
+            self._output_dir / relative_filepath.parent
+        )

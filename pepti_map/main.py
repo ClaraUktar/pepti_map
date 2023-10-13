@@ -253,12 +253,13 @@ def main(
         read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
             list(merged_set)
         )
-        filename = f"{str(set_index)}.fa"
+        (PATH_TO_TEMP_FILES / f"{str(set_index)}").mkdir()
+        relative_filepath = Path(f"{str(set_index)}/{str(set_index)}.fa")
         AssemblyInputGenerator.write_fasta_with_sequences(
             list(zip(read_ids, read_sequences)),
-            PATH_TO_TEMP_FILES / filename,
+            PATH_TO_TEMP_FILES / relative_filepath,
         )
-        trinity_wrapper.get_trinity_result_for_file(filename)
+        trinity_wrapper.get_trinity_result_for_file(relative_filepath)
         # TODO: Delete input fasta?
 
     _teardown()
