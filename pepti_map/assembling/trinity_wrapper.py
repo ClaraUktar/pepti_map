@@ -49,7 +49,6 @@ class TrinityWrapper:
                 "--full_cleanup",
                 "--min_contig_length",
                 "100",
-                "--no_normalize_reads",
                 "--single",
             ]
         )
