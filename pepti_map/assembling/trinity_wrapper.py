@@ -5,7 +5,7 @@ from typing import List
 
 
 class TrinityWrapper:
-    def __init__(self, output_dir: Path):
+    def __init__(self, output_dir: Path, min_contig_length: int = 200):
         self._output_dir = output_dir
         self._command = []
         use_docker = os.getenv("USE_DOCKER")
@@ -44,7 +44,7 @@ class TrinityWrapper:
                 "F",
                 "--full_cleanup",
                 "--min_contig_length",
-                "100",
+                str(min_contig_length),
             ]
         )
 

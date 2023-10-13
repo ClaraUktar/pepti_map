@@ -193,6 +193,14 @@ def compute_matches(
     default="full-matrix",
     help="Which merging method to use for sets of matched RNA-seq reads.",
 )
+@click.option(
+    "-cl",
+    "--min-contig-length",
+    required=False,
+    type=int,
+    default=200,
+    help="Sets the '--min_contig_length' option for Trinity during assembly.",
+)
 def main(
     peptide_file: str,
     rna_file: str,
@@ -203,6 +211,7 @@ def main(
     precompute_intersections: bool,
     jaccard_index_threshold: float,
     merging_method: Literal["agglomerative-clustering", "full-matrix"],
+    min_contig_length: int,
 ):
     _setup()
     # TODO: Delete all classes not needed here!
@@ -248,7 +257,7 @@ def main(
     if paired_end_file != "":
         rna_files.append(Path(paired_end_file))
     rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
-    trinity_wrapper = TrinityWrapper(PATH_TO_TEMP_FILES)
+    trinity_wrapper = TrinityWrapper(PATH_TO_TEMP_FILES, min_contig_length)
     for set_index, merged_set in enumerate(merged_sets):
         read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
             list(merged_set)
