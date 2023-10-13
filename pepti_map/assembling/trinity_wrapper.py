@@ -9,7 +9,7 @@ class TrinityWrapper:
         self._output_dir = output_dir
         self._command = []
         use_docker = os.getenv("USE_DOCKER")
-        if use_docker is not None and bool(use_docker):
+        if use_docker is not None and use_docker == "True":
             self._using_docker = True
             self._command.extend(
                 [
