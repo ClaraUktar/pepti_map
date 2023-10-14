@@ -6,6 +6,7 @@ from typing import List, Literal, Set, Tuple, Union
 import click
 import numpy as np
 import numpy.typing as npt
+import matplotlib.pyplot as plt
 from pepti_map.assembling.assembly_input_generator import AssemblyInputGenerator
 from pepti_map.assembling.trinity_wrapper import TrinityWrapper
 from pepti_map.constants import PATH_TO_LAST_STEP_FILE, PATH_TO_TEMP_FILES, Step
@@ -15,6 +16,9 @@ from pepti_map.importing.peptide_import.peptide_to_index_importer import (
 )
 from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
 from pepti_map.importing.rna_import.rna_reads_retriever import RNAReadsRetriever
+from pepti_map.matching.jaccard_index_calculation.jaccard_index_calculator import (
+    IJaccardIndexCalculator,
+)
 from pepti_map.matching.match_merger import MatchMerger
 from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
     PrecomputingRNAToPeptideMatcher,
@@ -23,7 +27,7 @@ from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 
 
 def _setup():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     PATH_TO_TEMP_FILES.mkdir(exist_ok=True)
     load_dotenv()
 
@@ -245,31 +249,64 @@ def main(
             precompute_intersections,
         )
 
-    logging.info(f"Merging sets of matched RNA-seq reads with method: {merging_method}")
-    merged_sets, peptide_indexes = MatchMerger(
+    # logging.info(f"Merging sets of matched RNA-seq reads with method: {merging_method}")
+    jaccard_index_values = MatchMerger(
         matches, jaccard_index_threshold, precomputed_intersections
-    ).merge_matches(merging_method)
-    logging.info("Completed merging.")
-    print(peptide_indexes)
-    print(merged_sets)
+    ).jaccard_calculator.get_jaccard_index_matrix()
+    number_of_single_entries = (
+        (jaccard_index_values.shape[0] * (jaccard_index_values.shape[0] + 1)) / 2
+    ) - jaccard_index_values.shape[0]
+    single_values = np.zeros(shape=(int(number_of_single_entries),), dtype=np.float16)
+    for i in range(jaccard_index_values.shape[0]):
+        single_values[
+            int(i * jaccard_index_values.shape[0] - (i * (i + 1)) / 2) : int(
+                i * jaccard_index_values.shape[0]
+                - (i * (i + 1)) / 2
+                + jaccard_index_values.shape[0]
+                - (i + 1)
+            )
+        ] = (
+            jaccard_index_values[i][(i + 1) : jaccard_index_values.shape[0]]
+            / IJaccardIndexCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
+        )
 
-    rna_files = [Path(rna_file)]
-    if paired_end_file != "":
-        rna_files.append(Path(paired_end_file))
-    rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
-    trinity_wrapper = TrinityWrapper(PATH_TO_TEMP_FILES, min_contig_length)
-    for set_index, merged_set in enumerate(merged_sets):
-        read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
-            list(merged_set)
-        )
-        (PATH_TO_TEMP_FILES / f"{str(set_index)}").mkdir()
-        relative_filepath = Path(f"{str(set_index)}/{str(set_index)}.fa")
-        AssemblyInputGenerator.write_fasta_with_sequences(
-            list(zip(read_ids, read_sequences)),
-            PATH_TO_TEMP_FILES / relative_filepath,
-        )
-        trinity_wrapper.get_trinity_result_for_file(relative_filepath)
-        # TODO: Delete input fasta?
+    plt.hist(
+        single_values,
+        bins=np.histogram_bin_edges(single_values, bins=20, range=(0, 1)),
+        rwidth=0.8,
+    )
+    plt.savefig("./jaccard_index_histogram.png")
+    plt.close()
+    single_values[single_values == 0] = np.nan
+    plt.hist(
+        single_values,
+        bins=np.histogram_bin_edges(single_values, bins=20, range=(0, 1)),
+        rwidth=0.8,
+    )
+    plt.savefig("./jaccard_index_histogram_without_zeros.png")
+    plt.close()
+
+    # logging.info("Completed merging.")
+    # print(peptide_indexes)
+    # print(merged_sets)
+
+    # rna_files = [Path(rna_file)]
+    # if paired_end_file != "":
+    #     rna_files.append(Path(paired_end_file))
+    # rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
+    # trinity_wrapper = TrinityWrapper(PATH_TO_TEMP_FILES, min_contig_length)
+    # for set_index, merged_set in enumerate(merged_sets):
+    #     read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
+    #         list(merged_set)
+    #     )
+    #     (PATH_TO_TEMP_FILES / f"{str(set_index)}").mkdir()
+    #     relative_filepath = Path(f"{str(set_index)}/{str(set_index)}.fa")
+    #     AssemblyInputGenerator.write_fasta_with_sequences(
+    #         list(zip(read_ids, read_sequences)),
+    #         PATH_TO_TEMP_FILES / relative_filepath,
+    #     )
+    #     trinity_wrapper.get_trinity_result_for_file(relative_filepath)
+    #     # TODO: Delete input fasta?
 
     _teardown()
 
