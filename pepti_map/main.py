@@ -1,4 +1,5 @@
 import logging
+from dotenv import load_dotenv
 from pathlib import Path
 import shutil
 import time
@@ -6,12 +7,15 @@ from typing import List, Literal, Set, Tuple, Union
 import click
 import numpy as np
 import numpy.typing as npt
+from pepti_map.assembling.assembly_input_generator import AssemblyInputGenerator
+from pepti_map.assembling.trinity_wrapper import TrinityWrapper
 from pepti_map.constants import PATH_TO_LAST_STEP_FILE, PATH_TO_TEMP_FILES, Step
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
 )
 from pepti_map.importing.rna_import.lazy_rna_reader import LazyRNAReader
+from pepti_map.importing.rna_import.rna_reads_retriever import RNAReadsRetriever
 from pepti_map.matching.match_merger import MatchMerger
 from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
     PrecomputingRNAToPeptideMatcher,
@@ -22,6 +26,7 @@ from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 def _setup():
     logging.basicConfig(level=logging.DEBUG)
     PATH_TO_TEMP_FILES.mkdir(exist_ok=True)
+    load_dotenv()
 
 
 def _teardown():
@@ -192,6 +197,14 @@ def compute_matches(
     default="full-matrix",
     help="Which merging method to use for sets of matched RNA-seq reads.",
 )
+@click.option(
+    "-cl",
+    "--min-contig-length",
+    required=False,
+    type=int,
+    default=200,
+    help="Sets the '--min_contig_length' option for Trinity during assembly.",
+)
 def main(
     peptide_file: str,
     rna_file: str,
@@ -202,6 +215,7 @@ def main(
     precompute_intersections: bool,
     jaccard_index_threshold: float,
     merging_method: Literal["agglomerative-clustering", "full-matrix"],
+    min_contig_length: int,
 ):
     _setup()
     # TODO: Delete all classes not needed here!

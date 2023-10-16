@@ -9,7 +9,7 @@ class TestAssemblyInputGenerator:
             "GCGTGTAATGTTATGATCTTATGCTTGTTTTAGTCCGCTAGGTTCTTTGGT"
             "GTACTGCCACTTTTCGATGCCATGCGCATTCTTGGGACTAGGAAGTACGA"
         )
-        AssemblyInputGenerator().write_fasta_with_sequences(
+        AssemblyInputGenerator.write_fasta_with_sequences(
             [
                 (
                     read_id,
@@ -36,7 +36,7 @@ class TestAssemblyInputGenerator:
             "CTTAAGTCATCGTGAAGGGAGGCATACGTGTTGGACAGAGCCCGAGACGC"
             "GGAATTTGCAAGATTTTATGGAAGAGGGGCGGCTCATTGCAAATCGAGCTC"
         )
-        AssemblyInputGenerator().write_fasta_with_sequences(
+        AssemblyInputGenerator.write_fasta_with_sequences(
             [
                 (
                     read_id_1,

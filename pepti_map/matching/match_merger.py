@@ -35,6 +35,7 @@ class MatchMerger:
                 precomputed_intersections, deleted_indexes
             )
             self._create_exact_jaccard_calculator(precomputed_intersections)
+            del precomputed_intersections
         else:
             self._create_min_hash_calculator()
 
@@ -71,23 +72,7 @@ class MatchMerger:
         )
 
         # Broadcasted cell-wise Jaccard-Index computation
-        # def get_jaccard_int_value(intersection_size, set1_size, set2_size):
-        #     return round(
-        #         (
-        #             intersection_size
-        #             * ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
-        #         )
-        #         / (set1_size + set2_size - intersection_size)
-        #     )
-
-        # vectorized_jaccard_calculation = np.vectorize(
-        #     get_jaccard_int_value, otypes=[np.uint16]
-        # )
-        # precomputed_intersections = vectorized_jaccard_calculation(
-        #     precomputed_intersections, set_sizes[row_index], set_sizes[column_index]
-        # )
-
-        precomputed_intersections = np.floor_divide(
+        precomputed_intersections_large = np.floor_divide(
             precomputed_intersections
             * ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR,
             (
@@ -95,8 +80,10 @@ class MatchMerger:
                 + set_sizes[column_index]
                 - precomputed_intersections
             ),
-            dtype=np.uint16,
+            dtype=np.uint32,
         )
+        precomputed_intersections = precomputed_intersections_large.astype(np.uint16)
+        del precomputed_intersections_large
 
         self.jaccard_calculator = ExactJaccardCalculator(precomputed_intersections)
 
