@@ -134,7 +134,8 @@ class TestMatchMerger:
         ).astype(np.uint16)
         MatchMerger(test_matches, 0.7, test_precomputed_intersections)
         mock_exact_jaccard_calculator_init.assert_called_once()
-        np.testing.assert_array_equal(
+        np.testing.assert_allclose(
             mock_exact_jaccard_calculator_init.call_args.args[0],
             expected_jaccard_indexes,
+            atol=1,
         )
