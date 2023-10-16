@@ -71,20 +71,31 @@ class MatchMerger:
         )
 
         # Broadcasted cell-wise Jaccard-Index computation
-        def get_jaccard_int_value(intersection_size, set1_size, set2_size):
-            return round(
-                (
-                    intersection_size
-                    * ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
-                )
-                / (set1_size + set2_size - intersection_size)
-            )
+        # def get_jaccard_int_value(intersection_size, set1_size, set2_size):
+        #     return round(
+        #         (
+        #             intersection_size
+        #             * ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR
+        #         )
+        #         / (set1_size + set2_size - intersection_size)
+        #     )
 
-        vectorized_jaccard_calculation = np.vectorize(
-            get_jaccard_int_value, otypes=[np.uint16]
-        )
-        precomputed_intersections = vectorized_jaccard_calculation(
-            precomputed_intersections, set_sizes[row_index], set_sizes[column_index]
+        # vectorized_jaccard_calculation = np.vectorize(
+        #     get_jaccard_int_value, otypes=[np.uint16]
+        # )
+        # precomputed_intersections = vectorized_jaccard_calculation(
+        #     precomputed_intersections, set_sizes[row_index], set_sizes[column_index]
+        # )
+
+        precomputed_intersections = np.floor_divide(
+            precomputed_intersections
+            * ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR,
+            (
+                set_sizes[row_index]
+                + set_sizes[column_index]
+                - precomputed_intersections
+            ),
+            dtype=np.uint16,
         )
 
         self.jaccard_calculator = ExactJaccardCalculator(precomputed_intersections)
