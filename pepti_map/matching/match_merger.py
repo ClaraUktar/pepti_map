@@ -35,6 +35,7 @@ class MatchMerger:
                 precomputed_intersections, deleted_indexes
             )
             self._create_exact_jaccard_calculator(precomputed_intersections)
+            del precomputed_intersections
         else:
             self._create_min_hash_calculator()
 
