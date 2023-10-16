@@ -104,7 +104,7 @@ class TestMatchMerger:
     def test_exact_jaccard_calculation(self, mock_exact_jaccard_calculator_init):
         test_matches = [
             {1, 2, 3, 4},
-            {20, 30},
+            {20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
             None,
             {3, 4, 7, 8},
             {8, 10, 11, 12},
@@ -113,7 +113,7 @@ class TestMatchMerger:
         test_precomputed_intersections = np.array(
             [
                 [4, 0, 0, 2, 0, 0],
-                [0, 2, 0, 0, 0, 0],
+                [0, 10, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0],
                 [2, 0, 0, 4, 1, 0],
                 [0, 0, 0, 1, 4, 0],

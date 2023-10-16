@@ -71,7 +71,7 @@ class MatchMerger:
         )
 
         # Broadcasted cell-wise Jaccard-Index computation
-        precomputed_intersections = np.floor_divide(
+        precomputed_intersections_large = np.floor_divide(
             precomputed_intersections
             * ExactJaccardCalculator.JACCARD_INT_MULTIPLICATION_FACTOR,
             (
@@ -79,8 +79,10 @@ class MatchMerger:
                 + set_sizes[column_index]
                 - precomputed_intersections
             ),
-            dtype=np.uint16,
+            dtype=np.uint32,
         )
+        precomputed_intersections = precomputed_intersections_large.astype(np.uint16)
+        del precomputed_intersections_large
 
         self.jaccard_calculator = ExactJaccardCalculator(precomputed_intersections)
 
