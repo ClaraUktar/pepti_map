@@ -1,5 +1,6 @@
 import gzip
 import logging
+import pyfastx
 from pathlib import Path
 from typing import List, TextIO, Tuple
 
@@ -21,9 +22,12 @@ class RNAReadsRetriever:
             logging.error(error_message)
             raise ValueError(error_message)
 
-    @staticmethod
-    def _is_gzip(filepath: Path) -> bool:
-        return filepath.name.endswith(".gz")
+        self._first_file_index = pyfastx.Fastq(self._filepaths[0].as_posix())
+        self._second_file_index = pyfastx.Fastq(self._filepaths[1].as_posix())
+
+    # @staticmethod
+    # def _is_gzip(filepath: Path) -> bool:
+    #     return filepath.name.endswith(".gz")
 
     @staticmethod
     def _sort_paired_end_read_ids(
@@ -81,26 +85,41 @@ class RNAReadsRetriever:
         if len(read_ids) == 0:
             return read_ids, []
 
-        (
-            sorted_read_ids,
-            original_sorted_ids,
-        ) = RNAReadsRetriever._sort_paired_end_read_ids(read_ids)
-
         sequences = []
-        for file_index, filepath in enumerate(self._filepaths):
-            read_ids_for_file = sorted_read_ids[file_index]
-            if len(read_ids_for_file) == 0:
-                continue
 
-            if RNAReadsRetriever._is_gzip(filepath):
-                with gzip.open(filepath, "rt", encoding="utf-8") as rna_file:
-                    self._append_sequences_for_file(
-                        read_ids_for_file, rna_file, file_index == 1, sequences
-                    )
+        for read_id in read_ids:
+            actual_id = int(str(read_id)[0:-1])
+            if str(read_id)[-1] == "1":
+                # Read id is from first file
+                sequence = self._first_file_index[actual_id - 1]
+                sequences.append(self._process_line(sequence, False))
             else:
-                with open(filepath, "rt", encoding="utf-8") as rna_file:
-                    self._append_sequences_for_file(
-                        read_ids_for_file, rna_file, file_index == 1, sequences
-                    )
+                # Read id is from second file
+                sequence = self._second_file_index[actual_id - 1]
+                sequences.append(self._process_line(sequence, True))
 
-        return original_sorted_ids, sequences
+        return read_ids, sequences
+
+        # (
+        #     sorted_read_ids,
+        #     original_sorted_ids,
+        # ) = RNAReadsRetriever._sort_paired_end_read_ids(read_ids)
+
+        # sequences = []
+        # for file_index, filepath in enumerate(self._filepaths):
+        #     read_ids_for_file = sorted_read_ids[file_index]
+        #     if len(read_ids_for_file) == 0:
+        #         continue
+
+        #     if RNAReadsRetriever._is_gzip(filepath):
+        #         with gzip.open(filepath, "rt", encoding="utf-8") as rna_file:
+        #             self._append_sequences_for_file(
+        #                 read_ids_for_file, rna_file, file_index == 1, sequences
+        #             )
+        #     else:
+        #         with open(filepath, "rt", encoding="utf-8") as rna_file:
+        #             self._append_sequences_for_file(
+        #                 read_ids_for_file, rna_file, file_index == 1, sequences
+        #             )
+
+        # return original_sorted_ids, sequences

@@ -5,6 +5,8 @@ from typing import List, TextIO, Tuple, Union
 
 from Bio.Seq import MutableSeq
 
+# TODO: Refactor to use pyfastx?
+
 
 class LazyRNAReader(object):
     def __init__(self, filepaths: List[Path], cutoff: int = -1):
