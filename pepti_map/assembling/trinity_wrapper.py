@@ -51,14 +51,19 @@ class TrinityWrapper:
     def _get_results_from_trinity_output_file(
         self, output_dir_for_file: Path
     ) -> List[str]:
+        # TODO: Delete unneeded Trinity output file?
         # TODO
-        with open(
-            output_dir_for_file / "trinity_out_dir.Trinity.fasta",
-            "rt",
-            encoding="utf-8",
-        ) as result_fasta:
-            print(result_fasta.readlines())
-        return []
+        try:
+            with open(
+                output_dir_for_file / "trinity_out_dir.Trinity.fasta",
+                "rt",
+                encoding="utf-8",
+            ) as result_fasta:
+                print(result_fasta.readlines())
+            return []
+        except OSError:
+            print("No file found!\n")
+            return []
 
     def get_trinity_result_for_file(self, relative_filepath: Path) -> List[str]:
         command_to_run = self._command.copy()
