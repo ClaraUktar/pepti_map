@@ -21,6 +21,8 @@ class RNAReadsRetriever:
             logging.error(error_message)
             raise ValueError(error_message)
 
+        # TODO: Delete index files again after use?
+
         self._first_file_index = pyfastx.Fastq(self._filepaths[0].as_posix())
         if len(self._filepaths) == 2:
             self._second_file_index = pyfastx.Fastq(self._filepaths[1].as_posix())

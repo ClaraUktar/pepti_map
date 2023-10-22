@@ -115,7 +115,14 @@ def compute_matches(
     help="The path to the peptide file.",
 )
 @click.option(
-    "-r", "--rna-file", required=True, type=str, help="The path to the RNA-seq file."
+    "-r",
+    "--rna-file",
+    required=True,
+    type=str,
+    help=(
+        "The path to the RNA-seq file. In case of paired-end sequencing, "
+        "this file is expected to be in forward orientation."
+    ),
 )
 @click.option(
     "-pa",
@@ -126,6 +133,7 @@ def compute_matches(
     show_default=False,
     help=(
         "The path to the second RNA-seq file in case of paired-end sequencing. "
+        "This file is expected to be in reverse orientation. "
         'If none is given, the RNA-seq file given with the "-r" option '
         "is assumed to result from single-end sequencing."
     ),
