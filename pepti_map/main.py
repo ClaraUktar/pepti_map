@@ -275,6 +275,7 @@ def main(
         bins=np.histogram_bin_edges(single_values, bins=20, range=(0, 1)),
         rwidth=0.8,
     )
+    plt.yscale("log")
     plt.savefig("./jaccard_index_histogram.png")
     plt.close()
     single_values[single_values == 0] = np.nan
@@ -283,6 +284,7 @@ def main(
         bins=np.histogram_bin_edges(single_values, bins=20, range=(0, 1)),
         rwidth=0.8,
     )
+    plt.yscale("log")
     plt.savefig("./jaccard_index_histogram_without_zeros.png")
     plt.close()
 
