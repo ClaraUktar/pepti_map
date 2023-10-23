@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 import subprocess
 from typing import List
@@ -51,19 +52,36 @@ class TrinityWrapper:
     def _get_results_from_trinity_output_file(
         self, output_dir_for_file: Path
     ) -> List[str]:
-        # TODO: Delete unneeded Trinity output file?
-        # TODO
+        # Delete unneeded Trinity output file
+        (output_dir_for_file / "trinity_out_dir.Trinity.fasta.gene_trans_map").unlink()
+
+        resulting_sequences = []
         try:
             with open(
                 output_dir_for_file / "trinity_out_dir.Trinity.fasta",
                 "rt",
                 encoding="utf-8",
             ) as result_fasta:
-                print(result_fasta.readlines())
-            return []
+                current_sequence = ""
+                for line in result_fasta:
+                    if line.strip().startswith(">"):
+                        if current_sequence != "":
+                            resulting_sequences.append(current_sequence)
+                            current_sequence = ""
+                        continue
+
+                    current_sequence += line.strip()
+
+                if current_sequence != "":
+                    resulting_sequences.append(current_sequence)
+
         except OSError:
-            print("No file found!\n")
-            return []
+            logging.info(
+                "No Trinity output sequences generated for set "
+                + output_dir_for_file.name
+            )
+
+        return resulting_sequences
 
     def get_trinity_result_for_file(self, relative_filepath: Path) -> List[str]:
         command_to_run = self._command.copy()
