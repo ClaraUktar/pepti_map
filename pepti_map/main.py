@@ -258,28 +258,32 @@ def main(
         matches, jaccard_index_threshold, precomputed_intersections
     ).merge_matches(merging_method)
     logging.info("Completed merging.")
-    print(peptide_indexes)
-    print(merged_sets)
-
-    rna_files = [Path(rna_file)]
-    if paired_end_file != "":
-        rna_files.append(Path(paired_end_file))
-    rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
-    trinity_wrapper = TrinityWrapper(PATH_TO_TEMP_FILES, min_contig_length)
-    for set_index, merged_set in enumerate(merged_sets):
-        read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
-            list(merged_set)
+    with open("set-sizes.txt", "wt", encoding="utf-8") as set_sizes_file:
+        set_sizes_file.writelines(
+            [f"{str(len(merged_set))}\n" for merged_set in merged_sets]
         )
-        (PATH_TO_TEMP_FILES / f"{str(set_index)}").mkdir()
-        relative_filepath = Path(f"{str(set_index)}/{str(set_index)}.fa")
-        AssemblyInputGenerator.write_fasta_with_sequences(
-            list(zip(read_ids, read_sequences)),
-            PATH_TO_TEMP_FILES / relative_filepath,
-        )
-        trinity_wrapper.get_trinity_result_for_file(relative_filepath)
-        # TODO: Delete input fasta?
+    # print(peptide_indexes)
+    # print(merged_sets)
 
-    _teardown()
+    # rna_files = [Path(rna_file)]
+    # if paired_end_file != "":
+    #     rna_files.append(Path(paired_end_file))
+    # rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
+    # trinity_wrapper = TrinityWrapper(PATH_TO_TEMP_FILES, min_contig_length)
+    # for set_index, merged_set in enumerate(merged_sets):
+    #     read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
+    #         list(merged_set)
+    #     )
+    #     (PATH_TO_TEMP_FILES / f"{str(set_index)}").mkdir()
+    #     relative_filepath = Path(f"{str(set_index)}/{str(set_index)}.fa")
+    #     AssemblyInputGenerator.write_fasta_with_sequences(
+    #         list(zip(read_ids, read_sequences)),
+    #         PATH_TO_TEMP_FILES / relative_filepath,
+    #     )
+    #     trinity_wrapper.get_trinity_result_for_file(relative_filepath)
+    #     # TODO: Delete input fasta?
+
+    # _teardown()
 
 
 if __name__ == "__main__":
