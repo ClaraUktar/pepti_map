@@ -1,6 +1,7 @@
 import os
 import logging
 from pathlib import Path
+import shutil
 import subprocess
 from typing import List
 
@@ -52,8 +53,13 @@ class TrinityWrapper:
     def _get_results_from_trinity_output_file(
         self, output_dir_for_file: Path
     ) -> List[str]:
-        # Delete unneeded Trinity output file
-        (output_dir_for_file / "trinity_out_dir.Trinity.fasta.gene_trans_map").unlink()
+        # Delete unneeded Trinity output files
+        try:
+            (
+                output_dir_for_file / "trinity_out_dir.Trinity.fasta.gene_trans_map"
+            ).unlink()
+        except FileNotFoundError:
+            shutil.rmtree(output_dir_for_file / "trinity_out_dir", ignore_errors=True)
 
         resulting_sequences = []
         try:
