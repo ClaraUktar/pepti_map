@@ -206,7 +206,7 @@ def compute_matches(
     "--min-contig-length",
     required=False,
     type=int,
-    default=200,
+    default=100,
     help="Sets the '--min_contig_length' option for Trinity during assembly.",
 )
 def main(

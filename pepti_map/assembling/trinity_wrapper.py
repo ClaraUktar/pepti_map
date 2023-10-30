@@ -6,7 +6,7 @@ from typing import List
 
 
 class TrinityWrapper:
-    def __init__(self, output_dir: Path, min_contig_length: int = 200):
+    def __init__(self, output_dir: Path, min_contig_length: int = 100):
         self._output_dir = output_dir
         self._command = []
         use_docker = os.getenv("USE_DOCKER")
