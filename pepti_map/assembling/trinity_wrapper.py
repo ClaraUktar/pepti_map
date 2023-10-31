@@ -11,7 +11,7 @@ class TrinityWrapper:
     def __init__(self, output_dir: Path, min_contig_length: int = 100):
         self._output_dir = output_dir
         self._command = []
-        use_docker = os.getenv("USE_DOCKER")
+        use_docker = os.getenv("TRINITY_USE_DOCKER")
         if use_docker is not None and use_docker == "True":
             self._using_docker = True
             self._command.extend(
@@ -32,7 +32,7 @@ class TrinityWrapper:
                 raise AssertionError(
                     (
                         "No path found for Trinity in the .env file. Specify a path "
-                        "via TRINITY_PATH or use Docker (USE_DOCKER=True)"
+                        "via TRINITY_PATH or use Docker (TRINITY_USE_DOCKER=True)"
                     )
                 )
             self._command.append(trinity_path)
@@ -134,9 +134,14 @@ class TrinityWrapper:
     def get_trinity_result_for_multiple_files(
         self, relative_filepaths: List[Path]
     ) -> List[List[str]]:
-        cpu_count = multiprocessing.cpu_count()
-        logging.info(f"Generating Trinity results with {cpu_count} cores")
-        with multiprocessing.Pool(cpu_count) as pool:
+        try:
+            n_processes = os.getenv("TRINITY_N_PROCESSES")
+            assert isinstance(n_processes, str)
+            n_processes = int(n_processes)
+        except (AssertionError, ValueError):
+            n_processes = multiprocessing.cpu_count()
+        logging.info(f"Generating Trinity results with {n_processes} processes")
+        with multiprocessing.Pool(n_processes) as pool:
             trinity_results = pool.map(
                 self._get_trinity_result_for_file, relative_filepaths
             )
