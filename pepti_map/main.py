@@ -265,7 +265,8 @@ def main(
     if paired_end_file != "":
         rna_files.append(Path(paired_end_file))
     rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
-    trinity_wrapper = TrinityWrapper(PATH_TO_TEMP_FILES, min_contig_length)
+
+    relative_filepaths = []
     for set_index, merged_set in enumerate(merged_sets):
         read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
             list(merged_set)
@@ -276,8 +277,13 @@ def main(
             list(zip(read_ids, read_sequences)),
             PATH_TO_TEMP_FILES / relative_filepath,
         )
-        trinity_wrapper.get_trinity_result_for_file(relative_filepath)
+        relative_filepaths.append(relative_filepath)
         # TODO: Delete input fasta?
+
+    trinity_results = TrinityWrapper(
+        PATH_TO_TEMP_FILES, min_contig_length
+    ).get_trinity_result_for_multiple_files(relative_filepaths)
+    print(trinity_results[0])
 
     _teardown()
 

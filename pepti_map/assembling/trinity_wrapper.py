@@ -1,6 +1,7 @@
 import os
 import logging
 from pathlib import Path
+import multiprocessing
 import shutil
 import subprocess
 from typing import List
@@ -82,14 +83,11 @@ class TrinityWrapper:
                     resulting_sequences.append(current_sequence)
 
         except OSError:
-            logging.info(
-                "No Trinity output sequences generated for set "
-                + output_dir_for_file.name
-            )
+            pass
 
         return resulting_sequences
 
-    def get_trinity_result_for_file(self, relative_filepath: Path) -> List[str]:
+    def _get_trinity_result_for_file(self, relative_filepath: Path) -> List[str]:
         command_to_run = self._command.copy()
         if self._using_docker:
             command_to_run.extend(
@@ -123,3 +121,30 @@ class TrinityWrapper:
         return self._get_results_from_trinity_output_file(
             self._output_dir / relative_filepath.parent
         )
+
+    def get_trinity_result_for_single_file(self, relative_filepath: Path) -> List[str]:
+        trinity_results = self._get_trinity_result_for_file(relative_filepath)
+        if len(trinity_results) == 0:
+            logging.info(
+                "No Trinity output sequences generated for set "
+                + relative_filepath.parent.name
+            )
+        return trinity_results
+
+    def get_trinity_result_for_multiple_files(
+        self, relative_filepaths: List[Path]
+    ) -> List[List[str]]:
+        cpu_count = multiprocessing.cpu_count()
+        logging.info(f"Generating Trinity results with {cpu_count} cores")
+        with multiprocessing.Pool(cpu_count) as pool:
+            trinity_results = pool.map(
+                self._get_trinity_result_for_file, relative_filepaths
+            )
+        for result_index, result in enumerate(trinity_results):
+            if len(result) == 0:
+                logging.info(
+                    "No Trinity output sequences generated for set "
+                    + relative_filepaths[result_index].parent.name
+                )
+
+        return trinity_results
