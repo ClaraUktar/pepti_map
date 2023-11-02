@@ -6,7 +6,7 @@ from typing import List, Literal, Set, Tuple, Union
 import click
 import numpy as np
 import numpy.typing as npt
-from pepti_map.assembling.assembly_input_generator import AssemblyInputGenerator
+from pepti_map.assembling.assembly_helper import AssemblyHelper
 from pepti_map.assembling.trinity_wrapper import TrinityWrapper
 from pepti_map.constants import PATH_TO_LAST_STEP_FILE, PATH_TO_TEMP_FILES, Step
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
@@ -267,23 +267,23 @@ def main(
     rna_reads_retriever = RNAReadsRetriever(rna_files, cutoff)
 
     relative_filepaths = []
+    # TODO: Could be parallelized?
     for set_index, merged_set in enumerate(merged_sets):
         read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
             list(merged_set)
         )
         (PATH_TO_TEMP_FILES / f"{str(set_index)}").mkdir()
         relative_filepath = Path(f"{str(set_index)}/{str(set_index)}.fa")
-        AssemblyInputGenerator.write_fasta_with_sequences(
-            list(zip(read_ids, read_sequences)),
+        AssemblyHelper.write_fasta_with_sequences(
+            (zip([str(read_id) for read_id in read_ids], read_sequences)),
             PATH_TO_TEMP_FILES / relative_filepath,
         )
         relative_filepaths.append(relative_filepath)
         # TODO: Delete input fasta?
 
-    trinity_results = TrinityWrapper(
+    TrinityWrapper(
         PATH_TO_TEMP_FILES, min_contig_length
-    ).get_trinity_result_for_multiple_files(relative_filepaths)
-    print(trinity_results[0])
+    ).write_trinity_result_for_multiple_files(relative_filepaths)
 
     _teardown()
 

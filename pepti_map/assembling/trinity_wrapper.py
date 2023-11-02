@@ -6,6 +6,8 @@ import shutil
 import subprocess
 from typing import List
 
+from pepti_map.assembling.assembly_helper import AssemblyHelper
+
 
 class TrinityWrapper:
     def __init__(self, output_dir: Path, min_contig_length: int = 100):
@@ -122,6 +124,27 @@ class TrinityWrapper:
             self._output_dir / relative_filepath.parent
         )
 
+    def _write_trinity_result_to_file(self, relative_filepath: Path) -> bool:
+        trinity_result = self._get_trinity_result_for_file(relative_filepath)
+        if len(trinity_result) == 0:
+            return False
+        AssemblyHelper.write_fasta_with_sequences(
+            zip(
+                [
+                    relative_filepath.parent.name + "-" + str(read_number)
+                    for read_number in range(len(trinity_result))
+                ],
+                trinity_result,
+            ),
+            self._output_dir / relative_filepath.parent / "resulting_contigs.fa",
+        )
+        (
+            self._output_dir
+            / relative_filepath.parent
+            / "trinity_out_dir.Trinity.fasta"
+        ).unlink()
+        return True
+
     def get_trinity_result_for_single_file(self, relative_filepath: Path) -> List[str]:
         trinity_results = self._get_trinity_result_for_file(relative_filepath)
         if len(trinity_results) == 0:
@@ -153,3 +176,25 @@ class TrinityWrapper:
                 )
 
         return trinity_results
+
+    # TODO: Refactor?
+    def write_trinity_result_for_multiple_files(
+        self, relative_filepaths: List[Path]
+    ) -> None:
+        try:
+            n_processes = os.getenv("TRINITY_N_PROCESSES")
+            assert isinstance(n_processes, str)
+            n_processes = int(n_processes)
+        except (AssertionError, ValueError):
+            n_processes = multiprocessing.cpu_count()
+        logging.info(f"Generating Trinity results with {n_processes} processes")
+        with multiprocessing.Pool(n_processes) as pool:
+            trinity_results = pool.map(
+                self._write_trinity_result_to_file, relative_filepaths
+            )
+        for result_index, result in enumerate(trinity_results):
+            if not result:
+                logging.info(
+                    "No Trinity output sequences generated for set "
+                    + relative_filepaths[result_index].parent.name
+                )
