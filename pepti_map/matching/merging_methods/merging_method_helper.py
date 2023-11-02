@@ -16,7 +16,7 @@ from pepti_map.matching.merging_methods.merging_method import IMergingMethod
 def get_merging_method(
     method: Literal["agglomerative-clustering", "full-matrix"],
     jaccard_calculator: IJaccardIndexCalculator,
-    jaccard_index_threshold: float = 0.7,
+    jaccard_index_threshold: float = 0.5,
 ) -> IMergingMethod:
     if method == "agglomerative-clustering":
         return AgglomerativeClusteringMergingMethod(

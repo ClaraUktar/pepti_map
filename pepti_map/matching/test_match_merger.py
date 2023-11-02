@@ -21,7 +21,7 @@ class TestMatchMerger:
     def test_filter_out_none_entries(self):
         test_matches = [{1, 2, 3, 4}, None, None, {5, 6, 7, 8}, {9, 10, 11, 12}, None]
         filtered_matches = [{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}]
-        match_merger = MatchMerger(test_matches)
+        match_merger = MatchMerger(test_matches, 0.7)
         assert match_merger.matches == filtered_matches
 
     @patch(

@@ -13,7 +13,7 @@ class FullMatrixMergingMethod(IMergingMethod):
     def __init__(
         self,
         jaccard_calculator: IJaccardIndexCalculator,
-        jaccard_index_threshold: float = 0.7,
+        jaccard_index_threshold: float = 0.5,
     ):
         self._merge_indication_matrix: npt.NDArray[np.bool_]
         super(FullMatrixMergingMethod, self).__init__(

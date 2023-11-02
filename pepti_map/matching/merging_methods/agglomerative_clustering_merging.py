@@ -19,7 +19,7 @@ class AgglomerativeClusteringMergingMethod(IMergingMethod):
     def __init__(
         self,
         jaccard_calculator: IJaccardIndexCalculator,
-        jaccard_index_threshold: float = 0.7,
+        jaccard_index_threshold: float = 0.5,
     ):
         self._distance_matrix: npt.NDArray[np.uint16]
         super(AgglomerativeClusteringMergingMethod, self).__init__(

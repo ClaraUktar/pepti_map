@@ -10,7 +10,7 @@ class IMergingMethod(ABC):
     def __init__(
         self,
         jaccard_calculator: IJaccardIndexCalculator,
-        jaccard_index_threshold: float = 0.7,
+        jaccard_index_threshold: float = 0.5,
     ):
         self.jaccard_index_threshold: int = round(
             jaccard_index_threshold

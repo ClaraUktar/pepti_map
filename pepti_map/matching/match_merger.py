@@ -21,7 +21,7 @@ class MatchMerger:
     def __init__(
         self,
         matches: List[Union[Set[int], None]],
-        jaccard_index_threshold: float = 0.7,
+        jaccard_index_threshold: float = 0.5,
         precomputed_intersections: Union[npt.NDArray[np.uint32], None] = None,
     ):
         # TODO: Want to delete matches after merging

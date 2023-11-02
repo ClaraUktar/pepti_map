@@ -187,7 +187,7 @@ def compute_matches(
     "--jaccard-index-threshold",
     required=False,
     type=float,
-    default=0.7,
+    default=0.5,
     help=(
         "Sets of matched RNA-seq reads per peptide will only be merged "
         "together if their Jaccard Index has a value above the given threshold."

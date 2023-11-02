@@ -47,7 +47,7 @@ class TestAgglomerativeClusteringMergingMethod(unittest.TestCase):
             get_jaccard_array_int_representation(np.array([[1.0, 0.7], [0.7, 1.0]]))
         )
         merge_results = AgglomerativeClusteringMergingMethod(
-            jaccard_calculator
+            jaccard_calculator, 0.7
         ).generate_merged_result(
             [0, 1], [{1, 2, 3, 4, 5, 6, 7, 8}, {2, 3, 4, 5, 6, 7, 8, 9, 10}]
         )
@@ -76,7 +76,7 @@ class TestAgglomerativeClusteringMergingMethod(unittest.TestCase):
             )
         )
         merge_results = AgglomerativeClusteringMergingMethod(
-            jaccard_calculator
+            jaccard_calculator, 0.7
         ).generate_merged_result(
             [0, 1, 2, 3, 4, 5],
             [
@@ -252,7 +252,7 @@ class TestFullMatrixMergingMethod(unittest.TestCase):
             get_jaccard_array_int_representation(np.array([[1.0, 0.7], [0.7, 1.0]]))
         )
         merge_results = FullMatrixMergingMethod(
-            jaccard_calculator
+            jaccard_calculator, 0.7
         ).generate_merged_result(
             [0, 1], [{1, 2, 3, 4, 5, 6, 7, 8}, {2, 3, 4, 5, 6, 7, 8, 9, 10}]
         )
@@ -281,7 +281,7 @@ class TestFullMatrixMergingMethod(unittest.TestCase):
             )
         )
         merge_results = FullMatrixMergingMethod(
-            jaccard_calculator
+            jaccard_calculator, 0.7
         ).generate_merged_result(
             [0, 1, 2, 3, 4, 5],
             [
