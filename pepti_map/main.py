@@ -6,6 +6,7 @@ from typing import List, Literal, Set, Tuple, Union
 import click
 import numpy as np
 import numpy.typing as npt
+from pepti_map.aligning.bowtie_wrapper import BowtieWrapper
 from pepti_map.assembling.assembly_helper import AssemblyHelper
 from pepti_map.assembling.trinity_wrapper import TrinityWrapper
 from pepti_map.constants import PATH_TO_LAST_STEP_FILE, PATH_TO_TEMP_FILES, Step
@@ -209,6 +210,27 @@ def compute_matches(
     default=100,
     help="Sets the '--min_contig_length' option for Trinity during assembly.",
 )
+@click.option(
+    "-g",
+    "--genome",
+    required=False,
+    type=str,
+    help=(
+        "The path to the genome file(s) to align to. "
+        "In case of multiple files, the paths must be separated by comma."
+    ),
+)
+@click.option(
+    "-x",
+    "--bowtie-index",
+    required=False,
+    type=str,
+    help=(
+        "The basename of an existing Bowtie index that should be used "
+        "instead of building a new one. If this option is set, "
+        "the '-g/--genome' option is ignored."
+    ),
+)
 def main(
     peptide_file: str,
     rna_file: str,
@@ -220,6 +242,8 @@ def main(
     jaccard_index_threshold: float,
     merging_method: Literal["agglomerative-clustering", "full-matrix"],
     min_contig_length: int,
+    genome: Union[str, None],
+    bowtie_index: Union[str, None],
 ):
     _setup()
     # TODO: Delete all classes not needed here!
@@ -281,9 +305,25 @@ def main(
         relative_filepaths.append(relative_filepath)
         # TODO: Delete input fasta?
 
-    TrinityWrapper(
+    trinity_results = TrinityWrapper(
         PATH_TO_TEMP_FILES, min_contig_length
     ).write_trinity_result_for_multiple_files(relative_filepaths)
+    print(trinity_results)
+
+    bowtie_wrapper = BowtieWrapper()
+    if bowtie_index is not None and bowtie_index != "":
+        bowtie_wrapper.use_existing_index(bowtie_index)
+    elif genome is not None and genome != "":
+        bowtie_wrapper.build_index(
+            [Path(index_file) for index_file in genome.split(",")]
+        )
+    else:
+        logging.error("One of '-g/--genome', '-x/--bowtie-index' must be set.")
+        raise ValueError("One of '-g/--genome', '-x/--bowtie-index' must be set.")
+
+    bowtie_wrapper.produce_alignment(
+        trinity_results, PATH_TO_TEMP_FILES / "alignment_result.sam"
+    )
 
     _teardown()
 

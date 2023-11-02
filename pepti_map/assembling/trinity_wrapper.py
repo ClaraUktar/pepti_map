@@ -180,7 +180,7 @@ class TrinityWrapper:
     # TODO: Refactor?
     def write_trinity_result_for_multiple_files(
         self, relative_filepaths: List[Path]
-    ) -> None:
+    ) -> List[Path]:
         try:
             n_processes = os.getenv("TRINITY_N_PROCESSES")
             assert isinstance(n_processes, str)
@@ -198,3 +198,10 @@ class TrinityWrapper:
                     "No Trinity output sequences generated for set "
                     + relative_filepaths[result_index].parent.name
                 )
+        return [
+            (self._output_dir / relative_filepath.parent / "resulting_contigs.fa")
+            for relative_filepath, has_result in zip(
+                relative_filepaths, trinity_results
+            )
+            if has_result
+        ]

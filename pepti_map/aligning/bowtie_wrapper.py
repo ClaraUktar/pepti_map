@@ -32,7 +32,7 @@ class BowtieWrapper:
             "bowtie2-build",
             "--threads",
             str(self._n_threads),
-            "--noref",  # do not build the index portions for paired-end alignment
+            # "--noref",  # do not build the index portions for paired-end alignment
             ",".join(
                 [
                     file_to_index.absolute().as_posix()
@@ -41,7 +41,10 @@ class BowtieWrapper:
             ),
             index_basename,
         ]
-        subprocess.run(build_index_command)
+        subprocess.run(
+            build_index_command,
+            stdout=subprocess.DEVNULL,
+        )
 
     def use_existing_index(self, index_basename: str) -> None:
         self._index_basename = index_basename
