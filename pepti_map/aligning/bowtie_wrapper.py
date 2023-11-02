@@ -20,9 +20,13 @@ class BowtieWrapper:
     def build_index(
         self, files_to_index: List[Path], index_basename: str = "bowtie_index"
     ) -> None:
-        logging.info(f"Generating Bowtie index with {self._n_threads} threads")
-
         self._index_basename = index_basename
+        logging.info(
+            (
+                f"Generating Bowtie index (basename: {self._index_basename}) "
+                f"with {self._n_threads} threads"
+            )
+        )
         # TODO: Do we want the --noref option?
         build_index_command = [
             "bowtie2-build",
@@ -39,9 +43,23 @@ class BowtieWrapper:
         ]
         subprocess.run(build_index_command)
 
+    def use_existing_index(self, index_basename: str) -> None:
+        self._index_basename = index_basename
+        logging.info(
+            f"Using existing Bowtie index with basename: {self._index_basename}"
+        )
+
     def produce_alignment(
         self, paths_to_sequences: List[Path], output_filepath: Path
     ) -> None:
+        if not self._index_basename:
+            logging.error(
+                "Cannot generate an alignment without an index generated or set."
+            )
+            raise ValueError(
+                "Cannot generate an alignment without an index generated or set."
+            )
+
         logging.info(f"Generating Bowtie alignment with {self._n_threads} threads")
 
         alignment_command = [
