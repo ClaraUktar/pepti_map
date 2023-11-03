@@ -32,7 +32,6 @@ class BowtieWrapper:
             "bowtie2-build",
             "--threads",
             str(self._n_threads),
-            # "--noref",  # do not build the index portions for paired-end alignment
             ",".join(
                 [
                     file_to_index.absolute().as_posix()
@@ -56,12 +55,11 @@ class BowtieWrapper:
         self, paths_to_sequences: List[Path], output_filepath: Path
     ) -> None:
         if not self._index_basename:
-            logging.error(
+            error_message = (
                 "Cannot generate an alignment without an index generated or set."
             )
-            raise ValueError(
-                "Cannot generate an alignment without an index generated or set."
-            )
+            logging.error(error_message)
+            raise ValueError(error_message)
 
         logging.info(f"Generating Bowtie alignment with {self._n_threads} threads")
 
@@ -69,6 +67,7 @@ class BowtieWrapper:
             "bowtie2",
             "-f",  # reads are given in FASTA format
             # TODO: Should we use "--reorder" option for same order of output as input?
+            # TODO: Use "--nofw/--norc" to align only to one strand?
             "--threads",
             str(self._n_threads),
             "-x",

@@ -318,8 +318,11 @@ def main(
             [Path(index_file) for index_file in genome.split(",")]
         )
     else:
-        logging.error("One of '-g/--genome', '-x/--bowtie-index' must be set.")
-        raise ValueError("One of '-g/--genome', '-x/--bowtie-index' must be set.")
+        missing_option_message = (
+            "One of '-g/--genome', '-x/--bowtie-index' must be set."
+        )
+        logging.error(missing_option_message)
+        raise ValueError(missing_option_message)
 
     bowtie_wrapper.produce_alignment(
         trinity_results, PATH_TO_TEMP_FILES / "alignment_result.sam"
