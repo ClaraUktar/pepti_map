@@ -7,6 +7,7 @@ import subprocess
 from typing import List
 
 from pepti_map.assembling.assembly_helper import AssemblyHelper
+from pepti_map.constants import PATH_TO_TRINITY_RESULTS_FILEPATHS
 
 
 class TrinityWrapper:
@@ -205,3 +206,33 @@ class TrinityWrapper:
             )
             if has_result
         ]
+
+    # TODO: Add test
+    @staticmethod
+    def save_results_filepaths(
+        results_filepaths: List[Path],
+        path_to_results_filepaths: Path = PATH_TO_TRINITY_RESULTS_FILEPATHS,
+    ) -> None:
+        with open(
+            path_to_results_filepaths, "wt", encoding="utf-8"
+        ) as results_filepaths_file:
+            results_filepaths_file.writelines(
+                [
+                    results_filepath.as_posix() + "\n"
+                    for results_filepath in results_filepaths
+                ]
+            )
+
+    # TODO: Add test
+    @staticmethod
+    def load_results_filepaths(
+        path_to_results_filepaths: Path = PATH_TO_TRINITY_RESULTS_FILEPATHS,
+    ) -> List[Path]:
+        results_filepaths: List[Path] = []
+        with open(
+            path_to_results_filepaths, "rt", encoding="utf-8"
+        ) as results_filepaths_file:
+            for line in results_filepaths_file:
+                line = line.strip()
+                results_filepaths.append(Path(line))
+        return results_filepaths

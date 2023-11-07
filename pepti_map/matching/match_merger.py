@@ -1,5 +1,6 @@
 from typing import List, Literal, Set, Tuple, Union
 from datasketch import LeanMinHash, MinHash
+from pathlib import Path
 import numpy as np
 import numpy.typing as npt
 from pepti_map.matching.jaccard_index_calculation.exact_jaccard_calculator import (
@@ -13,6 +14,7 @@ from pepti_map.matching.jaccard_index_calculation.min_hash_calculator import (
 )
 
 from pepti_map.matching.merging_methods.merging_method_helper import get_merging_method
+from pepti_map.constants import PATH_TO_MERGED_INDEXES, PATH_TO_MERGED_MATCHES
 
 NUM_BYTES_FOR_MIN_HASH_VALUES = 4
 
@@ -109,3 +111,51 @@ class MatchMerger:
         return get_merging_method(
             method, self.jaccard_calculator, self.jaccard_index_threshold
         ).generate_merged_result(self.peptide_indexes, self.matches)
+
+    # TODO: Add test
+    @staticmethod
+    def save_merged_result(
+        merged_matches: List[Set[int]],
+        peptide_indexes: List[List[int]],
+        path_to_sets_file: Path = PATH_TO_MERGED_MATCHES,
+        path_to_indexes_file: Path = PATH_TO_MERGED_INDEXES,
+    ) -> None:
+        with open(path_to_sets_file, "wt", encoding="utf-8") as merged_matches_file:
+            merged_matches_file.writelines(
+                [
+                    (",".join([str(match_elem) for match_elem in merged_match]) + "\n")
+                    for merged_match in merged_matches
+                ]
+            )
+
+        with open(path_to_indexes_file, "wt", encoding="utf-8") as peptide_indexes_file:
+            peptide_indexes_file.writelines(
+                [
+                    (",".join([str(index_elem) for index_elem in peptide_index]) + "\n")
+                    for peptide_index in peptide_indexes
+                ]
+            )
+
+    # TODO: Add test
+    @staticmethod
+    def load_merged_result(
+        path_to_sets_file: Path = PATH_TO_MERGED_MATCHES,
+        path_to_indexes_file: Path = PATH_TO_MERGED_INDEXES,
+    ) -> Tuple[List[Set[int]], List[List[int]]]:
+        merged_matches: List[Set[int]] = []
+        with open(path_to_sets_file, "rt", encoding="utf-8") as merged_matches_file:
+            for line in merged_matches_file:
+                line = line.strip()
+                merged_matches.append(
+                    set([int(match_elem) for match_elem in line.split(",")])
+                )
+
+        peptide_indexes: List[List[int]] = []
+        with open(path_to_indexes_file, "rt", encoding="utf-8") as peptide_indexes_file:
+            for line in peptide_indexes_file:
+                line = line.strip()
+                peptide_indexes.append(
+                    [int(match_elem) for match_elem in line.split(",")]
+                )
+
+        return merged_matches, peptide_indexes

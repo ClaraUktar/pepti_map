@@ -27,7 +27,7 @@ class BowtieWrapper:
                 f"with {self._n_threads} threads"
             )
         )
-        # TODO: Do we want the --noref option?
+
         build_index_command = [
             "bowtie2-build",
             "--threads",
