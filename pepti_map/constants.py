@@ -20,3 +20,4 @@ class Step(Enum):
     MERGING = 2
     TRINITY_INPUT = 3
     TRINITY_RUN = 4
+    ALIGNMENT = 5

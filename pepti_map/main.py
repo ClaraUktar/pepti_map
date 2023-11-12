@@ -189,6 +189,32 @@ def load_trinity_results_paths() -> List[Path]:
     return TrinityWrapper.load_results_filepaths()
 
 
+def align_reads_to_genome(
+    trinity_results_paths: List[Path],
+    genome: Union[str, None],
+    bowtie_index: Union[str, None],
+) -> None:
+    bowtie_wrapper = BowtieWrapper()
+    # TODO: How to automatically use previously generated index?
+    if bowtie_index is not None and bowtie_index != "":
+        bowtie_wrapper.use_existing_index(bowtie_index)
+    elif genome is not None and genome != "":
+        bowtie_wrapper.build_index(
+            [Path(index_file) for index_file in genome.split(",")]
+        )
+    else:
+        missing_option_message = (
+            "One of '-g/--genome', '-x/--bowtie-index' must be set."
+        )
+        logging.error(missing_option_message)
+        raise ValueError(missing_option_message)
+
+    bowtie_wrapper.produce_alignment(
+        trinity_results_paths, PATH_TO_TEMP_FILES / "alignment_result.sam"
+    )
+    _write_last_step(Step.ALIGNMENT.value)
+
+
 @click.command()
 @click.option(
     "-p",
@@ -392,24 +418,9 @@ def main(
 
     print(trinity_results_paths)
 
-    bowtie_wrapper = BowtieWrapper()
-    # TODO: How to automatically use previously generated index?
-    if bowtie_index is not None and bowtie_index != "":
-        bowtie_wrapper.use_existing_index(bowtie_index)
-    elif genome is not None and genome != "":
-        bowtie_wrapper.build_index(
-            [Path(index_file) for index_file in genome.split(",")]
-        )
-    else:
-        missing_option_message = (
-            "One of '-g/--genome', '-x/--bowtie-index' must be set."
-        )
-        logging.error(missing_option_message)
-        raise ValueError(missing_option_message)
-
-    bowtie_wrapper.produce_alignment(
-        trinity_results_paths, PATH_TO_TEMP_FILES / "alignment_result.sam"
-    )
+    if last_step < Step.ALIGNMENT.value:
+        logging.info("Aligning assembled RNA-seq reads to the genome.")
+        align_reads_to_genome(trinity_results_paths, genome, bowtie_index)
 
     convert_bam_to_gff(
         PATH_TO_TEMP_FILES / "alignment_result.sam", Path(output_dir) / OUTPUT_FILENAME
