@@ -9,7 +9,12 @@ import numpy.typing as npt
 from pepti_map.aligning.bowtie_wrapper import BowtieWrapper
 from pepti_map.assembling.assembly_helper import AssemblyHelper
 from pepti_map.assembling.trinity_wrapper import TrinityWrapper
-from pepti_map.constants import PATH_TO_LAST_STEP_FILE, PATH_TO_TEMP_FILES, Step
+from pepti_map.constants import (
+    OUTPUT_FILENAME,
+    PATH_TO_LAST_STEP_FILE,
+    PATH_TO_TEMP_FILES,
+    Step,
+)
 from pepti_map.importing.peptide_import.peptide_importer import PeptideImporter
 from pepti_map.importing.peptide_import.peptide_to_index_importer import (
     PeptideToIndexImporter,
@@ -21,6 +26,7 @@ from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
     PrecomputingRNAToPeptideMatcher,
 )
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
+from pepti_map.util.file_conversion import convert_bam_to_gff
 
 
 def _setup():
@@ -403,6 +409,10 @@ def main(
 
     bowtie_wrapper.produce_alignment(
         trinity_results_paths, PATH_TO_TEMP_FILES / "alignment_result.sam"
+    )
+
+    convert_bam_to_gff(
+        PATH_TO_TEMP_FILES / "alignment_result.sam", Path(output_dir) / OUTPUT_FILENAME
     )
 
     _teardown()

@@ -12,6 +12,8 @@ PATH_TO_MERGED_MATCHES = PATH_TO_TEMP_FILES / "merged_matches.txt"
 PATH_TO_MERGED_INDEXES = PATH_TO_TEMP_FILES / "merged_indexes.txt"
 PATH_TO_TRINITY_RESULTS_FILEPATHS = PATH_TO_TEMP_FILES / "trinity_results_filepaths.txt"
 
+OUTPUT_FILENAME = "pepti_map_output.gff"
+
 
 class Step(Enum):
     MATCHING = 1
