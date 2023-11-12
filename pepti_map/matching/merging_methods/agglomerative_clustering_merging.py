@@ -10,10 +10,6 @@ from pepti_map.matching.merging_methods.merging_method import IMergingMethod
 
 from sklearn.cluster import AgglomerativeClustering
 
-# TODO: Is using numpy.float16 sufficient?
-# Already has some rounding problems at second decimal
-# Better to use float32 or int (as first digit will always be 0 or 1)
-
 
 class AgglomerativeClusteringMergingMethod(IMergingMethod):
     def __init__(

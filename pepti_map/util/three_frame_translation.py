@@ -9,7 +9,6 @@ def translate_for_frame(sequence: str, frame: int, replace_isoleucine=True) -> s
             return sequence
         return sequence[:-mod]
 
-    # TODO: Exchange all I for L?
     translation = translate(shorten_sequence_to_translatable_len(sequence[frame:]))
     assert isinstance(translation, str)
     if replace_isoleucine:

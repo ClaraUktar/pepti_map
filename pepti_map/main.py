@@ -354,15 +354,12 @@ def main(
     bowtie_index: Union[str, None],
 ):
     _setup()
-    # TODO: Also need to read in the RNA file to access original sequences via id
 
     # TODO: Add progress indications
 
     # TODO: Recreate clean version of requirements.txt
 
     # TODO: Add full docstrings for all relevant methods
-
-    # TODO: Use numpy arrays everywhere?
 
     last_step = _get_last_step()
     # TODO: Make more beautiful?
