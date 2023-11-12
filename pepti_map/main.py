@@ -354,8 +354,6 @@ def main(
     bowtie_index: Union[str, None],
 ):
     _setup()
-    # TODO: Delete all classes not needed here!
-
     # TODO: Also need to read in the RNA file to access original sequences via id
 
     # TODO: Add progress indications
