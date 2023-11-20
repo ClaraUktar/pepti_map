@@ -94,6 +94,8 @@ class GmapWrapper:
                 for path_to_sequences in paths_to_sequences
             ]
         )
-        alignment_command.extend([">", output_filepath.absolute().as_posix()])
 
-        subprocess.run(alignment_command)
+        with open(output_filepath, "wt", encoding="utf-8") as output_file:
+            subprocess.run(
+                alignment_command, stderr=subprocess.DEVNULL, stdout=output_file
+            )
