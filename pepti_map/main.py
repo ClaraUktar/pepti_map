@@ -163,6 +163,7 @@ def generate_trinity_input(
         # TODO: Delete input fasta?
 
     _write_last_step(Step.TRINITY_INPUT.value)
+    logging.info("Generated input files for assembly with Trinity.")
     return relative_filepaths
 
 
@@ -181,6 +182,7 @@ def generate_trinity_results(
     ).write_trinity_result_for_multiple_files(relative_filepaths)
     TrinityWrapper.save_results_filepaths(trinity_results_paths)
     _write_last_step(Step.TRINITY_RUN.value)
+    logging.info("Finished assembly with Trinity.")
     return trinity_results_paths
 
 
@@ -209,6 +211,7 @@ def align_reads_to_genome(
         trinity_results_paths, PATH_TO_TEMP_FILES / "alignment_result.gff"
     )
     _write_last_step(Step.ALIGNMENT.value)
+    logging.info("Generated alignment of assembled contigs with GMAP.")
 
 
 @click.command()
