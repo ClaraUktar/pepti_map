@@ -6,7 +6,7 @@ from typing import List, Literal, Set, Tuple, Union
 import click
 import numpy as np
 import numpy.typing as npt
-from pepti_map.aligning.bowtie_wrapper import BowtieWrapper
+from pepti_map.aligning.gmap_wrapper import GmapWrapper
 from pepti_map.assembling.assembly_helper import AssemblyHelper
 from pepti_map.assembling.trinity_wrapper import TrinityWrapper
 from pepti_map.constants import (
@@ -26,7 +26,6 @@ from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
     PrecomputingRNAToPeptideMatcher,
 )
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
-from pepti_map.util.file_conversion import convert_bam_to_gff
 
 
 def _setup():
@@ -192,25 +191,22 @@ def load_trinity_results_paths() -> List[Path]:
 def align_reads_to_genome(
     trinity_results_paths: List[Path],
     genome: Union[str, None],
-    bowtie_index: Union[str, None],
+    gmap_index: Union[str, None],
 ) -> None:
-    bowtie_wrapper = BowtieWrapper()
+    gmap_wrapper = GmapWrapper()
     # TODO: How to automatically use previously generated index?
-    if bowtie_index is not None and bowtie_index != "":
-        bowtie_wrapper.use_existing_index(bowtie_index)
+    if gmap_index is not None and gmap_index != "":
+        gmap_index_path = Path(gmap_index)
+        gmap_wrapper.use_existing_index(gmap_index_path.name, gmap_index_path.parent)
     elif genome is not None and genome != "":
-        bowtie_wrapper.build_index(
-            [Path(index_file) for index_file in genome.split(",")]
-        )
+        gmap_wrapper.build_index([Path(index_file) for index_file in genome.split(",")])
     else:
-        missing_option_message = (
-            "One of '-g/--genome', '-x/--bowtie-index' must be set."
-        )
+        missing_option_message = "One of '-g/--genome', '-x/--gmap-index' must be set."
         logging.error(missing_option_message)
         raise ValueError(missing_option_message)
 
-    bowtie_wrapper.produce_alignment(
-        trinity_results_paths, PATH_TO_TEMP_FILES / "alignment_result.sam"
+    gmap_wrapper.produce_alignment(
+        trinity_results_paths, PATH_TO_TEMP_FILES / "alignment_result.gff"
     )
     _write_last_step(Step.ALIGNMENT.value)
 
@@ -330,11 +326,11 @@ def align_reads_to_genome(
 )
 @click.option(
     "-x",
-    "--bowtie-index",
+    "--gmap-index",
     required=False,
     type=str,
     help=(
-        "The basename of an existing Bowtie index that should be used "
+        "The path to an existing GMAP index that should be used "
         "instead of building a new one. If this option is set, "
         "the '-g/--genome' option is ignored."
     ),
@@ -351,7 +347,7 @@ def main(
     merging_method: Literal["agglomerative-clustering", "full-matrix"],
     min_contig_length: int,
     genome: Union[str, None],
-    bowtie_index: Union[str, None],
+    gmap_index: Union[str, None],
 ):
     _setup()
 
@@ -415,11 +411,9 @@ def main(
 
     if last_step < Step.ALIGNMENT.value:
         logging.info("Aligning assembled RNA-seq reads to the genome.")
-        align_reads_to_genome(trinity_results_paths, genome, bowtie_index)
+        align_reads_to_genome(trinity_results_paths, genome, gmap_index)
 
-    convert_bam_to_gff(
-        PATH_TO_TEMP_FILES / "alignment_result.sam", Path(output_dir) / OUTPUT_FILENAME
-    )
+    # TODO: Write peptide + pos information into file
 
     _teardown()
 
