@@ -60,8 +60,8 @@ class GmapWrapper:
         self._path_to_index_directory = path_to_index_directory
         logging.info(
             (
-                f"Using existing GMAP index with name {self._index_basename}, "
-                f"located in directory {self._path_to_index_directory.absolute().as_posix()}"
+                f"Using existing GMAP index with name {self._index_basename}, located"
+                f"in directory {self._path_to_index_directory.absolute().as_posix()}"
             )
         )
 
@@ -75,7 +75,18 @@ class GmapWrapper:
             logging.error(error_message)
             raise ValueError(error_message)
 
-        logging.info(f"Generating GMAP alignment with {self._n_threads} threads")
+        files_list_str = ",".join(
+            [
+                path_to_sequences.absolute().as_posix()
+                for path_to_sequences in paths_to_sequences
+            ]
+        )
+        logging.info(
+            (
+                f"Generating GMAP alignment with {self._n_threads} threads "
+                f"for file(s): {files_list_str}"
+            )
+        )
 
         alignment_command = [
             "gmap",
@@ -99,3 +110,37 @@ class GmapWrapper:
             subprocess.run(
                 alignment_command, stderr=subprocess.DEVNULL, stdout=output_file
             )
+
+    def _produce_alignment_for_single_file(self, path_to_sequences: Path) -> None:
+        alignment_command = [
+            "gmap",
+            "-D",
+            self._path_to_index_directory.absolute().as_posix(),
+            "-d",
+            self._index_basename,
+            "-t",
+            str(self._n_threads),
+            "-f",
+            "gff3_gene",
+            path_to_sequences.absolute().as_posix(),
+        ]
+        with open(
+            path_to_sequences.parent / "alignment_result.gff3", "wt", encoding="utf-8"
+        ) as output_file:
+            subprocess.run(
+                alignment_command, stderr=subprocess.DEVNULL, stdout=output_file
+            )
+
+    def produce_alignment_for_multiple_files(
+        self, paths_to_sequences: List[Path]
+    ) -> None:
+        if not self._index_basename or not self._path_to_index_directory:
+            error_message = (
+                "Cannot generate an alignment without an index generated or set."
+            )
+            logging.error(error_message)
+            raise ValueError(error_message)
+
+        logging.info(f"Generating GMAP alignment with {self._n_threads} threads")
+        with multiprocessing.Pool(self._n_threads) as pool:
+            pool.map(self._produce_alignment_for_single_file, paths_to_sequences)

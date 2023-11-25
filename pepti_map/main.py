@@ -207,9 +207,11 @@ def align_reads_to_genome(
         logging.error(missing_option_message)
         raise ValueError(missing_option_message)
 
-    gmap_wrapper.produce_alignment(
-        trinity_results_paths, PATH_TO_TEMP_FILES / "alignment_result.gff"
-    )
+    for trinity_results_path in trinity_results_paths:
+        gmap_wrapper.produce_alignment(
+            [trinity_results_path],
+            trinity_results_path.parent / "alignment_result.gff3",
+        )
     _write_last_step(Step.ALIGNMENT.value)
     logging.info("Generated alignment of assembled contigs with GMAP.")
 
