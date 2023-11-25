@@ -1,4 +1,7 @@
 from collections import defaultdict
+import logging
+import multiprocessing
+import os
 from pathlib import Path
 from typing import List, Tuple
 
@@ -108,3 +111,37 @@ class PepGenomeInputHelper:
                             )
                         )
                         output_file.write(translation + "\n")
+
+    @classmethod
+    def generate_gff_and_protein_files_for_directory(
+        cls, path_to_directory: Path
+    ) -> None:
+        number_of_transcripts_per_contig = cls.generate_gff_input_file(
+            path_to_directory / "alignment_result.gff3",
+            path_to_directory / "pepgenome_gff_in.gff3",
+        )
+        cls.generate_protein_fasta_input_file(
+            path_to_directory / "resulting_contigs.fa",
+            path_to_directory / "pepgenome_fasta_in.fa",
+            number_of_transcripts_per_contig,
+        )
+
+    @classmethod
+    def generate_gff_and_protein_files_for_multiple_directories(
+        cls,
+        paths_to_directories: List[Path],
+    ) -> None:
+        # TODO: Refactor code duplication
+        try:
+            n_processes = os.getenv("IO_N_PROCESSES")
+            assert isinstance(n_processes, str)
+            n_processes = int(n_processes)
+        except (AssertionError, ValueError):
+            n_processes = multiprocessing.cpu_count()
+        logging.info(
+            f"Generating GFF and FASTA files for PepGenome with {n_processes} processes"
+        )
+        with multiprocessing.Pool(n_processes) as pool:
+            pool.map(
+                cls.generate_gff_and_protein_files_for_directory, paths_to_directories
+            )
