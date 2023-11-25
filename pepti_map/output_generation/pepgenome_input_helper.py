@@ -1,6 +1,8 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
+
+from pepti_map.util.three_frame_translation import get_three_frame_translations
 
 
 class PepGenomeInputHelper:
@@ -63,15 +65,46 @@ class PepGenomeInputHelper:
         for set_index, output_path in enumerate(output_paths):
             self.generate_peptide_input_file(output_path, merged_indexes[set_index])
 
+    @staticmethod
+    def generate_gff_input_file(path_to_gff: Path, output_path: Path) -> List[int]:
+        # TODO: Return number of transcripts per contig (?)
+        # TODO: For each entry in GFF, adapt positions
+        pass
 
-def generate_gff_input_file(path_to_gff: Path, output_path: Path) -> None:
-    # TODO: For each entry in GFF, adapt positions
-    pass
+    @staticmethod
+    def generate_protein_fasta_input_file(
+        path_to_contig_sequences: Path,
+        output_path: Path,
+        number_of_transcripts_per_contig: List[int],
+    ) -> None:
+        contig_sequences: List[Tuple[str, str]] = []
+        with open(
+            path_to_contig_sequences, "rt", encoding="utf-8"
+        ) as contig_sequences_file:
+            current_id = ""
+            for line_index, line in enumerate(contig_sequences_file):
+                if line_index % 2 == 1:
+                    contig_sequences.append((current_id, line.strip()))
+                else:
+                    current_id = line.strip().replace(">", "")
 
-
-def generate_protein_fasta_input_file(
-    path_to_contig_sequences: Path, output_path: Path
-) -> None:
-    # TODO: Create 3-frame translation sequences for each contig
-    # Create correct "header" for each sequence in FASTA
-    pass
+        # TODO: Check if correct format
+        with open(output_path, "wt", encoding="utf-8") as output_file:
+            for contig_index, (contig_id, contig_sequence) in enumerate(
+                contig_sequences
+            ):
+                for translation, frame in get_three_frame_translations(
+                    contig_sequence, False
+                ):
+                    for transcript_index in range(
+                        number_of_transcripts_per_contig[contig_index]
+                    ):
+                        gene_id = f"{contig_id}.path{transcript_index + 1}"
+                        transcript_id = f"{contig_id}.mrna{transcript_index + 1}"
+                        output_file.write(
+                            (
+                                f">{contig_id} geneID={gene_id} "
+                                f"transcriptID={transcript_id} offset={str(frame)}\n"
+                            )
+                        )
+                        output_file.write(translation + "\n")
