@@ -141,6 +141,6 @@ class GmapWrapper:
             logging.error(error_message)
             raise ValueError(error_message)
 
-        logging.info(f"Generating GMAP alignment with {self._n_threads} threads")
-        with multiprocessing.Pool(self._n_threads) as pool:
-            pool.map(self._produce_alignment_for_single_file, paths_to_sequences)
+        logging.info(f"Generating GMAP alignments with {self._n_threads} threads")
+        for path_to_sequences in paths_to_sequences:
+            self._produce_alignment_for_single_file(path_to_sequences)
