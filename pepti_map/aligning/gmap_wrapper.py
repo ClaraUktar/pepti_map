@@ -15,7 +15,15 @@ class GmapWrapper:
         except (AssertionError, ValueError):
             n_threads = multiprocessing.cpu_count()
 
+        try:
+            batch_mode = os.getenv("GMAP_BATCH_MODE")
+            assert isinstance(batch_mode, str)
+            batch_mode = int(batch_mode)
+        except (AssertionError, ValueError):
+            batch_mode = 2
+
         self._n_threads = n_threads
+        self._batch_mode = batch_mode
 
     def build_index(
         self,
@@ -83,7 +91,8 @@ class GmapWrapper:
         )
         logging.info(
             (
-                f"Generating GMAP alignment with {self._n_threads} threads "
+                f"Generating GMAP alignment with {self._n_threads} threads, "
+                f"batch mode {str(self._batch_mode)} "
                 f"for file(s): {files_list_str}"
             )
         )
@@ -94,6 +103,8 @@ class GmapWrapper:
             self._path_to_index_directory.absolute().as_posix(),
             "-d",
             self._index_basename,
+            "-B",
+            str(self._batch_mode),
             "-t",
             str(self._n_threads),
             "-f",
@@ -118,6 +129,8 @@ class GmapWrapper:
             self._path_to_index_directory.absolute().as_posix(),
             "-d",
             self._index_basename,
+            "-B",
+            str(self._batch_mode),
             "-t",
             str(self._n_threads),
             "-f",
@@ -141,6 +154,11 @@ class GmapWrapper:
             logging.error(error_message)
             raise ValueError(error_message)
 
-        logging.info(f"Generating GMAP alignments with {self._n_threads} threads")
+        logging.info(
+            (
+                f"Generating GMAP alignments with {self._n_threads} threads, "
+                f"batch mode {str(self._batch_mode)}"
+            )
+        )
         for path_to_sequences in paths_to_sequences:
             self._produce_alignment_for_single_file(path_to_sequences)
