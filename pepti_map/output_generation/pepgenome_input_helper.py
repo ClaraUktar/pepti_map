@@ -2,6 +2,7 @@ from collections import defaultdict
 import logging
 import multiprocessing
 import os
+import gffutils
 from pathlib import Path
 from typing import List, Tuple
 
@@ -69,10 +70,102 @@ class PepGenomeInputHelper:
             self.generate_peptide_input_file(output_path, merged_indexes[set_index])
 
     @staticmethod
-    def generate_gff_input_file(path_to_gff: Path, output_path: Path) -> List[int]:
+    def _calculate_new_feature_coordinates(
+        contig_start: int,
+        contig_end: int,
+        feature_start: int,
+        feature_end: int,
+        contig_length: int,
+        strand: str,
+        direction: str,
+    ) -> Tuple[int, int]:
+        # TODO: Add algorithm
+        pass
+
+    @classmethod
+    def generate_gff_input_file(
+        cls,
+        path_to_gff: Path,
+        output_path: Path,
+        sequence_lengths_per_contig: List[int],
+    ) -> List[int]:
         # TODO: Return number of transcripts per contig (?)
         # TODO: For each entry in GFF, adapt positions
-        pass
+        gffutils_db = gffutils.create_db(
+            path_to_gff.absolute().as_posix(),
+            (path_to_gff.parent / "gffutils_db.sqlite").absolute().as_posix(),
+        )
+        # TODO: Add counts
+        number_of_transcripts_per_contig: List[int] = [
+            0 for _ in range(len(sequence_lengths_per_contig))
+        ]
+        for gene_feature in gffutils_db.features_of_type("gene"):
+            gene_children = list(gffutils_db.children(gene_feature))
+            # Delete unneeded CDS features
+            for gene_child in gene_children:
+                if gene_child.featuretype == "CDS":
+                    gffutils_db.delete(gene_child.id, False)
+            exons = [
+                gene_child
+                for gene_child in gene_children
+                if gene_child.featuretype == "exon"
+            ]
+            if len(exons) == 1:
+                only_exon = exons[0]
+                strand = only_exon.strand
+                target: str = only_exon.attributes["Target"][0]
+                contig_id, contig_start, contig_end, direction = target.split(" ")
+                contig_length = sequence_lengths_per_contig[int(contig_id[-1])]
+                contig_start = int(contig_start)
+                contig_end = int(contig_end)
+                if contig_start < contig_end:
+                    only_exon.attributes["Target"] = " ".join(
+                        [contig_id, "1", str(contig_length), direction]
+                    )
+                else:
+                    only_exon.attributes["Target"] = " ".join(
+                        [contig_id, str(contig_length), "1", direction]
+                    )
+                new_start, new_end = cls._calculate_new_feature_coordinates(
+                    contig_start,
+                    contig_end,
+                    only_exon.start,  # pyright: ignore[reportGeneralTypeIssues]
+                    only_exon.end,  # pyright: ignore[reportGeneralTypeIssues]
+                    contig_length,
+                    strand,
+                    direction,
+                )
+                only_exon.start = new_start
+                only_exon.end = new_end
+            else:
+                # TODO: Case of multiple exons
+                pass
+
+            mrna = [
+                gene_child
+                for gene_child in gene_children
+                if gene_child.featuretype == "mRNA"
+            ][
+                0
+            ]  # There can be only one mRNA per gene
+            mrna.start = new_start
+            mrna.end = new_end
+            gene_feature.start = new_start
+            gene_feature.end = new_end
+
+        with open(output_path, "wt", encoding="utf-8") as output_gff:
+            for feature in gffutils_db.all_features():
+                output_gff.write(str(feature) + "\n")
+
+        # Idea:
+        # 1. Iterate over all "gene" features
+        # 2. For each, get all children
+        # 2a. Delete all CDS features (?)
+        # 3. Look at exon attributes first to determine new coordinates
+        # 4. Adapt coordinates of exon + start/end in attrs
+        # - need to be able to deal with multiple exons
+        # 5. Adapt coordinates of mRNA and gene
+        # 6. Iterate over whole DB to generate new output file
 
     @staticmethod
     def generate_protein_fasta_input_file(
