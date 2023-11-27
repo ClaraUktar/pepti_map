@@ -10,8 +10,9 @@ from pepti_map.aligning.gmap_wrapper import GmapWrapper
 from pepti_map.assembling.assembly_helper import AssemblyHelper
 from pepti_map.assembling.trinity_wrapper import TrinityWrapper
 from pepti_map.constants import (
-    OUTPUT_FILENAME,
+    PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE,
     PATH_TO_LAST_STEP_FILE,
+    PATH_TO_MERGED_INDEXES,
     PATH_TO_TEMP_FILES,
     Step,
 )
@@ -26,6 +27,8 @@ from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
     PrecomputingRNAToPeptideMatcher,
 )
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
+from pepti_map.output_generation.pepgenome_input_helper import PepGenomeInputHelper
+from pepti_map.output_generation.pepgenome_wrapper import PepGenomeWrapper
 
 
 def _setup():
@@ -214,6 +217,26 @@ def align_reads_to_genome(
         )
     _write_last_step(Step.ALIGNMENT.value)
     logging.info("Generated alignment of assembled contigs with GMAP.")
+
+
+def generate_pepgenome_input(
+    paths_to_subdirectories: List[Path], peptide_file: str
+) -> None:
+    pepgenome_input_helper = PepGenomeInputHelper(
+        Path(peptide_file), PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE
+    )
+    pepgenome_input_helper.generate_all_peptide_input_files(
+        paths_to_subdirectories, PATH_TO_MERGED_INDEXES
+    )
+    PepGenomeInputHelper.generate_gff_and_protein_files_for_multiple_directories(
+        paths_to_subdirectories
+    )
+    _write_last_step(Step.PEPGENOME_INPUT.value)
+    logging.info("Generated PepGenome input files.")
+
+
+def generate_output_files(paths_to_subdirectories: List[Path]) -> None:
+    PepGenomeWrapper().run_pepgenome_for_multiple_directories(paths_to_subdirectories)
 
 
 @click.command()
@@ -412,13 +435,29 @@ def main(
         logging.info("Using already generated Trinity output files.")
         trinity_results_paths = load_trinity_results_paths()
 
-    print(trinity_results_paths)
-
     if last_step < Step.ALIGNMENT.value:
         logging.info("Aligning assembled RNA-seq reads to the genome.")
         align_reads_to_genome(trinity_results_paths, genome, gmap_index)
+    else:
+        logging.info("Using already generated alignments.")
 
-    # TODO: Write peptide + pos information into file
+    paths_to_subdirectories = [
+        trinity_results_path.parent for trinity_results_path in trinity_results_paths
+    ]
+
+    if last_step < Step.PEPGENOME_INPUT.value:
+        logging.info("Generating input files for PepGenome.")
+        generate_pepgenome_input(paths_to_subdirectories, peptide_file)
+    else:
+        logging.info("Using already generated PepGenome input files.")
+
+    if last_step < Step.PEPGENOME_RUN.value:
+        logging.info("Generating output files using PepGenome")
+        generate_output_files(paths_to_subdirectories)
+    else:
+        logging.info("Already generated all output files.")
+
+    # TODO: Concat output files?
 
     _teardown()
 

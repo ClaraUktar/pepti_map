@@ -1,12 +1,21 @@
 import logging
+import os
 from pathlib import Path
 import subprocess
 from typing import List
 
 
 class PepGenomeWrapper:
-    def __init__(self, path_to_pepgenome: Path):
-        self._path_to_pepgenome = path_to_pepgenome
+    def __init__(self):
+        path_to_pepgenome = os.getenv("PEPGENOME_PATH")
+        if path_to_pepgenome is None:
+            raise AssertionError(
+                (
+                    "No path found for PepGenome in the .env file. "
+                    "Specify a path via PEPGENOME_PATH"
+                )
+            )
+        self._path_to_pepgenome = Path(path_to_pepgenome)
 
     def run_pepgenome_for_directory(self, path_to_directory: Path) -> None:
         # TODO: Do we need to allow mismatches? (-mm)

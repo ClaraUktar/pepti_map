@@ -35,12 +35,14 @@ class PepGenomeInputHelper:
                 self._cluster_to_peptide_mapping[cluster_id].append(peptide_id)
 
     def generate_peptide_input_file(
-        self, output_path: Path, merged_indexes: List[int]
+        self, output_directory: Path, merged_indexes: List[int]
     ) -> None:
         peptide_already_written: List[bool] = [
             False for _ in range(len(self._peptides))
         ]
-        with open(output_path, "wt", encoding="utf-8") as new_input_file:
+        with open(
+            output_directory / "pepgenome_peptides_in.tsv", "wt", encoding="utf-8"
+        ) as new_input_file:
             for cluster_id in merged_indexes:
                 peptide_ids = self._cluster_to_peptide_mapping[cluster_id]
                 for peptide_id in peptide_ids:
@@ -53,7 +55,7 @@ class PepGenomeInputHelper:
                     peptide_already_written[peptide_id] = True
 
     def generate_all_peptide_input_files(
-        self, output_paths: List[Path], path_to_merged_indexes: Path
+        self, output_directories: List[Path], path_to_merged_indexes: Path
     ) -> None:
         # TODO: Refactor to use code from match merger
         merged_indexes: List[List[int]] = []
@@ -66,8 +68,10 @@ class PepGenomeInputHelper:
                     [int(match_elem) for match_elem in line.split(",")]
                 )
 
-        for set_index, output_path in enumerate(output_paths):
-            self.generate_peptide_input_file(output_path, merged_indexes[set_index])
+        for set_index, output_directory in enumerate(output_directories):
+            self.generate_peptide_input_file(
+                output_directory, merged_indexes[set_index]
+            )
 
     @staticmethod
     def _set_new_feature_coordinates(
@@ -167,11 +171,10 @@ class PepGenomeInputHelper:
     def generate_gff_input_file(
         cls,
         path_to_gff: Path,
-        output_path: Path,
+        output_directory: Path,
         sequence_lengths_per_contig: List[int],
     ) -> List[int]:
         # TODO: Return number of transcripts per contig (?)
-        # TODO: For each entry in GFF, adapt positions
         gffutils_db = gffutils.create_db(
             path_to_gff.absolute().as_posix(),
             (path_to_gff.parent / "gffutils_db.sqlite").absolute().as_posix(),
@@ -229,18 +232,22 @@ class PepGenomeInputHelper:
             )
 
         # Write new file with all features adapted
-        with open(output_path, "wt", encoding="utf-8") as output_gff:
+        with open(
+            output_directory / "pepgenome_gff_in.gff3", "wt", encoding="utf-8"
+        ) as output_gff:
             for feature in gffutils_db.all_features():
                 output_gff.write(str(feature) + "\n")
 
     @staticmethod
     def generate_protein_fasta_input_file(
         contig_sequences: List[Tuple[str, str]],
-        output_path: Path,
+        output_directory: Path,
         number_of_transcripts_per_contig: List[int],
     ) -> None:
         # TODO: Check if correct format
-        with open(output_path, "wt", encoding="utf-8") as output_file:
+        with open(
+            output_directory / "pepgenome_fasta_in.fa", "wt", encoding="utf-8"
+        ) as output_file:
             for contig_index, (contig_id, contig_sequence) in enumerate(
                 contig_sequences
             ):
@@ -283,12 +290,12 @@ class PepGenomeInputHelper:
         )
         number_of_transcripts_per_contig = cls.generate_gff_input_file(
             path_to_directory / "alignment_result.gff3",
-            path_to_directory / "pepgenome_gff_in.gff3",
+            path_to_directory,
             [len(contig_sequence[1]) for contig_sequence in contig_sequences],
         )
         cls.generate_protein_fasta_input_file(
             contig_sequences,
-            path_to_directory / "pepgenome_fasta_in.fa",
+            path_to_directory,
             number_of_transcripts_per_contig,
         )
 

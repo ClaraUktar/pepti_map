@@ -21,3 +21,5 @@ class Step(Enum):
     TRINITY_INPUT = 3
     TRINITY_RUN = 4
     ALIGNMENT = 5
+    PEPGENOME_INPUT = 6
+    PEPGENOME_RUN = 7
