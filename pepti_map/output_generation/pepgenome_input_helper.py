@@ -174,15 +174,11 @@ class PepGenomeInputHelper:
         output_directory: Path,
         sequence_lengths_per_contig: List[int],
     ) -> List[int]:
-        # TODO: Return number of transcripts per contig (?)
         gffutils_db = gffutils.create_db(
             path_to_gff.absolute().as_posix(),
             (path_to_gff.parent / "gffutils_db.sqlite").absolute().as_posix(),
         )
-        # TODO: Add counts
-        number_of_transcripts_per_contig: List[int] = [
-            0 for _ in range(len(sequence_lengths_per_contig))
-        ]
+
         for gene_feature in gffutils_db.features_of_type("gene"):
             gene_children = list(gffutils_db.children(gene_feature))
             # Delete unneeded CDS features
@@ -231,12 +227,45 @@ class PepGenomeInputHelper:
                 contig_length,
             )
 
+        # Track number of transcripts to write protein FASTA with matching ids
+        number_of_transcripts_per_contig: List[int] = [
+            0 for _ in range(len(sequence_lengths_per_contig))
+        ]
+
         # Write new file with all features adapted
+        # TODO: Refactor to pull into block above to avoid iterating twice?
         with open(
             output_directory / "pepgenome_gff_in.gff3", "wt", encoding="utf-8"
         ) as output_gff:
-            for feature in gffutils_db.all_features():
-                output_gff.write(str(feature) + "\n")
+            for gene_feature in gffutils_db.features_of_type("gene"):
+                output_gff.write(str(gene_feature) + "\n")
+                gene_children = list(gffutils_db.children(gene_feature))
+                mrna = [
+                    gene_child
+                    for gene_child in gene_children
+                    if gene_child.featuretype == "mRNA"
+                ][
+                    0
+                ]  # There can be only one mRNA per gene
+                mrna_id = mrna.attributes["ID"][0]
+
+                number_of_transcripts_per_contig[int(mrna_id.split(".")[0][-1])] += 1
+
+                exons = [
+                    gene_child
+                    for gene_child in gene_children
+                    if gene_child.featuretype == "exon"
+                ]
+                exon_ids = [exon.attributes["ID"][0] for exon in exons]
+                for frame in range(3):
+                    mrna.attributes["ID"] = mrna_id + "." + str(frame)
+                    output_gff.write(str(mrna) + "\n")
+                    for exon_index, exon in enumerate(exons):
+                        exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
+                        exon.attributes["Parent"] = mrna.attributes["ID"]
+                        output_gff.write(str(exon) + "\n")
+
+        return number_of_transcripts_per_contig
 
     @staticmethod
     def generate_protein_fasta_input_file(
@@ -244,7 +273,6 @@ class PepGenomeInputHelper:
         output_directory: Path,
         number_of_transcripts_per_contig: List[int],
     ) -> None:
-        # TODO: Check if correct format
         with open(
             output_directory / "pepgenome_fasta_in.fa", "wt", encoding="utf-8"
         ) as output_file:
@@ -257,8 +285,10 @@ class PepGenomeInputHelper:
                     for transcript_index in range(
                         number_of_transcripts_per_contig[contig_index]
                     ):
-                        gene_id = f"{contig_id}.path{transcript_index + 1}"
-                        transcript_id = f"{contig_id}.mrna{transcript_index + 1}"
+                        gene_id = f"{contig_id}.path{str(transcript_index + 1)}"
+                        transcript_id = (
+                            f"{contig_id}.mrna{str(transcript_index + 1)}.{str(frame)}"
+                        )
                         output_file.write(
                             (
                                 f">{contig_id} geneID={gene_id} "
