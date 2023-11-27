@@ -235,21 +235,10 @@ class PepGenomeInputHelper:
 
     @staticmethod
     def generate_protein_fasta_input_file(
-        path_to_contig_sequences: Path,
+        contig_sequences: List[Tuple[str, str]],
         output_path: Path,
         number_of_transcripts_per_contig: List[int],
     ) -> None:
-        contig_sequences: List[Tuple[str, str]] = []
-        with open(
-            path_to_contig_sequences, "rt", encoding="utf-8"
-        ) as contig_sequences_file:
-            current_id = ""
-            for line_index, line in enumerate(contig_sequences_file):
-                if line_index % 2 == 1:
-                    contig_sequences.append((current_id, line.strip()))
-                else:
-                    current_id = line.strip().replace(">", "")
-
         # TODO: Check if correct format
         with open(output_path, "wt", encoding="utf-8") as output_file:
             for contig_index, (contig_id, contig_sequence) in enumerate(
@@ -271,16 +260,34 @@ class PepGenomeInputHelper:
                         )
                         output_file.write(translation + "\n")
 
+    @staticmethod
+    def _get_contig_sequences(path_to_contig_sequences: Path) -> List[Tuple[str, str]]:
+        contig_sequences: List[Tuple[str, str]] = []
+        with open(
+            path_to_contig_sequences, "rt", encoding="utf-8"
+        ) as contig_sequences_file:
+            current_id = ""
+            for line_index, line in enumerate(contig_sequences_file):
+                if line_index % 2 == 1:
+                    contig_sequences.append((current_id, line.strip()))
+                else:
+                    current_id = line.strip().replace(">", "")
+        return contig_sequences
+
     @classmethod
     def generate_gff_and_protein_files_for_directory(
         cls, path_to_directory: Path
     ) -> None:
+        contig_sequences = cls._get_contig_sequences(
+            path_to_directory / "resulting_contigs.fa"
+        )
         number_of_transcripts_per_contig = cls.generate_gff_input_file(
             path_to_directory / "alignment_result.gff3",
             path_to_directory / "pepgenome_gff_in.gff3",
+            [len(contig_sequence[1]) for contig_sequence in contig_sequences],
         )
         cls.generate_protein_fasta_input_file(
-            path_to_directory / "resulting_contigs.fa",
+            contig_sequences,
             path_to_directory / "pepgenome_fasta_in.fa",
             number_of_transcripts_per_contig,
         )
