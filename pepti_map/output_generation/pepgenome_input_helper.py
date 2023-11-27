@@ -70,17 +70,98 @@ class PepGenomeInputHelper:
             self.generate_peptide_input_file(output_path, merged_indexes[set_index])
 
     @staticmethod
-    def _calculate_new_feature_coordinates(
-        contig_start: int,
-        contig_end: int,
-        feature_start: int,
-        feature_end: int,
-        contig_length: int,
+    def _set_new_feature_coordinates(
+        gene: gffutils.Feature,
+        mrna: gffutils.Feature,
+        start_exon: gffutils.Feature,
+        end_exon: gffutils.Feature,
         strand: str,
         direction: str,
-    ) -> Tuple[int, int]:
-        # TODO: Add algorithm
-        pass
+        contig_length: int,
+    ) -> None:
+        if (
+            not start_exon.start
+            or not start_exon.end
+            or not end_exon.start
+            or not end_exon.end
+        ):
+            raise ValueError("No start and end coordinates given.")
+
+        if direction == ".":
+            contig_id, start_exon_contig_end, contig_start, _ = start_exon.attributes[
+                "Target"
+            ][0].split(" ")
+            _, contig_end, end_exon_contig_start, _ = end_exon.attributes["Target"][
+                0
+            ].split(" ")
+            contig_start = int(contig_start)
+            contig_end = int(contig_end)
+
+            if strand == "+":
+                new_start = start_exon.start - (contig_start - 1)
+                start_exon.start = new_start
+                mrna.start = new_start
+                gene.start = new_start
+                new_end = end_exon.end + (contig_length - contig_end)
+                end_exon.end = new_end
+                mrna.end = new_end
+                gene.end = new_end
+            elif strand == "-":
+                new_end = start_exon.end + (contig_start - 1)
+                start_exon.end = new_end
+                mrna.end = new_end
+                gene.end = new_end
+                new_start = end_exon.start - (contig_length - contig_end)
+                end_exon.start = new_start
+                mrna.start = new_start
+                gene.start = new_start
+            else:
+                raise ValueError("Strand must be one of '+', '-'.")
+            start_exon.attributes = " ".join(
+                [contig_id, start_exon_contig_end, "1", direction]
+            )
+            end_exon.attributes = " ".join(
+                [contig_id, str(contig_length), end_exon_contig_start, direction]
+            )
+        else:
+            contig_id, contig_start, start_exon_contig_end, _ = start_exon.attributes[
+                "Target"
+            ][0].split(" ")
+            _, end_exon_contig_start, contig_end, _ = end_exon.attributes["Target"][
+                0
+            ].split(" ")
+            contig_start = int(contig_start)
+            contig_end = int(contig_end)
+            if (direction == "+" and strand == "+") or (
+                direction == "-" and strand == "-"
+            ):
+                new_start = start_exon.start - (contig_start - 1)
+                start_exon.start = new_start
+                mrna.start = new_start
+                gene.start = new_start
+                new_end = end_exon.end + (contig_length - contig_end)
+                end_exon.end = new_end
+                mrna.end = new_end
+                gene.end = new_end
+            elif (direction == "+" and strand == "-") or (
+                direction == "-" and strand == "+"
+            ):
+                new_end = start_exon.end + (contig_start - 1)
+                start_exon.end = new_end
+                mrna.end = new_end
+                gene.end = new_end
+                new_start = end_exon.start - (contig_length - contig_end)
+                end_exon.start = new_start
+                mrna.start = new_start
+                gene.start = new_start
+            else:
+                raise ValueError("Strand must be one of '+', '-'.")
+            start_exon.attributes = " ".join(
+                [contig_id, "1", start_exon_contig_end, direction]
+            )
+            end_exon.attributes = " ".join(
+                [contig_id, end_exon_contig_start, str(contig_length), direction]
+            )
 
     @classmethod
     def generate_gff_input_file(
@@ -110,37 +191,26 @@ class PepGenomeInputHelper:
                 for gene_child in gene_children
                 if gene_child.featuretype == "exon"
             ]
-            if len(exons) == 1:
-                only_exon = exons[0]
-                strand = only_exon.strand
-                target: str = only_exon.attributes["Target"][0]
-                contig_id, contig_start, contig_end, direction = target.split(" ")
-                contig_length = sequence_lengths_per_contig[int(contig_id[-1])]
-                contig_start = int(contig_start)
-                contig_end = int(contig_end)
-                if contig_start < contig_end:
-                    only_exon.attributes["Target"] = " ".join(
-                        [contig_id, "1", str(contig_length), direction]
-                    )
-                else:
-                    only_exon.attributes["Target"] = " ".join(
-                        [contig_id, str(contig_length), "1", direction]
-                    )
-                new_start, new_end = cls._calculate_new_feature_coordinates(
-                    contig_start,
-                    contig_end,
-                    only_exon.start,  # pyright: ignore[reportGeneralTypeIssues]
-                    only_exon.end,  # pyright: ignore[reportGeneralTypeIssues]
-                    contig_length,
-                    strand,
-                    direction,
-                )
-                only_exon.start = new_start
-                only_exon.end = new_end
-            else:
-                # TODO: Case of multiple exons
-                pass
 
+            first_exon = exons[0]
+            strand = first_exon.strand
+            target: str = first_exon.attributes["Target"][0]
+            contig_id, _, _, direction = target.split(" ")
+            contig_length = sequence_lengths_per_contig[int(contig_id[-1])]
+            if direction == ".":  # indeterminate
+                start_exon = min(
+                    exons, key=lambda exon: exon.attributes["Target"][0].split(" ")[2]
+                )
+                end_exon = max(
+                    exons, key=lambda exon: exon.attributes["Target"][0].split(" ")[1]
+                )
+            else:  # sense or antisense
+                start_exon = min(
+                    exons, key=lambda exon: exon.attributes["Target"][0].split(" ")[1]
+                )
+                end_exon = max(
+                    exons, key=lambda exon: exon.attributes["Target"][0].split(" ")[2]
+                )
             mrna = [
                 gene_child
                 for gene_child in gene_children
@@ -148,24 +218,20 @@ class PepGenomeInputHelper:
             ][
                 0
             ]  # There can be only one mRNA per gene
-            mrna.start = new_start
-            mrna.end = new_end
-            gene_feature.start = new_start
-            gene_feature.end = new_end
+            cls._set_new_feature_coordinates(
+                gene_feature,
+                mrna,
+                start_exon,
+                end_exon,
+                strand,
+                direction,
+                contig_length,
+            )
 
+        # Write new file with all features adapted
         with open(output_path, "wt", encoding="utf-8") as output_gff:
             for feature in gffutils_db.all_features():
                 output_gff.write(str(feature) + "\n")
-
-        # Idea:
-        # 1. Iterate over all "gene" features
-        # 2. For each, get all children
-        # 2a. Delete all CDS features (?)
-        # 3. Look at exon attributes first to determine new coordinates
-        # 4. Adapt coordinates of exon + start/end in attrs
-        # - need to be able to deal with multiple exons
-        # 5. Adapt coordinates of mRNA and gene
-        # 6. Iterate over whole DB to generate new output file
 
     @staticmethod
     def generate_protein_fasta_input_file(
