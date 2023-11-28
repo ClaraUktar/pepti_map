@@ -18,8 +18,7 @@ class PepGenomeWrapper:
         self._path_to_pepgenome = Path(path_to_pepgenome)
 
     def run_pepgenome_for_directory(self, path_to_directory: Path) -> None:
-        # TODO: Do we need to allow mismatches? (-mm)
-        command_to_run = [
+        pepgenome_command = [
             "java",
             "-cp",
             "'./*'",
@@ -33,10 +32,15 @@ class PepGenomeWrapper:
             "-format",
             "bed,gtf",
             "-exco",
+            "true",
             "-source",
             "pepti_map",
         ]
+        path_to_pepgenome_script = path_to_directory / "run-pepgenome.sh"
+        with open(path_to_pepgenome_script, "wt", encoding="utf-8") as pepgenome_script:
+            pepgenome_script.write(" ".join(pepgenome_command))
 
+        command_to_run = ["sh", path_to_pepgenome_script.absolute().as_posix()]
         subprocess.run(command_to_run, cwd=self._path_to_pepgenome)
 
     def run_pepgenome_for_multiple_directories(

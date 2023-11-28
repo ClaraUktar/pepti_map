@@ -237,6 +237,8 @@ def generate_pepgenome_input(
 
 def generate_output_files(paths_to_subdirectories: List[Path]) -> None:
     PepGenomeWrapper().run_pepgenome_for_multiple_directories(paths_to_subdirectories)
+    _write_last_step(Step.PEPGENOME_RUN.value)
+    logging.info("Generated output with PepGenome.")
 
 
 @click.command()
