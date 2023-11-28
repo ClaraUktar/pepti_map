@@ -41,7 +41,12 @@ class PepGenomeWrapper:
             pepgenome_script.write(" ".join(pepgenome_command))
 
         command_to_run = ["sh", path_to_pepgenome_script.absolute().as_posix()]
-        subprocess.run(command_to_run, cwd=self._path_to_pepgenome)
+        subprocess.run(
+            command_to_run,
+            cwd=self._path_to_pepgenome,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     def run_pepgenome_for_multiple_directories(
         self, paths_to_directories: List[Path]
