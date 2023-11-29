@@ -68,7 +68,7 @@ class GmapWrapper:
         self._path_to_index_directory = path_to_index_directory
         logging.info(
             (
-                f"Using existing GMAP index with name {self._index_basename}, located"
+                f"Using existing GMAP index with name {self._index_basename}, located "
                 f"in directory {self._path_to_index_directory.absolute().as_posix()}"
             )
         )

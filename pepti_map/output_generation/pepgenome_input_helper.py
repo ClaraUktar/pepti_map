@@ -121,10 +121,10 @@ class PepGenomeInputHelper:
                 gene.start = new_start
             else:
                 raise ValueError("Strand must be one of '+', '-'.")
-            start_exon.attributes = " ".join(
+            start_exon.attributes["Target"] = " ".join(
                 [contig_id, start_exon_contig_end, "1", direction]
             )
-            end_exon.attributes = " ".join(
+            end_exon.attributes["Target"] = " ".join(
                 [contig_id, str(contig_length), end_exon_contig_start, direction]
             )
         else:
@@ -160,10 +160,10 @@ class PepGenomeInputHelper:
                 gene.start = new_start
             else:
                 raise ValueError("Strand must be one of '+', '-'.")
-            start_exon.attributes = " ".join(
+            start_exon.attributes["Target"] = " ".join(
                 [contig_id, "1", start_exon_contig_end, direction]
             )
-            end_exon.attributes = " ".join(
+            end_exon.attributes["Target"] = " ".join(
                 [contig_id, end_exon_contig_start, str(contig_length), direction]
             )
 
@@ -174,72 +174,53 @@ class PepGenomeInputHelper:
         output_directory: Path,
         sequence_lengths_per_contig: List[int],
     ) -> List[int]:
-        gffutils_db = gffutils.create_db(
-            path_to_gff.absolute().as_posix(),
-            (path_to_gff.parent / "gffutils_db.sqlite").absolute().as_posix(),
-        )
-
-        for gene_feature in gffutils_db.features_of_type("gene"):
-            gene_children = list(gffutils_db.children(gene_feature))
-            # Delete unneeded CDS features
-            for gene_child in gene_children:
-                if gene_child.featuretype == "CDS":
-                    gffutils_db.delete(gene_child.id, False)
-            exons = [
-                gene_child
-                for gene_child in gene_children
-                if gene_child.featuretype == "exon"
-            ]
-
-            first_exon = exons[0]
-            strand = first_exon.strand
-            target: str = first_exon.attributes["Target"][0]
-            contig_id, _, _, direction = target.split(" ")
-            contig_length = sequence_lengths_per_contig[int(contig_id[-1])]
-            if direction == ".":  # indeterminate
-                start_exon = min(
-                    exons, key=lambda exon: exon.attributes["Target"][0].split(" ")[2]
-                )
-                end_exon = max(
-                    exons, key=lambda exon: exon.attributes["Target"][0].split(" ")[1]
-                )
-            else:  # sense or antisense
-                start_exon = min(
-                    exons, key=lambda exon: exon.attributes["Target"][0].split(" ")[1]
-                )
-                end_exon = max(
-                    exons, key=lambda exon: exon.attributes["Target"][0].split(" ")[2]
-                )
-            mrna = [
-                gene_child
-                for gene_child in gene_children
-                if gene_child.featuretype == "mRNA"
-            ][
-                0
-            ]  # There can be only one mRNA per gene
-            cls._set_new_feature_coordinates(
-                gene_feature,
-                mrna,
-                start_exon,
-                end_exon,
-                strand,
-                direction,
-                contig_length,
-            )
-
         # Track number of transcripts to write protein FASTA with matching ids
         number_of_transcripts_per_contig: List[int] = [
             0 for _ in range(len(sequence_lengths_per_contig))
         ]
 
-        # Write new file with all features adapted
-        # TODO: Refactor to pull into block above to avoid iterating twice?
+        gffutils_db = gffutils.create_db(
+            path_to_gff.absolute().as_posix(),
+            (path_to_gff.parent / "gffutils_db.sqlite").absolute().as_posix(),
+        )
         with open(
             output_directory / "pepgenome_gff_in.gff3", "wt", encoding="utf-8"
         ) as output_gff:
             for gene_feature in gffutils_db.features_of_type("gene"):
-                output_gff.write(str(gene_feature) + "\n")
                 gene_children = list(gffutils_db.children(gene_feature))
+                # Delete unneeded CDS features
+                for gene_child in gene_children:
+                    if gene_child.featuretype == "CDS":
+                        gffutils_db.delete(gene_child.id, False)
+                exons = [
+                    gene_child
+                    for gene_child in gene_children
+                    if gene_child.featuretype == "exon"
+                ]
+
+                first_exon = exons[0]
+                strand = first_exon.strand
+                target: str = first_exon.attributes["Target"][0]
+                contig_id, _, _, direction = target.split(" ")
+                contig_length = sequence_lengths_per_contig[int(contig_id[-1])]
+                if direction == ".":  # indeterminate
+                    start_exon = min(
+                        exons,
+                        key=lambda exon: exon.attributes["Target"][0].split(" ")[2],
+                    )
+                    end_exon = max(
+                        exons,
+                        key=lambda exon: exon.attributes["Target"][0].split(" ")[1],
+                    )
+                else:  # sense or antisense
+                    start_exon = min(
+                        exons,
+                        key=lambda exon: exon.attributes["Target"][0].split(" ")[1],
+                    )
+                    end_exon = max(
+                        exons,
+                        key=lambda exon: exon.attributes["Target"][0].split(" ")[2],
+                    )
                 mrna = [
                     gene_child
                     for gene_child in gene_children
@@ -247,16 +228,23 @@ class PepGenomeInputHelper:
                 ][
                     0
                 ]  # There can be only one mRNA per gene
-                mrna_id = mrna.attributes["ID"][0]
+                cls._set_new_feature_coordinates(
+                    gene_feature,
+                    mrna,
+                    start_exon,
+                    end_exon,
+                    strand,
+                    direction,
+                    contig_length,
+                )
 
+                mrna_id = mrna.attributes["ID"][0]
                 number_of_transcripts_per_contig[int(mrna_id.split(".")[0][-1])] += 1
 
-                exons = [
-                    gene_child
-                    for gene_child in gene_children
-                    if gene_child.featuretype == "exon"
-                ]
                 exon_ids = [exon.attributes["ID"][0] for exon in exons]
+
+                # Write output file
+                output_gff.write(str(gene_feature) + "\n")
                 for frame in range(3):
                     mrna.attributes["ID"] = mrna_id + "." + str(frame)
                     output_gff.write(str(mrna) + "\n")
