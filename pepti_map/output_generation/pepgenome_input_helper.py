@@ -121,12 +121,17 @@ class PepGenomeInputHelper:
                 gene.start = new_start
             else:
                 raise ValueError("Strand must be one of '+', '-'.")
-            start_exon.attributes["Target"] = " ".join(
-                [contig_id, start_exon_contig_end, "1", direction]
-            )
-            end_exon.attributes["Target"] = " ".join(
-                [contig_id, str(contig_length), end_exon_contig_start, direction]
-            )
+            if start_exon == end_exon:
+                start_exon.attributes["Target"] = " ".join(
+                    [contig_id, str(contig_length), "1", direction]
+                )
+            else:
+                start_exon.attributes["Target"] = " ".join(
+                    [contig_id, start_exon_contig_end, "1", direction]
+                )
+                end_exon.attributes["Target"] = " ".join(
+                    [contig_id, str(contig_length), end_exon_contig_start, direction]
+                )
         else:
             contig_id, contig_start, start_exon_contig_end, _ = start_exon.attributes[
                 "Target"
@@ -160,12 +165,17 @@ class PepGenomeInputHelper:
                 gene.start = new_start
             else:
                 raise ValueError("Strand must be one of '+', '-'.")
-            start_exon.attributes["Target"] = " ".join(
-                [contig_id, "1", start_exon_contig_end, direction]
-            )
-            end_exon.attributes["Target"] = " ".join(
-                [contig_id, end_exon_contig_start, str(contig_length), direction]
-            )
+            if start_exon == end_exon:
+                start_exon.attributes["Target"] = " ".join(
+                    [contig_id, "1", str(contig_length), direction]
+                )
+            else:
+                start_exon.attributes["Target"] = " ".join(
+                    [contig_id, "1", start_exon_contig_end, direction]
+                )
+                end_exon.attributes["Target"] = " ".join(
+                    [contig_id, end_exon_contig_start, str(contig_length), direction]
+                )
 
     @classmethod
     def generate_gff_input_file(
