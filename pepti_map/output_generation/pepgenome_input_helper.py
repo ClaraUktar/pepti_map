@@ -206,20 +206,28 @@ class PepGenomeInputHelper:
                 if direction == ".":  # indeterminate
                     start_exon = min(
                         exons,
-                        key=lambda exon: exon.attributes["Target"][0].split(" ")[2],
+                        key=lambda exon: int(
+                            exon.attributes["Target"][0].split(" ")[2]
+                        ),
                     )
                     end_exon = max(
                         exons,
-                        key=lambda exon: exon.attributes["Target"][0].split(" ")[1],
+                        key=lambda exon: int(
+                            exon.attributes["Target"][0].split(" ")[1]
+                        ),
                     )
                 else:  # sense or antisense
                     start_exon = min(
                         exons,
-                        key=lambda exon: exon.attributes["Target"][0].split(" ")[1],
+                        key=lambda exon: int(
+                            exon.attributes["Target"][0].split(" ")[1]
+                        ),
                     )
                     end_exon = max(
                         exons,
-                        key=lambda exon: exon.attributes["Target"][0].split(" ")[2],
+                        key=lambda exon: int(
+                            exon.attributes["Target"][0].split(" ")[2]
+                        ),
                     )
                 mrna = [
                     gene_child
