@@ -68,7 +68,9 @@ class PepGenomeInputHelper:
                     [int(match_elem) for match_elem in line.split(",")]
                 )
 
-        for set_index, output_directory in enumerate(output_directories):
+        for output_directory in output_directories:
+            # TODO: Refactor?
+            set_index = int(output_directory.name)
             self.generate_peptide_input_file(
                 output_directory, merged_indexes[set_index]
             )
