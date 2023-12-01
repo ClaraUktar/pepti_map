@@ -17,30 +17,21 @@ class PoGoWrapper:
             )
         self._path_to_pogo = Path(path_to_pogo)
 
-    def run_pepgenome_for_directory(self, path_to_directory: Path) -> None:
-        pepgenome_command = [
-            "java",
-            "-cp",
-            "'./*'",
-            "org.bigbio.pgatk.pepgenome.PepGenomeTool",
+    def run_pogo_for_directory(self, path_to_directory: Path) -> None:
+        command_to_run = [
+            "./PoGo",
             "-fasta",
-            (path_to_directory / "pepgenome_fasta_in.fa").absolute().as_posix(),
-            "-gff",
-            (path_to_directory / "pepgenome_gff_in.gff3").absolute().as_posix(),
+            (path_to_directory / "pogo_fasta_in.fa").absolute().as_posix(),
+            "-gtf",
+            (path_to_directory / "pogo_gtf_in.gtf").absolute().as_posix(),
             "-in",
-            (path_to_directory / "pepgenome_peptides_in.tsv").absolute().as_posix(),
+            (path_to_directory / "pogo_peptides_in.tsv").absolute().as_posix(),
             "-format",
             "bed,gtf",
-            "-exco",
-            "true",
             "-source",
             "pepti_map",
         ]
-        path_to_pepgenome_script = path_to_directory / "run-pepgenome.sh"
-        with open(path_to_pepgenome_script, "wt", encoding="utf-8") as pepgenome_script:
-            pepgenome_script.write(" ".join(pepgenome_command))
 
-        command_to_run = ["sh", path_to_pepgenome_script.absolute().as_posix()]
         subprocess.run(
             command_to_run,
             cwd=self._path_to_pogo,
@@ -48,9 +39,9 @@ class PoGoWrapper:
             stderr=subprocess.DEVNULL,
         )
 
-    def run_pepgenome_for_multiple_directories(
+    def run_pogo_for_multiple_directories(
         self, paths_to_directories: List[Path]
     ) -> None:
         logging.info("Running PoGo for all generated alignments")
         for path_to_directory in paths_to_directories:
-            self.run_pepgenome_for_directory(path_to_directory)
+            self.run_pogo_for_directory(path_to_directory)
