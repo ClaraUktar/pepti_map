@@ -9,7 +9,7 @@ from typing import List, Tuple
 from pepti_map.util.three_frame_translation import get_three_frame_translations
 
 
-class PepGenomeInputHelper:
+class PoGoInputHelper:
     def __init__(
         self, path_to_peptides: Path, path_to_peptide_to_cluster_mapping: Path
     ):
@@ -41,7 +41,7 @@ class PepGenomeInputHelper:
             False for _ in range(len(self._peptides))
         ]
         with open(
-            output_directory / "pepgenome_peptides_in.tsv", "wt", encoding="utf-8"
+            output_directory / "pogo_peptides_in.tsv", "wt", encoding="utf-8"
         ) as new_input_file:
             for cluster_id in merged_indexes:
                 peptide_ids = self._cluster_to_peptide_mapping[cluster_id]
@@ -196,7 +196,7 @@ class PepGenomeInputHelper:
             (path_to_gff.parent / "gffutils_db.sqlite").absolute().as_posix(),
         )
         with open(
-            output_directory / "pepgenome_gff_in.gff3", "wt", encoding="utf-8"
+            output_directory / "pogo_gff_in.gff3", "wt", encoding="utf-8"
         ) as output_gff:
             for gene_feature in gffutils_db.features_of_type("gene"):
                 gene_children = list(gffutils_db.children(gene_feature))
@@ -282,7 +282,7 @@ class PepGenomeInputHelper:
         number_of_transcripts_per_contig: List[int],
     ) -> None:
         with open(
-            output_directory / "pepgenome_fasta_in.fa", "wt", encoding="utf-8"
+            output_directory / "pogo_fasta_in.fa", "wt", encoding="utf-8"
         ) as output_file:
             for contig_index, (contig_id, contig_sequence) in enumerate(
                 contig_sequences
@@ -293,14 +293,14 @@ class PepGenomeInputHelper:
                     for transcript_index in range(
                         number_of_transcripts_per_contig[contig_index]
                     ):
-                        gene_id = f"{contig_id}.path{str(transcript_index + 1)}"
+                        gene_id = f"{contig_id}-path{str(transcript_index + 1)}"
                         transcript_id = (
-                            f"{contig_id}.mrna{str(transcript_index + 1)}.{str(frame)}"
+                            f"{contig_id}-mrna{str(transcript_index + 1)}-{str(frame)}"
                         )
                         output_file.write(
                             (
-                                f">{contig_id} geneID={gene_id} "
-                                f"transcriptID={transcript_id} offset={str(frame)}\n"
+                                f">{contig_id} gene:{gene_id} "
+                                f"transcript:{transcript_id}\n"
                             )
                         )
                         output_file.write(translation + "\n")
@@ -350,7 +350,7 @@ class PepGenomeInputHelper:
         except (AssertionError, ValueError):
             n_processes = multiprocessing.cpu_count()
         logging.info(
-            f"Generating GFF and FASTA files for PepGenome with {n_processes} processes"
+            f"Generating GFF and FASTA files for PoGo with {n_processes} processes"
         )
         with multiprocessing.Pool(n_processes) as pool:
             pool.map(
