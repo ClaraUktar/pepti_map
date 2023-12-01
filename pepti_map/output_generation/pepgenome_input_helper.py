@@ -293,14 +293,14 @@ class PepGenomeInputHelper:
                     for transcript_index in range(
                         number_of_transcripts_per_contig[contig_index]
                     ):
-                        gene_id = f"{contig_id}.path{str(transcript_index + 1)}"
+                        gene_id = f"{contig_id}-path{str(transcript_index + 1)}"
                         transcript_id = (
-                            f"{contig_id}.mrna{str(transcript_index + 1)}.{str(frame)}"
+                            f"{contig_id}-mrna{str(transcript_index + 1)}-{str(frame)}"
                         )
                         output_file.write(
                             (
-                                f">{contig_id} geneID={gene_id} "
-                                f"transcriptID={transcript_id} offset={str(frame)}\n"
+                                f">{contig_id} gene:{gene_id} "
+                                f"transcript:{transcript_id}\n"
                             )
                         )
                         output_file.write(translation + "\n")
