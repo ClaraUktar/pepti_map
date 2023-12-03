@@ -98,10 +98,6 @@ class PoGoInputHelper:
         ):
             raise ValueError("No start and end coordinates given.")
 
-        exon_ids = [exon.attributes["ID"][0] for exon in exons]
-        cds_ids = [cds_entry.attributes["ID"][0] for cds_entry in cds]
-        mrna_id = mrna.attributes["ID"][0]
-
         if direction == ".":
             contig_id, start_exon_contig_end, contig_start, _ = start_exon.attributes[
                 "Target"
@@ -123,75 +119,6 @@ class PoGoInputHelper:
                 end_exon.attributes["Target"] = " ".join(
                     [contig_id, str(contig_length), end_exon_contig_start, direction]
                 )
-
-            if strand == "+":
-                new_start = start_exon.start - (contig_start - 1)
-                start_exon.start = new_start
-                mrna.start = new_start
-                gene.start = new_start
-                new_end = end_exon.end + (contig_length - contig_end)
-                end_exon.end = new_end
-                mrna.end = new_end
-                gene.end = new_end
-
-                output_gtf.write(str(gene) + "\n")
-                for frame in range(3):
-                    mrna.attributes["ID"] = mrna_id + "." + str(frame)
-                    output_gtf.write(str(mrna) + "\n")
-                    for exon_index, exon in enumerate(exons):
-                        exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
-                        exon.attributes["Parent"] = mrna.attributes["ID"]
-                        output_gtf.write(str(exon) + "\n")
-                    for cds_index, cds_entry in enumerate(cds):
-                        cds_entry.start = exons[cds_index].start
-                        cds_entry.end = exons[cds_index].end
-                        if cds_index == start_exon_index:
-                            cds_entry.start = cds_entry.start + frame
-                        if cds_index == end_exon_index:
-                            cds_entry.end = cds_entry.end - (
-                                (contig_length - frame) % 3
-                            )
-                        cds_entry.attributes["ID"] = (
-                            cds_ids[cds_index] + "." + str(frame)
-                        )
-                        cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-                        output_gtf.write(str(cds_entry) + "\n")
-
-            elif strand == "-":
-                new_end = start_exon.end + (contig_start - 1)
-                start_exon.end = new_end
-                mrna.end = new_end
-                gene.end = new_end
-                new_start = end_exon.start - (contig_length - contig_end)
-                end_exon.start = new_start
-                mrna.start = new_start
-                gene.start = new_start
-
-                output_gtf.write(str(gene) + "\n")
-                for frame in range(3):
-                    mrna.attributes["ID"] = mrna_id + "." + str(frame)
-                    output_gtf.write(str(mrna) + "\n")
-                    for exon_index, exon in enumerate(exons):
-                        exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
-                        exon.attributes["Parent"] = mrna.attributes["ID"]
-                        output_gtf.write(str(exon) + "\n")
-                    for cds_index, cds_entry in enumerate(cds):
-                        cds_entry.start = exons[cds_index].start
-                        cds_entry.end = exons[cds_index].end
-                        if cds_index == start_exon_index:
-                            cds_entry.end = cds_entry.end - frame
-                        if cds_index == end_exon_index:
-                            cds_entry.start = cds_entry.start + (
-                                (contig_length - frame) % 3
-                            )
-                        cds_entry.attributes["ID"] = (
-                            cds_ids[cds_index] + "." + str(frame)
-                        )
-                        cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-                        output_gtf.write(str(cds_entry) + "\n")
-            else:
-                raise ValueError("Strand must be one of '+', '-'.")
-
         else:
             contig_id, contig_start, start_exon_contig_end, _ = start_exon.attributes[
                 "Target"
@@ -214,77 +141,79 @@ class PoGoInputHelper:
                     [contig_id, end_exon_contig_start, str(contig_length), direction]
                 )
 
-            if (direction == "+" and strand == "+") or (
-                direction == "-" and strand == "-"
-            ):
-                new_start = start_exon.start - (contig_start - 1)
-                start_exon.start = new_start
-                mrna.start = new_start
-                gene.start = new_start
-                new_end = end_exon.end + (contig_length - contig_end)
-                end_exon.end = new_end
-                mrna.end = new_end
-                gene.end = new_end
+        exon_ids = [exon.attributes["ID"][0] for exon in exons]
+        cds_ids = [cds_entry.attributes["ID"][0] for cds_entry in cds]
+        mrna_id = mrna.attributes["ID"][0]
 
-                output_gtf.write(str(gene) + "\n")
-                for frame in range(3):
-                    mrna.attributes["ID"] = mrna_id + "." + str(frame)
-                    output_gtf.write(str(mrna) + "\n")
-                    for exon_index, exon in enumerate(exons):
-                        exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
-                        exon.attributes["Parent"] = mrna.attributes["ID"]
-                        output_gtf.write(str(exon) + "\n")
-                    for cds_index, cds_entry in enumerate(cds):
-                        cds_entry.start = exons[cds_index].start
-                        cds_entry.end = exons[cds_index].end
-                        if cds_index == start_exon_index:
-                            cds_entry.start = cds_entry.start + frame
-                        if cds_index == end_exon_index:
-                            cds_entry.end = cds_entry.end - (
-                                (contig_length - frame) % 3
-                            )
-                        cds_entry.attributes["ID"] = (
-                            cds_ids[cds_index] + "." + str(frame)
+        if (
+            (direction == "+" and strand == "+")
+            or (direction == "-" and strand == "-")
+            or (direction == "." and strand == "+")
+        ):
+            new_start = start_exon.start - (contig_start - 1)
+            start_exon.start = new_start
+            mrna.start = new_start
+            gene.start = new_start
+            new_end = end_exon.end + (contig_length - contig_end)
+            end_exon.end = new_end
+            mrna.end = new_end
+            gene.end = new_end
+
+            output_gtf.write(str(gene) + "\n")
+            for frame in range(3):
+                mrna.attributes["ID"] = mrna_id + "." + str(frame)
+                output_gtf.write(str(mrna) + "\n")
+                for exon_index, exon in enumerate(exons):
+                    exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
+                    exon.attributes["Parent"] = mrna.attributes["ID"]
+                    output_gtf.write(str(exon) + "\n")
+                for cds_index, cds_entry in enumerate(cds):
+                    cds_entry.start = exons[cds_index].start
+                    cds_entry.end = exons[cds_index].end
+                    if cds_index == start_exon_index:
+                        cds_entry.start = cds_entry.start + frame
+                    if cds_index == end_exon_index:
+                        cds_entry.end = cds_entry.end - ((contig_length - frame) % 3)
+                    cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
+                    cds_entry.attributes["Parent"] = mrna.attributes["ID"]
+                    output_gtf.write(str(cds_entry) + "\n")
+
+        elif (
+            (direction == "+" and strand == "-")
+            or (direction == "-" and strand == "+")
+            or (direction == "." and strand == "-")
+        ):
+            new_end = start_exon.end + (contig_start - 1)
+            start_exon.end = new_end
+            mrna.end = new_end
+            gene.end = new_end
+            new_start = end_exon.start - (contig_length - contig_end)
+            end_exon.start = new_start
+            mrna.start = new_start
+            gene.start = new_start
+
+            output_gtf.write(str(gene) + "\n")
+            for frame in range(3):
+                mrna.attributes["ID"] = mrna_id + "." + str(frame)
+                output_gtf.write(str(mrna) + "\n")
+                for exon_index, exon in enumerate(exons):
+                    exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
+                    exon.attributes["Parent"] = mrna.attributes["ID"]
+                    output_gtf.write(str(exon) + "\n")
+                for cds_index, cds_entry in enumerate(cds):
+                    cds_entry.start = exons[cds_index].start
+                    cds_entry.end = exons[cds_index].end
+                    if cds_index == start_exon_index:
+                        cds_entry.end = cds_entry.end - frame
+                    if cds_index == end_exon_index:
+                        cds_entry.start = cds_entry.start + (
+                            (contig_length - frame) % 3
                         )
-                        cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-                        output_gtf.write(str(cds_entry) + "\n")
-
-            elif (direction == "+" and strand == "-") or (
-                direction == "-" and strand == "+"
-            ):
-                new_end = start_exon.end + (contig_start - 1)
-                start_exon.end = new_end
-                mrna.end = new_end
-                gene.end = new_end
-                new_start = end_exon.start - (contig_length - contig_end)
-                end_exon.start = new_start
-                mrna.start = new_start
-                gene.start = new_start
-
-                output_gtf.write(str(gene) + "\n")
-                for frame in range(3):
-                    mrna.attributes["ID"] = mrna_id + "." + str(frame)
-                    output_gtf.write(str(mrna) + "\n")
-                    for exon_index, exon in enumerate(exons):
-                        exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
-                        exon.attributes["Parent"] = mrna.attributes["ID"]
-                        output_gtf.write(str(exon) + "\n")
-                    for cds_index, cds_entry in enumerate(cds):
-                        cds_entry.start = exons[cds_index].start
-                        cds_entry.end = exons[cds_index].end
-                        if cds_index == start_exon_index:
-                            cds_entry.end = cds_entry.end - frame
-                        if cds_index == end_exon_index:
-                            cds_entry.start = cds_entry.start + (
-                                (contig_length - frame) % 3
-                            )
-                        cds_entry.attributes["ID"] = (
-                            cds_ids[cds_index] + "." + str(frame)
-                        )
-                        cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-                        output_gtf.write(str(cds_entry) + "\n")
-            else:
-                raise ValueError("Strand must be one of '+', '-'.")
+                    cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
+                    cds_entry.attributes["Parent"] = mrna.attributes["ID"]
+                    output_gtf.write(str(cds_entry) + "\n")
+        else:
+            raise ValueError("Strand must be one of '+', '-'.")
 
     @classmethod
     def generate_gtf_input_file(
