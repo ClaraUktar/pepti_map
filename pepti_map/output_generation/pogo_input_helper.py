@@ -4,7 +4,7 @@ import multiprocessing
 import os
 import gffutils
 from pathlib import Path
-from typing import List, TextIO, Tuple
+from typing import List, TextIO, Tuple, Union
 
 from pepti_map.util.three_frame_translation import get_three_frame_translations
 
@@ -76,7 +76,41 @@ class PoGoInputHelper:
             )
 
     @staticmethod
+    def _write_feature_in_gtf_format(
+        output_gtf: TextIO,
+        feature: gffutils.Feature,
+        gene_id: str,
+        transcript_id: Union[str, None] = None,
+    ) -> None:
+        featuretype = feature.featuretype
+        if featuretype == "mRNA":
+            featuretype = "transcript"
+        attributes = f"gene_id \"{gene_id.replace('.', '_')}\";"
+        if transcript_id is not None:
+            attributes = (
+                attributes + f"transcript_id \"{transcript_id.replace('.', '_')}\";"
+            )
+
+        output_gtf.write(
+            "\t".join(
+                [
+                    feature.chrom,  # pyright: ignore[reportGeneralTypeIssues]
+                    feature.source,
+                    featuretype,
+                    str(feature.start),
+                    str(feature.end),
+                    ".",
+                    feature.strand,
+                    ".",
+                    attributes,
+                ]
+            )
+            + "\n"
+        )
+
+    @classmethod
     def _write_new_feature_coordinates(
+        cls,
         output_gtf: TextIO,
         gene: gffutils.Feature,
         mrna: gffutils.Feature,
@@ -159,24 +193,42 @@ class PoGoInputHelper:
             mrna.end = new_end
             gene.end = new_end
 
-            output_gtf.write(str(gene) + "\n")
+            cls._write_feature_in_gtf_format(
+                output_gtf,
+                gene,
+                gene.attributes["ID"][0],
+            )
             for frame in range(3):
                 mrna.attributes["ID"] = mrna_id + "." + str(frame)
-                output_gtf.write(str(mrna) + "\n")
+                cls._write_feature_in_gtf_format(
+                    output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
+                )
                 for exon_index, exon in enumerate(exons):
                     exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
                     exon.attributes["Parent"] = mrna.attributes["ID"]
-                    output_gtf.write(str(exon) + "\n")
+                    cls._write_feature_in_gtf_format(
+                        output_gtf,
+                        exon,
+                        gene.attributes["ID"][0],
+                        mrna.attributes["ID"][0],
+                    )
                 for cds_index, cds_entry in enumerate(cds):
                     cds_entry.start = exons[cds_index].start
                     cds_entry.end = exons[cds_index].end
                     if cds_index == start_exon_index:
-                        cds_entry.start = cds_entry.start + frame
+                        cds_entry.start = cds_entry.start + frame  # pyright: ignore
                     if cds_index == end_exon_index:
-                        cds_entry.end = cds_entry.end - ((contig_length - frame) % 3)
+                        cds_entry.end = cds_entry.end - (  # pyright: ignore
+                            (contig_length - frame) % 3
+                        )
                     cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
                     cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-                    output_gtf.write(str(cds_entry) + "\n")
+                    cls._write_feature_in_gtf_format(
+                        output_gtf,
+                        cds_entry,
+                        gene.attributes["ID"][0],
+                        mrna.attributes["ID"][0],
+                    )
 
         elif (
             (direction == "+" and strand == "-")
@@ -192,26 +244,38 @@ class PoGoInputHelper:
             mrna.start = new_start
             gene.start = new_start
 
-            output_gtf.write(str(gene) + "\n")
+            cls._write_feature_in_gtf_format(output_gtf, gene, gene.attributes["ID"][0])
             for frame in range(3):
                 mrna.attributes["ID"] = mrna_id + "." + str(frame)
-                output_gtf.write(str(mrna) + "\n")
+                cls._write_feature_in_gtf_format(
+                    output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
+                )
                 for exon_index, exon in enumerate(exons):
                     exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
                     exon.attributes["Parent"] = mrna.attributes["ID"]
-                    output_gtf.write(str(exon) + "\n")
+                    cls._write_feature_in_gtf_format(
+                        output_gtf,
+                        exon,
+                        gene.attributes["ID"][0],
+                        mrna.attributes["ID"][0],
+                    )
                 for cds_index, cds_entry in enumerate(cds):
                     cds_entry.start = exons[cds_index].start
                     cds_entry.end = exons[cds_index].end
                     if cds_index == start_exon_index:
-                        cds_entry.end = cds_entry.end - frame
+                        cds_entry.end = cds_entry.end - frame  # pyright: ignore
                     if cds_index == end_exon_index:
-                        cds_entry.start = cds_entry.start + (
+                        cds_entry.start = cds_entry.start + (  # pyright: ignore
                             (contig_length - frame) % 3
                         )
                     cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
                     cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-                    output_gtf.write(str(cds_entry) + "\n")
+                    cls._write_feature_in_gtf_format(
+                        output_gtf,
+                        cds_entry,
+                        gene.attributes["ID"][0],
+                        mrna.attributes["ID"][0],
+                    )
         else:
             raise ValueError("Strand must be one of '+', '-'.")
 
@@ -328,9 +392,9 @@ class PoGoInputHelper:
                     for transcript_index in range(
                         number_of_transcripts_per_contig[contig_index]
                     ):
-                        gene_id = f"{contig_id}-path{str(transcript_index + 1)}"
+                        gene_id = f"{contig_id}_path{str(transcript_index + 1)}"
                         transcript_id = (
-                            f"{contig_id}-mrna{str(transcript_index + 1)}-{str(frame)}"
+                            f"{contig_id}_mrna{str(transcript_index + 1)}_{str(frame)}"
                         )
                         output_file.write(
                             (
