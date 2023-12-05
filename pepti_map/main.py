@@ -28,6 +28,7 @@ from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
 )
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
 from pepti_map.output_generation.pogo_input_helper import PoGoInputHelper
+from pepti_map.output_generation.pogo_output_helper import PoGoOutputHelper
 from pepti_map.output_generation.pogo_wrapper import PoGoWrapper
 
 
@@ -239,6 +240,17 @@ def generate_output_files(paths_to_subdirectories: List[Path]) -> None:
     logging.info("Generated output with PoGo.")
 
 
+def concat_output(paths_to_subdirectories: List[Path], output_dir: str) -> None:
+    PoGoOutputHelper.concat_gtf_output_into_single_file(
+        paths_to_subdirectories, Path(output_dir)
+    )
+    PoGoOutputHelper.concat_bed_output_into_single_file(
+        paths_to_subdirectories, Path(output_dir)
+    )
+    _write_last_step(Step.POGO_OUTPUT.value)
+    logging.info("Generated final output.")
+
+
 @click.command()
 @click.option(
     "-p",
@@ -304,6 +316,7 @@ def generate_output_files(paths_to_subdirectories: List[Path]) -> None:
     required=False,
     type=str,
     default="./",
+    show_default=True,
     help="The path to the output directory for all generated files.",
 )
 @click.option(
@@ -321,6 +334,7 @@ def generate_output_files(paths_to_subdirectories: List[Path]) -> None:
     required=False,
     type=float,
     default=0.5,
+    show_default=True,
     help=(
         "Sets of matched RNA-seq reads per peptide will only be merged "
         "together if their Jaccard Index has a value above the given threshold."
@@ -332,6 +346,7 @@ def generate_output_files(paths_to_subdirectories: List[Path]) -> None:
     required=False,
     type=click.Choice(["agglomerative-clustering", "full-matrix"]),
     default="full-matrix",
+    show_default=True,
     help="Which merging method to use for sets of matched RNA-seq reads.",
 )
 @click.option(
@@ -340,6 +355,7 @@ def generate_output_files(paths_to_subdirectories: List[Path]) -> None:
     required=False,
     type=int,
     default=100,
+    show_default=True,
     help="Sets the '--min_contig_length' option for Trinity during assembly.",
 )
 @click.option(
@@ -457,7 +473,11 @@ def main(
     else:
         logging.info("Already generated all output files.")
 
-    # TODO: Concat output files or copy them outside of temp?
+    if last_step < Step.POGO_OUTPUT.value:
+        logging.info("Concatenating files to final output.")
+        concat_output(paths_to_subdirectories, output_dir)
+    else:
+        logging.info("Already generated final output.")
 
     _teardown()
 

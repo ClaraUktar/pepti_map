@@ -12,7 +12,9 @@ PATH_TO_MERGED_MATCHES = PATH_TO_TEMP_FILES / "merged_matches.txt"
 PATH_TO_MERGED_INDEXES = PATH_TO_TEMP_FILES / "merged_indexes.txt"
 PATH_TO_TRINITY_RESULTS_FILEPATHS = PATH_TO_TEMP_FILES / "trinity_results_filepaths.txt"
 
-OUTPUT_FILENAME = "pepti_map_output.gff"
+PEPTIDE_READ_QUANT_FILENAME = "peptide_read_quant.tsv"
+OUTPUT_GTF_FILENAME = "pepti_map_output.gtf"
+OUTPUT_BED_FILENAME = "pepti_map_output.bed"
 
 
 class Step(Enum):
@@ -23,3 +25,4 @@ class Step(Enum):
     ALIGNMENT = 5
     POGO_INPUT = 6
     POGO_RUN = 7
+    POGO_OUTPUT = 8

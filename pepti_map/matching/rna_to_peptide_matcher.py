@@ -2,13 +2,11 @@ import csv
 import logging
 from pathlib import Path
 from typing import Generator, List, Set, Union
-from pepti_map.constants import PATH_TO_MATCHING_RESULT
+from pepti_map.constants import PATH_TO_MATCHING_RESULT, PEPTIDE_READ_QUANT_FILENAME
 
 from pepti_map.peptide_data.peptide_kmer_index import PeptideKmerIndex
 from pepti_map.util.k_mer import split_into_kmer
 from pepti_map.util.three_frame_translation import get_three_frame_translations
-
-PEPTIDE_READ_QUANT_FILENAME = "peptide_read_quant.tsv"
 
 
 class RNAToPeptideMatcher:
