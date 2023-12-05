@@ -419,7 +419,7 @@ class PoGoInputHelper:
         return contig_sequences
 
     @classmethod
-    def generate_gff_and_protein_files_for_directory(
+    def generate_gtf_and_protein_files_for_directory(
         cls, path_to_directory: Path
     ) -> None:
         contig_sequences = cls._get_contig_sequences(
@@ -437,7 +437,7 @@ class PoGoInputHelper:
         )
 
     @classmethod
-    def generate_gff_and_protein_files_for_multiple_directories(
+    def generate_gtf_and_protein_files_for_multiple_directories(
         cls,
         paths_to_directories: List[Path],
     ) -> None:
@@ -453,5 +453,5 @@ class PoGoInputHelper:
         )
         with multiprocessing.Pool(n_processes) as pool:
             pool.map(
-                cls.generate_gff_and_protein_files_for_directory, paths_to_directories
+                cls.generate_gtf_and_protein_files_for_directory, paths_to_directories
             )

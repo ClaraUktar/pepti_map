@@ -27,8 +27,8 @@ from pepti_map.matching.precomputing_rna_to_peptide_matcher import (
     PrecomputingRNAToPeptideMatcher,
 )
 from pepti_map.matching.rna_to_peptide_matcher import RNAToPeptideMatcher
-from pepti_map.output_generation.pepgenome_input_helper import PepGenomeInputHelper
-from pepti_map.output_generation.pepgenome_wrapper import PepGenomeWrapper
+from pepti_map.output_generation.pogo_input_helper import PoGoInputHelper
+from pepti_map.output_generation.pogo_wrapper import PoGoWrapper
 
 
 def _setup():
@@ -219,26 +219,24 @@ def align_reads_to_genome(
     logging.info("Generated alignment of assembled contigs with GMAP.")
 
 
-def generate_pepgenome_input(
-    paths_to_subdirectories: List[Path], peptide_file: str
-) -> None:
-    pepgenome_input_helper = PepGenomeInputHelper(
+def generate_pogo_input(paths_to_subdirectories: List[Path], peptide_file: str) -> None:
+    pogo_input_helper = PoGoInputHelper(
         Path(peptide_file), PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE
     )
-    pepgenome_input_helper.generate_all_peptide_input_files(
+    pogo_input_helper.generate_all_peptide_input_files(
         paths_to_subdirectories, PATH_TO_MERGED_INDEXES
     )
-    PepGenomeInputHelper.generate_gff_and_protein_files_for_multiple_directories(
+    PoGoInputHelper.generate_gtf_and_protein_files_for_multiple_directories(
         paths_to_subdirectories
     )
-    _write_last_step(Step.PEPGENOME_INPUT.value)
-    logging.info("Generated PepGenome input files.")
+    _write_last_step(Step.POGO_INPUT.value)
+    logging.info("Generated PoGo input files.")
 
 
 def generate_output_files(paths_to_subdirectories: List[Path]) -> None:
-    PepGenomeWrapper().run_pepgenome_for_multiple_directories(paths_to_subdirectories)
-    _write_last_step(Step.PEPGENOME_RUN.value)
-    logging.info("Generated output with PepGenome.")
+    PoGoWrapper().run_pogo_for_multiple_directories(paths_to_subdirectories)
+    _write_last_step(Step.POGO_RUN.value)
+    logging.info("Generated output with PoGo.")
 
 
 @click.command()
@@ -447,19 +445,19 @@ def main(
         trinity_results_path.parent for trinity_results_path in trinity_results_paths
     ]
 
-    if last_step < Step.PEPGENOME_INPUT.value:
-        logging.info("Generating input files for PepGenome.")
-        generate_pepgenome_input(paths_to_subdirectories, peptide_file)
+    if last_step < Step.POGO_INPUT.value:
+        logging.info("Generating input files for PoGo.")
+        generate_pogo_input(paths_to_subdirectories, peptide_file)
     else:
-        logging.info("Using already generated PepGenome input files.")
+        logging.info("Using already generated PoGo input files.")
 
-    if last_step < Step.PEPGENOME_RUN.value:
-        logging.info("Generating output files using PepGenome")
+    if last_step < Step.POGO_RUN.value:
+        logging.info("Generating output files using PoGo")
         generate_output_files(paths_to_subdirectories)
     else:
         logging.info("Already generated all output files.")
 
-    # TODO: Concat output files?
+    # TODO: Concat output files or copy them outside of temp?
 
     _teardown()
 
