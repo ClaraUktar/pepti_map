@@ -32,12 +32,7 @@ class TrinityWrapper:
             self._using_docker = False
             trinity_path = os.getenv("TRINITY_PATH")
             if trinity_path is None:
-                raise AssertionError(
-                    (
-                        "No path found for Trinity in the .env file. Specify a path "
-                        "via TRINITY_PATH or use Docker (TRINITY_USE_DOCKER=True)"
-                    )
-                )
+                trinity_path = "Trinity"
             self._command.append(trinity_path)
 
         self._command.extend(
