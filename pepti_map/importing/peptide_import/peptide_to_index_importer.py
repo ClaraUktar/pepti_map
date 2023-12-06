@@ -30,8 +30,6 @@ class PeptideToIndexImporter:
                 [str(cluster_id) + "\n" for cluster_id in peptide_to_cluster_mapping]
             )
 
-    # TODO: Add read of cluster mapping file
-
     def _process_simple_peptide_file(
         self, filepath: Path, replace_isoleucine=True
     ) -> Tuple[PeptideKmerIndex, List[int]]:

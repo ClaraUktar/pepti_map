@@ -52,9 +52,6 @@ class PeptideImporter:
 
     # TODO: Still save the peptide data in separate class, similar to the rna data?
     def import_file(self, filepath: Path) -> List[str]:
-        """
-        TODO
-        """
         peptides = []
         with open(filepath, "rt", encoding="utf-8") as peptide_file:
             for line in peptide_file:
