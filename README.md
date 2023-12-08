@@ -72,9 +72,9 @@ Overview of the options for running `pepti_map`:
 | `-g` / `--genome` | The path to the genome file(s) to align to. In case of multiple files, the paths must be separated by comma. |
 | `-x` / `--gmap-index` | The path to an existing GMAP index that should be used instead of building a new one. If this option is set, the `-g` / `--genome` option is ignored.|
 
-#### Input file formats
+### Input file formats
 
-Peptide file ( `-p` / `--peptide-file`):\
+#### Peptide file ( `-p` / `--peptide-file`):
 This file should contain a list of peptides in form of amino acid sequences, with one peptide sequence per line. Optionally, the file may contain protein group information per peptide, with this information being on the same line as the peptide, separated by tab. A header is not needed. One line may thus look as follows:
 ```
 <peptide sequence>
@@ -86,13 +86,13 @@ or
 
 If the protein group information is given, peptides with the same protein group will be grouped together, with matches to the RNA-seq reads being allocated per group. If not given, each peptide is treated as a separate group.
 
-RNA-seq file(s) (`-r` / `--rna-file` and `-pa` / `--paired-end-file`):\
+#### RNA-seq file(s) (`-r` / `--rna-file` and `-pa` / `--paired-end-file`):
 These files should contain the RNA-seq reads of the same sample/subject as the peptide data in FASTA format.
 
-Genome file(s) (`-g` / `--genome`):\
+#### Genome file(s) (`-g` / `--genome`):
 These files should contain the genomic sequences to align to in FASTA format.
 
-#### `pepti_map` output
+### `pepti_map` output
 `pepti_map` will output a GTF (`pepti_map_output.gtf`) and a BED (`pepti_map_output.bed`) file containing the mappings of the peptides to genomic loci. Peptides that were not matched will not appear in these files. For further information on these formats, please see the `PoGo` [documentation](https://github.com/cschlaffner/PoGo), as these outputs correspond directly to the respective `PoGo` output formats.
 
 Additionally, `pepti_map` outputs a quantification file (`peptide_read_quant.tsv`), containing the group id assigned to each peptide, the number of reads that were matched to the peptide, and the number of reads that were matched to the group the peptide belongs to. This means, for all peptides belonging to the same group, their individual read counts add up exactly to the read count for the group. The format per line is as follows, with the individual values being tab-separated:
