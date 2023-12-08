@@ -1,6 +1,6 @@
 # pepti_map
 
-TODO: Short explanation of what it does
+`pepti_map` is a tool for mapping peptide sequences to their possible genomic loci. It does so based only on the sequence information, so that no further peptide information besides the amino acid sequence and no annotation of the genome is required, enabling a mapping to personal genomes. `pepti_map` utilizes RNA-seq reads of the same sample to facilitate the mapping: Each peptide is first matched to RNA-seq reads, which are then assembled into longer contigs and aligned onto the genome.
 
 ## Setup
 
