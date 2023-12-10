@@ -4,10 +4,10 @@
 
 ## Setup
 
-To setup `pepti_map`, first install all dependencies listed in the `environment.yml`. We recommend using [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html#mamba-install).
+To setup `pepti_map`, first install all dependencies listed in the `environment_<os>.yml` (`environment_macos.yml` or `environment_linux.yml`). We recommend using [Mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html#mamba-install). For example:
 
 ```
-$ mamba env create -f environment.yml
+$ mamba env create -f environment_linux.yml
 ```
 
 `pepti_map` relies on the following tools to be installed:
