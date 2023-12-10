@@ -15,7 +15,7 @@ $ mamba env create -f environment_linux.yml
 - [`GMAP`](http://research-pub.gene.com/gmap/)
 - [`PoGo`](https://www.sanger.ac.uk/tool/pogo/)
 
-If you install the dependencies via the given `environment.yml`, both `Trinity` and `GMAP` should already be installed. To install `PoGo`, download the latest release from its [GitHub page](https://github.com/cschlaffner/PoGo/releases).
+If you install the dependencies via the given `environment_<os>.yml`, both `Trinity` and `GMAP` should already be installed. To install `PoGo`, download the latest release from its [GitHub page](https://github.com/cschlaffner/PoGo/releases).
 
 You will then need to add the path to the directory in which your `PoGo` installation is located in an `.env` file via the `POGO_PATH` environment variable, e.g.:
 
@@ -23,7 +23,7 @@ You will then need to add the path to the directory in which your `PoGo` install
 POGO_PATH=/Users/me/Tools/PoGo_v1.2.3/Linux
 ```
 
-This is the only environment variable that needs to be set for pepti_map to work. You can, however, set additional environment variables. Below you will find a table listing all environment variables.
+This is the only environment variable that needs to be set for `pepti_map` to work. You can, however, set additional environment variables. Below you will find a table listing all environment variables.
 
 | Environment Variable Name | Usage |
 | ------------------------- | ----- |
