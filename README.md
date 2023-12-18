@@ -87,7 +87,7 @@ or
 If the protein group information is given, peptides with the same protein group will be grouped together, with matches to the RNA-seq reads being allocated per group. If not given, each peptide is treated as a separate group.
 
 #### RNA-seq file(s) (`-r` / `--rna-file` and `-pa` / `--paired-end-file`):
-These files should contain the RNA-seq reads of the same sample/subject as the peptide data in FASTA format.
+These files should contain the RNA-seq reads of the same sample/subject as the peptide data in FASTQ format.
 
 #### Genome file(s) (`-g` / `--genome`):
 These files should contain the genomic sequences to align to in FASTA format.
@@ -95,7 +95,7 @@ These files should contain the genomic sequences to align to in FASTA format.
 ### `pepti_map` output
 `pepti_map` will output a GTF (`pepti_map_output.gtf`) and a BED (`pepti_map_output.bed`) file containing the mappings of the peptides to genomic loci. Peptides that were not matched will not appear in these files. For further information on these formats, please see the `PoGo` [documentation](https://github.com/cschlaffner/PoGo), as these outputs correspond directly to the respective `PoGo` output formats.
 
-Additionally, `pepti_map` outputs a quantification file (`peptide_read_quant.tsv`), containing the group id assigned to each peptide, the number of reads that were matched to the peptide, and the number of reads that were matched to the group the peptide belongs to. This means, for all peptides belonging to the same group, their individual read counts add up exactly to the read count for the group. The format per line is as follows, with the individual values being tab-separated:
+Additionally, `pepti_map` outputs a quantification file (`peptide_read_quant.tsv`), containing the group id assigned to each peptide, the number of reads that were matched to the peptide, and the number of reads that were matched to the group the peptide belongs to. This means, for all peptides belonging to the same group, their individual read counts add up exactly to the read count for the group. In case a peptide is too short (smaller than the k-mer length), it will be assigned a group id of -1 and excluded from further calculations. The format per line is as follows, with the individual values being tab-separated:
 ```
 <peptide sequence>  <numeric group id>  <number of matched reads for peptide>   <number of matched reads per group>
 ```
