@@ -87,7 +87,7 @@ or
 If the protein group information is given, peptides with the same protein group will be grouped together, with matches to the RNA-seq reads being allocated per group. If not given, each peptide is treated as a separate group.
 
 #### RNA-seq file(s) (`-r` / `--rna-file` and `-pa` / `--paired-end-file`):
-These files should contain the RNA-seq reads of the same sample/subject as the peptide data in FASTQ format.
+These files should contain the RNA-seq reads of the same sample/subject as the peptide data in FASTQ or gzipped FASTQ format.
 
 #### Genome file(s) (`-g` / `--genome`):
 These files should contain the genomic sequences to align to in FASTA format.
