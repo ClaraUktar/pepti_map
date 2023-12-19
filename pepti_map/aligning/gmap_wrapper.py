@@ -30,8 +30,8 @@ class GmapWrapper:
     def build_index(
         self,
         files_to_index: List[Path],
-        index_basename: str = "gmap_index",
         path_to_index_directory: Path = Path("./"),
+        index_basename: str = "gmap_index",
     ) -> None:
         self._index_basename = index_basename
         self._path_to_index_directory = path_to_index_directory

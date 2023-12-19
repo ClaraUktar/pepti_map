@@ -200,6 +200,7 @@ def align_reads_to_genome(
     trinity_results_paths: List[Path],
     genome: Union[str, None],
     gmap_index: Union[str, None],
+    output_dir: str,
 ) -> None:
     gmap_wrapper = GmapWrapper()
     # TODO: How to automatically use previously generated index?
@@ -207,7 +208,9 @@ def align_reads_to_genome(
         gmap_index_path = Path(gmap_index)
         gmap_wrapper.use_existing_index(gmap_index_path.name, gmap_index_path.parent)
     elif genome is not None and genome != "":
-        gmap_wrapper.build_index([Path(index_file) for index_file in genome.split(",")])
+        gmap_wrapper.build_index(
+            [Path(index_file) for index_file in genome.split(",")], Path(output_dir)
+        )
     else:
         missing_option_message = "One of '-g/--genome', '-x/--gmap-index' must be set."
         logging.error(missing_option_message)
@@ -461,7 +464,7 @@ def main(
 
     if last_step < Step.ALIGNMENT.value:
         logging.info("Aligning assembled RNA-seq reads to the genome.")
-        align_reads_to_genome(trinity_results_paths, genome, gmap_index)
+        align_reads_to_genome(trinity_results_paths, genome, gmap_index, output_dir)
     else:
         logging.info("Using already generated alignments.")
 
