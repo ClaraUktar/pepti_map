@@ -1,5 +1,4 @@
 import logging
-from dotenv import load_dotenv
 from pathlib import Path
 import shutil
 from typing import List, Literal, Set, Tuple, Union
@@ -32,10 +31,10 @@ from pepti_map.output_generation.pogo_output_helper import PoGoOutputHelper
 from pepti_map.output_generation.pogo_wrapper import PoGoWrapper
 
 
-def _setup():
+def _setup(output_dir: str):
     logging.basicConfig(level=logging.DEBUG)
+    Path(output_dir).mkdir(exist_ok=True)
     PATH_TO_TEMP_FILES.mkdir(exist_ok=True)
-    load_dotenv()
 
 
 def _teardown():
@@ -402,7 +401,7 @@ def main(
     genome: Union[str, None],
     gmap_index: Union[str, None],
 ):
-    _setup()
+    _setup(output_dir)
 
     # TODO: Add progress indications
 

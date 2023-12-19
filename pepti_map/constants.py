@@ -1,7 +1,12 @@
 from enum import Enum
 from pathlib import Path
+from dotenv import dotenv_values
 
-PATH_TO_TEMP_FILES = Path("./temp")
+temp_dir_path = dotenv_values().get("TEMP_DIR_PATH")
+if temp_dir_path is None:
+    temp_dir_path = "./temp"
+
+PATH_TO_TEMP_FILES = Path(temp_dir_path)
 PATH_TO_LAST_STEP_FILE = PATH_TO_TEMP_FILES / "last_step.txt"
 PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE = (
     PATH_TO_TEMP_FILES / "peptide_to_cluster_mapping.txt"

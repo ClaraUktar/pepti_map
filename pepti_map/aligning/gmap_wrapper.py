@@ -1,22 +1,24 @@
 import logging
 import multiprocessing
-import os
 from pathlib import Path
 from typing import List
 import subprocess
 
+from dotenv import dotenv_values
+
 
 class GmapWrapper:
     def __init__(self):
+        env_vars = dotenv_values()
         try:
-            n_threads = os.getenv("GMAP_N_THREADS")
+            n_threads = env_vars.get("GMAP_N_THREADS")
             assert isinstance(n_threads, str)
             n_threads = int(n_threads)
         except (AssertionError, ValueError):
             n_threads = multiprocessing.cpu_count()
 
         try:
-            batch_mode = os.getenv("GMAP_BATCH_MODE")
+            batch_mode = env_vars.get("GMAP_BATCH_MODE")
             assert isinstance(batch_mode, str)
             batch_mode = int(batch_mode)
         except (AssertionError, ValueError):

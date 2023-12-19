@@ -1,13 +1,14 @@
 import logging
-import os
 from pathlib import Path
 import subprocess
 from typing import List
 
+from dotenv import dotenv_values
+
 
 class PoGoWrapper:
     def __init__(self):
-        path_to_pogo = os.getenv("POGO_PATH")
+        path_to_pogo = dotenv_values().get("POGO_PATH")
         if path_to_pogo is None:
             raise AssertionError(
                 (

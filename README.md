@@ -34,6 +34,7 @@ This is the only environment variable that needs to be set for `pepti_map` to wo
 | `TRINITY_N_PROCESSES`     | The number of processes with which to run `Trinity` in parallel. If not set, defaults to `multiprocessing.cpu_count()`. |
 | `GMAP_N_THREADS`          | The number of threads with which to run `GMAP` during the alignment. Corresponds to the `-t` option of `gmap`. If not set, defaults to `multiprocessing.cpu_count()`. |
 | `GMAP_BATCH_MODE`         | The batch mode in which to run `GMAP` during the alignment. Corresponds to the `-B` option of `gmap`. If not set, defaults to 2.      |
+| `TEMP_DIR_PATH`           | The path to the folder in which temporary results are saved. If not set, defaults to `./temp`. |
 
 
 ## Usage

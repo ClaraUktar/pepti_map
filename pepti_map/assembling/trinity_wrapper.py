@@ -1,10 +1,11 @@
-import os
 import logging
 from pathlib import Path
 import multiprocessing
 import shutil
 import subprocess
 from typing import List
+
+from dotenv import dotenv_values
 
 from pepti_map.assembling.assembly_helper import AssemblyHelper
 from pepti_map.constants import PATH_TO_TRINITY_RESULTS_FILEPATHS
@@ -14,7 +15,8 @@ class TrinityWrapper:
     def __init__(self, output_dir: Path, min_contig_length: int = 100):
         self._output_dir = output_dir
         self._command = []
-        use_docker = os.getenv("TRINITY_USE_DOCKER")
+        self._env_vars = dotenv_values()
+        use_docker = self._env_vars.get("TRINITY_USE_DOCKER")
         if use_docker is not None and use_docker == "True":
             self._using_docker = True
             self._command.extend(
@@ -30,7 +32,7 @@ class TrinityWrapper:
             )
         else:
             self._using_docker = False
-            trinity_path = os.getenv("TRINITY_PATH")
+            trinity_path = self._env_vars.get("TRINITY_PATH")
             if trinity_path is None:
                 trinity_path = "Trinity"
             self._command.append(trinity_path)
@@ -154,7 +156,7 @@ class TrinityWrapper:
         self, relative_filepaths: List[Path]
     ) -> List[List[str]]:
         try:
-            n_processes = os.getenv("TRINITY_N_PROCESSES")
+            n_processes = self._env_vars.get("TRINITY_N_PROCESSES")
             assert isinstance(n_processes, str)
             n_processes = int(n_processes)
         except (AssertionError, ValueError):
@@ -178,7 +180,7 @@ class TrinityWrapper:
         self, relative_filepaths: List[Path]
     ) -> List[Path]:
         try:
-            n_processes = os.getenv("TRINITY_N_PROCESSES")
+            n_processes = self._env_vars.get("TRINITY_N_PROCESSES")
             assert isinstance(n_processes, str)
             n_processes = int(n_processes)
         except (AssertionError, ValueError):

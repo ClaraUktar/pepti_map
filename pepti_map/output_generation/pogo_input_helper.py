@@ -1,7 +1,7 @@
 from collections import defaultdict
 import logging
 import multiprocessing
-import os
+from dotenv import dotenv_values
 import gffutils
 from pathlib import Path
 from typing import List, TextIO, Tuple, Union
@@ -443,7 +443,7 @@ class PoGoInputHelper:
     ) -> None:
         # TODO: Refactor code duplication
         try:
-            n_processes = os.getenv("IO_N_PROCESSES")
+            n_processes = dotenv_values().get("IO_N_PROCESSES")
             assert isinstance(n_processes, str)
             n_processes = int(n_processes)
         except (AssertionError, ValueError):
