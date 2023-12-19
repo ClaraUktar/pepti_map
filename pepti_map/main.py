@@ -74,7 +74,7 @@ def compute_matches(
     peptide_file: str,
     rna_file: str,
     paired_end_file: str,
-    cutoff: int,
+    cutoff: Tuple[int, int],
     kmer_length: int,
     output_dir: str,
     precompute_intersections: bool,
@@ -144,7 +144,10 @@ def compute_merge_results(
 
 
 def generate_trinity_input(
-    rna_file: str, paired_end_file: str, cutoff: int, merged_sets: List[Set[int]]
+    rna_file: str,
+    paired_end_file: str,
+    cutoff: Tuple[int, int],
+    merged_sets: List[Set[int]],
 ) -> List[Path]:
     rna_files = [Path(rna_file)]
     if paired_end_file != "":
@@ -288,13 +291,19 @@ def concat_output(paths_to_subdirectories: List[Path], output_dir: str) -> None:
     "--cutoff",
     required=False,
     type=int,
-    default=-1,
+    default=[-1, -1],
     show_default=True,
+    multiple=True,
     help=(
         "The position of the last base in the reads "
         "after which a cutoff should be performed (starting at 1). "
         "The cutoff is applied to all reads. "
-        "If the value is equal to or smaller than 0, no cutoff is performed."
+        "If the value is equal to or smaller than 0, no cutoff is performed. "
+        "To define different cutoff values for the RNA-seq files in case of "
+        "paired-end sequencing, you can supply two cutoff values by using the "
+        '"-m" option twice (e.g. "-m 80 -m 60"). The first value is used for '
+        'the file supplied with "-r", whereas the second value is used for the '
+        'file supplied with "-pa".'
     ),
 )
 @click.option(
@@ -383,7 +392,7 @@ def main(
     peptide_file: str,
     rna_file: str,
     paired_end_file: str,
-    cutoff: int,
+    cutoff: Tuple[int, int],
     kmer_length: int,
     output_dir: str,
     precompute_intersections: bool,

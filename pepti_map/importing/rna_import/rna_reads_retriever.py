@@ -1,15 +1,24 @@
 import logging
 import pyfastx
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from Bio.Seq import MutableSeq
 
 
 class RNAReadsRetriever:
-    def __init__(self, filepaths: List[Path], cutoff: int = -1):
+    def __init__(self, filepaths: List[Path], cutoff: Union[int, Tuple[int, int]] = -1):
         self._filepaths: List[Path] = filepaths
-        self._cutoff: int = cutoff
+        self._cutoff: Tuple[int, int]
+        if isinstance(cutoff, int):
+            self._cutoff = (cutoff, cutoff)
+        elif isinstance(cutoff, Tuple):
+            if len(cutoff) < 2:
+                self._cutoff = (cutoff[0], cutoff[0])
+            else:
+                self._cutoff = cutoff
+        else:
+            raise AssertionError("Expected cutoff to be either an int or a tuple.")
 
         if len(self._filepaths) > 2 or len(self._filepaths) < 1:
             error_message = (
@@ -27,10 +36,15 @@ class RNAReadsRetriever:
         if len(self._filepaths) == 2:
             self._second_file_index = pyfastx.Fastq(self._filepaths[1].as_posix())
 
-    def _process_line(self, line: str, is_reverse_complement: bool) -> str:
+    def _process_line(
+        self,
+        line: str,
+        is_reverse_complement: bool,
+        cutoff_to_use: int,
+    ) -> str:
         line = line.strip()
-        if self._cutoff > 0:
-            line = line[0 : self._cutoff]  # noqa: E203
+        if cutoff_to_use > 0:
+            line = line[0:cutoff_to_use]  # noqa: E203
         if is_reverse_complement:
             line = str(MutableSeq(line).reverse_complement(inplace=True))
         return line
@@ -48,10 +62,10 @@ class RNAReadsRetriever:
             if str(read_id)[-1] == "1":
                 # Read id is from first file
                 sequence = self._first_file_index[actual_id - 1].seq
-                sequences.append(self._process_line(sequence, False))
+                sequences.append(self._process_line(sequence, False, self._cutoff[0]))
             else:
                 # Read id is from second file
                 sequence = self._second_file_index[actual_id - 1].seq
-                sequences.append(self._process_line(sequence, True))
+                sequences.append(self._process_line(sequence, True, self._cutoff[1]))
 
         return read_ids, sequences

@@ -9,10 +9,19 @@ from Bio.Seq import MutableSeq
 
 
 class LazyRNAReader(object):
-    def __init__(self, filepaths: List[Path], cutoff: int = -1):
+    def __init__(self, filepaths: List[Path], cutoff: Union[int, Tuple[int, int]] = -1):
         self._filepaths: List[Path] = filepaths
         self._open_filehandle: Union[TextIO, None] = None
-        self._cutoff: int = cutoff
+        self._cutoff: Tuple[int, int]
+        if isinstance(cutoff, int):
+            self._cutoff = (cutoff, cutoff)
+        elif isinstance(cutoff, Tuple):
+            if len(cutoff) < 2:
+                self._cutoff = (cutoff[0], cutoff[0])
+            else:
+                self._cutoff = cutoff
+        else:
+            raise AssertionError("Expected cutoff to be either an int or a tuple.")
 
         if len(self._filepaths) > 2 or len(self._filepaths) < 1:
             error_message = (
@@ -36,15 +45,19 @@ class LazyRNAReader(object):
         return int(f"{str((line_index // 4) + 1)}{str(int(is_reverse_complement) + 1)}")
 
     def _process_line(
-        self, line: str, line_index: int, is_reverse_complement: bool
+        self,
+        line: str,
+        line_index: int,
+        is_reverse_complement: bool,
+        cutoff_to_use: int,
     ) -> Union[Tuple[int, str], None]:
         if self._line_count_for_current_sequence == 1:
             self._sequence = line.strip()
 
             # TODO: Exchange all T for U? (inplace?)
 
-            if self._cutoff > 0:
-                self._sequence = self._sequence[0 : self._cutoff]  # noqa: E203
+            if cutoff_to_use > 0:
+                self._sequence = self._sequence[0:cutoff_to_use]  # noqa: E203
 
             if is_reverse_complement:
                 self._sequence = str(
@@ -85,7 +98,9 @@ class LazyRNAReader(object):
                 self._open_filehandle = open(filepath, "rt", encoding="utf-8")
 
             for line_index, line in enumerate(self._open_filehandle):
-                processed_line = self._process_line(line, line_index, file_index == 1)
+                processed_line = self._process_line(
+                    line, line_index, file_index == 1, self._cutoff[file_index]
+                )
                 if processed_line is not None:
                     yield processed_line
 
