@@ -37,12 +37,24 @@ class TrinityWrapper:
                 trinity_path = "Trinity"
             self._command.append(trinity_path)
 
+        max_mem = self._env_vars.get("TRINITY_MAX_MEM")
+        if max_mem is None:
+            # Enough for ~1M ~76 base Illumina paired reads
+            # https://github.com/trinityrnaseq/trinityrnaseq/wiki/Running-Trinity#typical-trinity-command-line
+            max_mem = "1G"
+        num_cpus = self._env_vars.get("TRINITY_N_CPUS")
+        if num_cpus is None:
+            # Trinity default
+            num_cpus = "2"
+        self._num_cpus = num_cpus
         self._command.extend(
             [
                 "--seqType",
                 "fa",
                 "--max_memory",
-                "1G",
+                max_mem,
+                "--CPU",
+                self._num_cpus,
                 "--SS_lib_type",
                 "F",
                 "--full_cleanup",
@@ -185,6 +197,7 @@ class TrinityWrapper:
             n_processes = int(n_processes)
         except (AssertionError, ValueError):
             n_processes = multiprocessing.cpu_count()
+            n_processes = n_processes // int(self._num_cpus)
         logging.info(f"Generating Trinity results with {n_processes} processes")
         with multiprocessing.Pool(n_processes) as pool:
             trinity_results = pool.map(

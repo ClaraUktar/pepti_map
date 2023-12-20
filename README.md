@@ -31,7 +31,9 @@ This is the only environment variable that needs to be set for `pepti_map` to wo
 | `IO_N_PROCESSES`          | The number of processes to use when generating the input files for `PoGo`. If not set, defaults to `multiprocessing.cpu_count()`. |
 | `TRINITY_USE_DOCKER`      | Whether to run a dockerized version of Trinity. Value must be `True` or `False`. If not set, defaults to `False`. If set to `True`, a dockerized version of Trinity must be installed on the system. |
 | `TRINITY_PATH`            | The path to the `Trinity` installation. If not given, expects `Trinity` to be executable from the working directory (e.g. by using an installation via a `Mamba` environment). |
-| `TRINITY_N_PROCESSES`     | The number of processes with which to run `Trinity` in parallel. If not set, defaults to `multiprocessing.cpu_count()`. |
+| `TRINITY_N_PROCESSES`     | The number of processes with which to run `Trinity` in parallel. If not set, defaults to `multiprocessing.cpu_count() // TRINITY_N_CPUS` (floor division). |
+| `TRINITY_N_CPUS`          | The number of CPUS to use for one `Trinity` process. Corresponds to the `--CPU` option of `Trinity`. If not set, defaults to 2. |
+| `TRINITY_MAX_MEM`         | The max memory to use for one `Trinity` process. Corresponds to the `--max_memory` option of `Trinity`. If not set, defaults to "1G". |
 | `GMAP_N_THREADS`          | The number of threads with which to run `GMAP` during the alignment. Corresponds to the `-t` option of `gmap`. If not set, defaults to `multiprocessing.cpu_count()`. |
 | `GMAP_BATCH_MODE`         | The batch mode in which to run `GMAP` during the alignment. Corresponds to the `-B` option of `gmap`. If not set, defaults to 2.      |
 | `TEMP_DIR_PATH`           | The path to the folder in which temporary results are saved. If not set, defaults to `./temp`. |
