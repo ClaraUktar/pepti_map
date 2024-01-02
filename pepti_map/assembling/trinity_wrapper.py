@@ -72,6 +72,8 @@ class TrinityWrapper:
                 output_dir_for_file / "trinity_out_dir.Trinity.fasta.gene_trans_map"
             ).unlink()
         except FileNotFoundError:
+            # TODO: Always delete trinity_out_dir if it exists
+            # to cover case of restarted run
             shutil.rmtree(output_dir_for_file / "trinity_out_dir", ignore_errors=True)
 
         resulting_sequences = []
@@ -135,6 +137,12 @@ class TrinityWrapper:
         )
 
     def _write_trinity_result_to_file(self, relative_filepath: Path) -> bool:
+        # Do not run Trinity if a result file already exists in the directory
+        if (
+            self._output_dir / relative_filepath.parent / "resulting_contigs.fa"
+        ).is_file():
+            return True
+
         trinity_result = self._get_trinity_result_for_file(relative_filepath)
         if len(trinity_result) == 0:
             return False
