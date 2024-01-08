@@ -156,11 +156,15 @@ def generate_trinity_input(
     relative_filepaths: List[Path] = []
     # TODO: Could be parallelized?
     for set_index, merged_set in enumerate(merged_sets):
+        relative_filepath = Path(f"{str(set_index)}/{str(set_index)}.fa")
+        if (PATH_TO_TEMP_FILES / relative_filepath).is_file():
+            relative_filepaths.append(relative_filepath)
+            continue
+
         read_ids, read_sequences = rna_reads_retriever.get_read_sequences_for_ids(
             list(merged_set)
         )
         (PATH_TO_TEMP_FILES / f"{str(set_index)}").mkdir()
-        relative_filepath = Path(f"{str(set_index)}/{str(set_index)}.fa")
         AssemblyHelper.write_fasta_with_sequences(
             (zip([str(read_id) for read_id in read_ids], read_sequences)),
             PATH_TO_TEMP_FILES / relative_filepath,
