@@ -205,8 +205,10 @@ def align_reads_to_genome(
     genome: Union[str, None],
     gmap_index: Union[str, None],
     output_dir: str,
+    min_trimmed_coverage: float,
+    min_identity: float,
 ) -> None:
-    gmap_wrapper = GmapWrapper()
+    gmap_wrapper = GmapWrapper(min_trimmed_coverage, min_identity)
     # TODO: How to automatically use previously generated index?
     if gmap_index is not None and gmap_index != "":
         gmap_index_path = Path(gmap_index)
@@ -394,6 +396,24 @@ def concat_output(paths_to_subdirectories: List[Path], output_dir: str) -> None:
         "the '-g/--genome' option is ignored."
     ),
 )
+@click.option(
+    "-mtc",
+    "--min-trimmed-coverage",
+    required=False,
+    type=float,
+    default=0.0,
+    show_default=True,
+    help="Sets the '--min-trimmed-coverage' option for GMAP during alignment.",
+)
+@click.option(
+    "-mid",
+    "--min-identity",
+    required=False,
+    type=float,
+    default=0.0,
+    show_default=True,
+    help="Sets the '--min-identity' option for GMAP during alignment.",
+)
 def main(
     peptide_file: str,
     rna_file: str,
@@ -407,6 +427,8 @@ def main(
     min_contig_length: int,
     genome: Union[str, None],
     gmap_index: Union[str, None],
+    min_trimmed_coverage: float,
+    min_identity: float,
 ):
     _setup(output_dir)
 
@@ -468,7 +490,14 @@ def main(
 
     if last_step < Step.ALIGNMENT.value:
         logging.info("Aligning assembled RNA-seq reads to the genome.")
-        align_reads_to_genome(trinity_results_paths, genome, gmap_index, output_dir)
+        align_reads_to_genome(
+            trinity_results_paths,
+            genome,
+            gmap_index,
+            output_dir,
+            min_trimmed_coverage,
+            min_identity,
+        )
     else:
         logging.info("Using already generated alignments.")
 
