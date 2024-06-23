@@ -196,7 +196,7 @@ def generate_trinity_results(
     return trinity_results_paths
 
 
-def load_trinity_results_paths() -> List[Path]:
+def load_current_results_paths() -> List[Path]:
     return TrinityWrapper.load_results_filepaths()
 
 
@@ -207,7 +207,7 @@ def align_reads_to_genome(
     output_dir: str,
     min_trimmed_coverage: float,
     min_identity: float,
-) -> None:
+) -> List[Path]:
     gmap_wrapper = GmapWrapper(min_trimmed_coverage, min_identity)
     # TODO: How to automatically use previously generated index?
     if gmap_index is not None and gmap_index != "":
@@ -222,13 +222,30 @@ def align_reads_to_genome(
         logging.error(missing_option_message)
         raise ValueError(missing_option_message)
 
+    new_results_paths: List[Path] = []
     for trinity_results_path in trinity_results_paths:
         gmap_wrapper.produce_alignment(
             [trinity_results_path],
             trinity_results_path.parent / "alignment_result.gff3",
         )
+        # Check if actual output was produced
+        with open(
+            trinity_results_path.parent / "alignment_result.gff3",
+            "rt",
+            encoding="utf-8",
+        ) as gmap_output:
+            line_count = 0
+            for _ in gmap_output:
+                line_count += 1
+                if line_count == 4:
+                    new_results_paths.append(trinity_results_path)
+                    break
+
+    # Save new output paths
+    TrinityWrapper.save_results_filepaths(new_results_paths)
     _write_last_step(Step.ALIGNMENT.value)
     logging.info("Generated alignment of assembled contigs with GMAP.")
+    return new_results_paths
 
 
 def generate_pogo_input(paths_to_subdirectories: List[Path], peptide_file: str) -> None:
@@ -486,11 +503,11 @@ def main(
         )
     else:
         logging.info("Using already generated Trinity output files.")
-        trinity_results_paths = load_trinity_results_paths()
+        trinity_results_paths = load_current_results_paths()
 
     if last_step < Step.ALIGNMENT.value:
         logging.info("Aligning assembled RNA-seq reads to the genome.")
-        align_reads_to_genome(
+        trinity_results_paths = align_reads_to_genome(
             trinity_results_paths,
             genome,
             gmap_index,
@@ -500,6 +517,7 @@ def main(
         )
     else:
         logging.info("Using already generated alignments.")
+        trinity_results_paths = load_current_results_paths()
 
     paths_to_subdirectories = [
         trinity_results_path.parent for trinity_results_path in trinity_results_paths
