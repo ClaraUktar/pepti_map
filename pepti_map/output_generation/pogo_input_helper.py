@@ -132,6 +132,8 @@ class PoGoInputHelper:
         ):
             raise ValueError("No start and end coordinates given.")
 
+        # Adapt attributes for start/stop of coverage in sequence to the whole length of
+        # the contig even if not the whole contig was matched to the genome
         if direction == ".":
             contig_id, start_exon_contig_end, contig_start, _ = start_exon.attributes[
                 "Target"
@@ -179,6 +181,27 @@ class PoGoInputHelper:
         cds_ids = [cds_entry.attributes["ID"][0] for cds_entry in cds]
         mrna_id = mrna.attributes["ID"][0]
 
+        # If direction is antisense, change alignment to be on the complementary strand
+        if direction == "-":
+            if strand == "+":
+                new_strand = "-"
+            else:
+                new_strand = "+"
+
+            gene.strand = new_strand
+            mrna.strand = new_strand
+            for exon in exons:
+                exon.strand = new_strand
+            for cds_entry in cds:
+                cds_entry.strand = new_strand
+
+            exons.reverse()
+            cds.reverse()
+
+            start_exon_index = (len(exons) - 1) - start_exon_index
+            end_exon_index = (len(exons) - 1) - end_exon_index
+
+        # Adapt the alignment genome coordinates to fit the whole contig length
         if (
             (direction == "+" and strand == "+")
             or (direction == "-" and strand == "-")
@@ -295,6 +318,7 @@ class PoGoInputHelper:
             path_to_gff.absolute().as_posix(),
             (path_to_gff.parent / "gffutils_db.sqlite").absolute().as_posix(),
         )
+
         with open(
             output_directory / "pogo_gtf_in.gtf", "wt", encoding="utf-8"
         ) as output_gtf:
