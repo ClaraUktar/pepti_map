@@ -108,6 +108,200 @@ class PoGoInputHelper:
             + "\n"
         )
 
+    # @classmethod
+    # def _write_new_feature_coordinates_old(
+    #     cls,
+    #     output_gtf: TextIO,
+    #     gene: gffutils.Feature,
+    #     mrna: gffutils.Feature,
+    #     exons: List[gffutils.Feature],
+    #     cds: List[gffutils.Feature],
+    #     start_exon_index: int,
+    #     end_exon_index: int,
+    #     strand: str,
+    #     direction: str,
+    #     contig_length: int,
+    # ) -> None:
+    #     start_exon = exons[start_exon_index]
+    #     end_exon = exons[end_exon_index]
+    #     if (
+    #         not start_exon.start
+    #         or not start_exon.end
+    #         or not end_exon.start
+    #         or not end_exon.end
+    #     ):
+    #         raise ValueError("No start and end coordinates given.")
+
+    #     # Adapt attributes for start/stop of coverage in sequence to the whole length of
+    #     # the contig even if not the whole contig was matched to the genome
+    #     if direction == ".":
+    #         contig_id, start_exon_contig_end, contig_start, _ = start_exon.attributes[
+    #             "Target"
+    #         ][0].split(" ")
+    #         _, contig_end, end_exon_contig_start, _ = end_exon.attributes["Target"][
+    #             0
+    #         ].split(" ")
+    #         contig_start = int(contig_start)
+    #         contig_end = int(contig_end)
+
+    #         if start_exon == end_exon:
+    #             start_exon.attributes["Target"] = " ".join(
+    #                 [contig_id, str(contig_length), "1", direction]
+    #             )
+    #         else:
+    #             start_exon.attributes["Target"] = " ".join(
+    #                 [contig_id, start_exon_contig_end, "1", direction]
+    #             )
+    #             end_exon.attributes["Target"] = " ".join(
+    #                 [contig_id, str(contig_length), end_exon_contig_start, direction]
+    #             )
+    #     else:
+    #         contig_id, contig_start, start_exon_contig_end, _ = start_exon.attributes[
+    #             "Target"
+    #         ][0].split(" ")
+    #         _, end_exon_contig_start, contig_end, _ = end_exon.attributes["Target"][
+    #             0
+    #         ].split(" ")
+    #         contig_start = int(contig_start)
+    #         contig_end = int(contig_end)
+
+    #         if start_exon == end_exon:
+    #             start_exon.attributes["Target"] = " ".join(
+    #                 [contig_id, "1", str(contig_length), direction]
+    #             )
+    #         else:
+    #             start_exon.attributes["Target"] = " ".join(
+    #                 [contig_id, "1", start_exon_contig_end, direction]
+    #             )
+    #             end_exon.attributes["Target"] = " ".join(
+    #                 [contig_id, end_exon_contig_start, str(contig_length), direction]
+    #             )
+
+    #     exon_ids = [exon.attributes["ID"][0] for exon in exons]
+    #     cds_ids = [cds_entry.attributes["ID"][0] for cds_entry in cds]
+    #     mrna_id = mrna.attributes["ID"][0]
+
+    #     # If direction is antisense, change alignment to be on the complementary strand
+    #     if direction == "-":
+    #         if strand == "+":
+    #             new_strand = "-"
+    #         else:
+    #             new_strand = "+"
+
+    #         gene.strand = new_strand
+    #         mrna.strand = new_strand
+    #         for exon in exons:
+    #             exon.strand = new_strand
+    #         for cds_entry in cds:
+    #             cds_entry.strand = new_strand
+
+    #         exons.reverse()
+    #         cds.reverse()
+
+    #         start_exon_index = (len(exons) - 1) - start_exon_index
+    #         end_exon_index = (len(exons) - 1) - end_exon_index
+
+    #     # Adapt the alignment genome coordinates to fit the whole contig length
+    #     if (
+    #         (direction == "+" and strand == "+")
+    #         or (direction == "-" and strand == "-")
+    #         or (direction == "." and strand == "+")
+    #     ):
+    #         new_start = start_exon.start - (contig_start - 1)
+    #         start_exon.start = new_start
+    #         mrna.start = new_start
+    #         gene.start = new_start
+    #         new_end = end_exon.end + (contig_length - contig_end)
+    #         end_exon.end = new_end
+    #         mrna.end = new_end
+    #         gene.end = new_end
+
+    #         cls._write_feature_in_gtf_format(
+    #             output_gtf,
+    #             gene,
+    #             gene.attributes["ID"][0],
+    #         )
+    #         for frame in range(3):
+    #             mrna.attributes["ID"] = mrna_id + "." + str(frame)
+    #             cls._write_feature_in_gtf_format(
+    #                 output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
+    #             )
+    #             for exon_index, exon in enumerate(exons):
+    #                 exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
+    #                 exon.attributes["Parent"] = mrna.attributes["ID"]
+    #                 cls._write_feature_in_gtf_format(
+    #                     output_gtf,
+    #                     exon,
+    #                     gene.attributes["ID"][0],
+    #                     mrna.attributes["ID"][0],
+    #                 )
+    #             for cds_index, cds_entry in enumerate(cds):
+    #                 cds_entry.start = exons[cds_index].start
+    #                 cds_entry.end = exons[cds_index].end
+    #                 if cds_index == start_exon_index:
+    #                     cds_entry.start = cds_entry.start + frame  # pyright: ignore
+    #                 if cds_index == end_exon_index:
+    #                     cds_entry.end = cds_entry.end - (  # pyright: ignore
+    #                         (contig_length - frame) % 3
+    #                     )
+    #                 cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
+    #                 cds_entry.attributes["Parent"] = mrna.attributes["ID"]
+    #                 cls._write_feature_in_gtf_format(
+    #                     output_gtf,
+    #                     cds_entry,
+    #                     gene.attributes["ID"][0],
+    #                     mrna.attributes["ID"][0],
+    #                 )
+
+    #     elif (
+    #         (direction == "+" and strand == "-")
+    #         or (direction == "-" and strand == "+")
+    #         or (direction == "." and strand == "-")
+    #     ):
+    #         new_end = start_exon.end + (contig_start - 1)
+    #         start_exon.end = new_end
+    #         mrna.end = new_end
+    #         gene.end = new_end
+    #         new_start = end_exon.start - (contig_length - contig_end)
+    #         end_exon.start = new_start
+    #         mrna.start = new_start
+    #         gene.start = new_start
+
+    #         cls._write_feature_in_gtf_format(output_gtf, gene, gene.attributes["ID"][0])
+    #         for frame in range(3):
+    #             mrna.attributes["ID"] = mrna_id + "." + str(frame)
+    #             cls._write_feature_in_gtf_format(
+    #                 output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
+    #             )
+    #             for exon_index, exon in enumerate(exons):
+    #                 exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
+    #                 exon.attributes["Parent"] = mrna.attributes["ID"]
+    #                 cls._write_feature_in_gtf_format(
+    #                     output_gtf,
+    #                     exon,
+    #                     gene.attributes["ID"][0],
+    #                     mrna.attributes["ID"][0],
+    #                 )
+    #             for cds_index, cds_entry in enumerate(cds):
+    #                 cds_entry.start = exons[cds_index].start
+    #                 cds_entry.end = exons[cds_index].end
+    #                 if cds_index == start_exon_index:
+    #                     cds_entry.end = cds_entry.end - frame  # pyright: ignore
+    #                 if cds_index == end_exon_index:
+    #                     cds_entry.start = cds_entry.start + (  # pyright: ignore
+    #                         (contig_length - frame) % 3
+    #                     )
+    #                 cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
+    #                 cds_entry.attributes["Parent"] = mrna.attributes["ID"]
+    #                 cls._write_feature_in_gtf_format(
+    #                     output_gtf,
+    #                     cds_entry,
+    #                     gene.attributes["ID"][0],
+    #                     mrna.attributes["ID"][0],
+    #                 )
+    #     else:
+    #         raise ValueError("Strand must be one of '+', '-'.")
+
     @classmethod
     def _write_new_feature_coordinates(
         cls,
@@ -115,72 +309,11 @@ class PoGoInputHelper:
         gene: gffutils.Feature,
         mrna: gffutils.Feature,
         exons: List[gffutils.Feature],
-        cds: List[gffutils.Feature],
-        start_exon_index: int,
-        end_exon_index: int,
         strand: str,
         direction: str,
         contig_length: int,
-    ) -> None:
-        start_exon = exons[start_exon_index]
-        end_exon = exons[end_exon_index]
-        if (
-            not start_exon.start
-            or not start_exon.end
-            or not end_exon.start
-            or not end_exon.end
-        ):
-            raise ValueError("No start and end coordinates given.")
-
-        # Adapt attributes for start/stop of coverage in sequence to the whole length of
-        # the contig even if not the whole contig was matched to the genome
-        if direction == ".":
-            contig_id, start_exon_contig_end, contig_start, _ = start_exon.attributes[
-                "Target"
-            ][0].split(" ")
-            _, contig_end, end_exon_contig_start, _ = end_exon.attributes["Target"][
-                0
-            ].split(" ")
-            contig_start = int(contig_start)
-            contig_end = int(contig_end)
-
-            if start_exon == end_exon:
-                start_exon.attributes["Target"] = " ".join(
-                    [contig_id, str(contig_length), "1", direction]
-                )
-            else:
-                start_exon.attributes["Target"] = " ".join(
-                    [contig_id, start_exon_contig_end, "1", direction]
-                )
-                end_exon.attributes["Target"] = " ".join(
-                    [contig_id, str(contig_length), end_exon_contig_start, direction]
-                )
-        else:
-            contig_id, contig_start, start_exon_contig_end, _ = start_exon.attributes[
-                "Target"
-            ][0].split(" ")
-            _, end_exon_contig_start, contig_end, _ = end_exon.attributes["Target"][
-                0
-            ].split(" ")
-            contig_start = int(contig_start)
-            contig_end = int(contig_end)
-
-            if start_exon == end_exon:
-                start_exon.attributes["Target"] = " ".join(
-                    [contig_id, "1", str(contig_length), direction]
-                )
-            else:
-                start_exon.attributes["Target"] = " ".join(
-                    [contig_id, "1", start_exon_contig_end, direction]
-                )
-                end_exon.attributes["Target"] = " ".join(
-                    [contig_id, end_exon_contig_start, str(contig_length), direction]
-                )
-
-        exon_ids = [exon.attributes["ID"][0] for exon in exons]
-        cds_ids = [cds_entry.attributes["ID"][0] for cds_entry in cds]
-        mrna_id = mrna.attributes["ID"][0]
-
+        contig: str,
+    ) -> str:
         # If direction is antisense, change alignment to be on the complementary strand
         if direction == "-":
             if strand == "+":
@@ -192,115 +325,70 @@ class PoGoInputHelper:
             mrna.strand = new_strand
             for exon in exons:
                 exon.strand = new_strand
-            for cds_entry in cds:
-                cds_entry.strand = new_strand
 
             exons.reverse()
-            cds.reverse()
 
-            start_exon_index = (len(exons) - 1) - start_exon_index
-            end_exon_index = (len(exons) - 1) - end_exon_index
+        # TODO: Is assumption that exons are already in correct order
+        # if dir=indeterminate true?
+        # Potentially only labeled "indeterminate" if only one exon?
 
-        # Adapt the alignment genome coordinates to fit the whole contig length
-        if (
-            (direction == "+" and strand == "+")
-            or (direction == "-" and strand == "-")
-            or (direction == "." and strand == "+")
-        ):
-            new_start = start_exon.start - (contig_start - 1)
-            start_exon.start = new_start
-            mrna.start = new_start
-            gene.start = new_start
-            new_end = end_exon.end + (contig_length - contig_end)
-            end_exon.end = new_end
-            mrna.end = new_end
-            gene.end = new_end
+        exon_starts: List[int] = []
+        exon_ends: List[int] = []
+        for exon in exons:
+            if direction == ".":
+                _, exon_end, exon_start, _ = exon.attributes["Target"][0].split(" ")
+            else:
+                _, exon_start, exon_end, _ = exon.attributes["Target"][0].split(" ")
+            exon_starts.append(int(exon_start))
+            exon_ends.append(int(exon_end))
 
+        cut_contig_parts: List[str] = []
+        for i in range(len(exon_starts)):
+            current_start = exon_starts[i]
+            current_end = exon_ends[i]
+            current_part = contig[current_start - 1 : current_end]  # noqa: E203
+            cut_contig_parts.append(current_part)
+        start_end_cut_contig = "".join(cut_contig_parts)
+
+        if len(start_end_cut_contig) < (0.7 * len(contig)):
+            # TODO: Filter out alignment and report
+            pass
+
+        # TODO: Not needed?
+        # exon_ids = [exon.attributes["ID"][0] for exon in exons]
+        # cds_ids = [exon_id.replace("exon", "cds") for exon_id in exon_ids]
+        mrna_id = mrna.attributes["ID"][0]
+
+        cls._write_feature_in_gtf_format(
+            output_gtf,
+            gene,
+            gene.attributes["ID"][0],
+        )
+        for frame in range(3):
+            mrna.attributes["ID"] = mrna_id + "." + str(frame)
             cls._write_feature_in_gtf_format(
-                output_gtf,
-                gene,
-                gene.attributes["ID"][0],
+                output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
             )
-            for frame in range(3):
-                mrna.attributes["ID"] = mrna_id + "." + str(frame)
+            for exon in exons:
+                # TODO: Not needed?
+                # exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
+                # exon.attributes["Parent"] = mrna.attributes["ID"]
                 cls._write_feature_in_gtf_format(
-                    output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
+                    output_gtf,
+                    exon,
+                    gene.attributes["ID"][0],
+                    mrna.attributes["ID"][0],
                 )
-                for exon_index, exon in enumerate(exons):
-                    exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
-                    exon.attributes["Parent"] = mrna.attributes["ID"]
-                    cls._write_feature_in_gtf_format(
-                        output_gtf,
-                        exon,
-                        gene.attributes["ID"][0],
-                        mrna.attributes["ID"][0],
-                    )
-                for cds_index, cds_entry in enumerate(cds):
-                    cds_entry.start = exons[cds_index].start
-                    cds_entry.end = exons[cds_index].end
-                    if cds_index == start_exon_index:
-                        cds_entry.start = cds_entry.start + frame  # pyright: ignore
-                    if cds_index == end_exon_index:
-                        cds_entry.end = cds_entry.end - (  # pyright: ignore
-                            (contig_length - frame) % 3
-                        )
-                    cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
-                    cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-                    cls._write_feature_in_gtf_format(
-                        output_gtf,
-                        cds_entry,
-                        gene.attributes["ID"][0],
-                        mrna.attributes["ID"][0],
-                    )
-
-        elif (
-            (direction == "+" and strand == "-")
-            or (direction == "-" and strand == "+")
-            or (direction == "." and strand == "-")
-        ):
-            new_end = start_exon.end + (contig_start - 1)
-            start_exon.end = new_end
-            mrna.end = new_end
-            gene.end = new_end
-            new_start = end_exon.start - (contig_length - contig_end)
-            end_exon.start = new_start
-            mrna.start = new_start
-            gene.start = new_start
-
-            cls._write_feature_in_gtf_format(output_gtf, gene, gene.attributes["ID"][0])
-            for frame in range(3):
-                mrna.attributes["ID"] = mrna_id + "." + str(frame)
+            for exon in exons:
+                exon.featuretype = "CDS"
                 cls._write_feature_in_gtf_format(
-                    output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
+                    output_gtf,
+                    exon,
+                    gene.attributes["ID"][0],
+                    mrna.attributes["ID"][0],
                 )
-                for exon_index, exon in enumerate(exons):
-                    exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
-                    exon.attributes["Parent"] = mrna.attributes["ID"]
-                    cls._write_feature_in_gtf_format(
-                        output_gtf,
-                        exon,
-                        gene.attributes["ID"][0],
-                        mrna.attributes["ID"][0],
-                    )
-                for cds_index, cds_entry in enumerate(cds):
-                    cds_entry.start = exons[cds_index].start
-                    cds_entry.end = exons[cds_index].end
-                    if cds_index == start_exon_index:
-                        cds_entry.end = cds_entry.end - frame  # pyright: ignore
-                    if cds_index == end_exon_index:
-                        cds_entry.start = cds_entry.start + (  # pyright: ignore
-                            (contig_length - frame) % 3
-                        )
-                    cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
-                    cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-                    cls._write_feature_in_gtf_format(
-                        output_gtf,
-                        cds_entry,
-                        gene.attributes["ID"][0],
-                        mrna.attributes["ID"][0],
-                    )
-        else:
-            raise ValueError("Strand must be one of '+', '-'.")
+
+        return start_end_cut_contig
 
     @classmethod
     def generate_gtf_input_file(
@@ -308,10 +396,16 @@ class PoGoInputHelper:
         path_to_gff: Path,
         output_directory: Path,
         sequence_lengths_per_contig: List[int],
-    ) -> List[int]:
+        contig_sequences: List[Tuple[str, str]],
+    ) -> Tuple[List[int], List[List[str]]]:
         # Track number of transcripts to write protein FASTA with matching ids
         number_of_transcripts_per_contig: List[int] = [
             0 for _ in range(len(sequence_lengths_per_contig))
+        ]
+        # Per original contig, there can be several new contigs
+        # based on different cutoffs
+        new_contig_sequences: List[List[str]] = [
+            [] for _ in range(len(contig_sequences))
         ]
 
         gffutils_db = gffutils.create_db(
@@ -334,41 +428,10 @@ class PoGoInputHelper:
                 strand = first_exon.strand
                 target: str = first_exon.attributes["Target"][0]
                 contig_id, _, _, direction = target.split(" ")
-                contig_length = sequence_lengths_per_contig[int(contig_id[-1])]
-                if direction == ".":  # indeterminate
-                    start_exon_index = exons.index(
-                        min(
-                            exons,
-                            key=lambda exon: int(
-                                exon.attributes["Target"][0].split(" ")[2]
-                            ),
-                        )
-                    )
-                    end_exon_index = exons.index(
-                        max(
-                            exons,
-                            key=lambda exon: int(
-                                exon.attributes["Target"][0].split(" ")[1]
-                            ),
-                        )
-                    )
-                else:  # sense or antisense
-                    start_exon_index = exons.index(
-                        min(
-                            exons,
-                            key=lambda exon: int(
-                                exon.attributes["Target"][0].split(" ")[1]
-                            ),
-                        )
-                    )
-                    end_exon_index = exons.index(
-                        max(
-                            exons,
-                            key=lambda exon: int(
-                                exon.attributes["Target"][0].split(" ")[2]
-                            ),
-                        )
-                    )
+                contig_id = int(contig_id.split("-")[-1])
+                contig_length = sequence_lengths_per_contig[contig_id]
+                contig = contig_sequences[contig_id]
+
                 mrna = [
                     gene_child
                     for gene_child in gene_children
@@ -377,45 +440,48 @@ class PoGoInputHelper:
                     0
                 ]  # There can be only one mRNA per gene
                 mrna_id = mrna.attributes["ID"][0]
-                number_of_transcripts_per_contig[int(mrna_id.split(".")[0][-1])] += 1
+                # TODO: Unify with the one above?
+                contig_idx = int(mrna_id.split(".")[0].split("-")[-1])
+                number_of_transcripts_per_contig[contig_idx] += 1
 
-                cls._write_new_feature_coordinates(
+                new_contig = cls._write_new_feature_coordinates(
                     output_gtf,
                     gene_feature,
                     mrna,
                     exons,
-                    [
-                        gene_child
-                        for gene_child in gene_children
-                        if gene_child.featuretype == "CDS"
-                    ],
-                    start_exon_index,
-                    end_exon_index,
                     strand,
                     direction,
                     contig_length,
+                    contig[1],
                 )
+                new_contig_sequences[contig_idx].append(new_contig)
 
-        return number_of_transcripts_per_contig
+        return (number_of_transcripts_per_contig, new_contig_sequences)
 
     @staticmethod
     def generate_protein_fasta_input_file(
-        contig_sequences: List[Tuple[str, str]],
+        contig_ids: List[str],
+        contig_sequences: List[List[str]],
         output_directory: Path,
         number_of_transcripts_per_contig: List[int],
     ) -> None:
+        # TODO: Adapt to new separation of ids and seqs
         with open(
             output_directory / "pogo_fasta_in.fa", "wt", encoding="utf-8"
         ) as output_file:
-            for contig_index, (contig_id, contig_sequence) in enumerate(
-                contig_sequences
-            ):
-                for translation, frame in get_three_frame_translations(
-                    contig_sequence, False
+            for contig_id, contig_cut_sequences in zip(contig_ids, contig_sequences):
+                # TODO: This relies on the assumption that all paths for one contig are
+                # reported in the GMAP alignment in ascending numerical order.
+                # Can we really be sure about this?
+                for transcript_index, contig_sequence in enumerate(
+                    contig_cut_sequences
                 ):
-                    for transcript_index in range(
-                        number_of_transcripts_per_contig[contig_index]
+                    for translation, frame in get_three_frame_translations(
+                        contig_sequence, False
                     ):
+                        # for transcript_index in range(
+                        #     number_of_transcripts_per_contig[contig_index]
+                        # ):
                         gene_id = f"{contig_id}_path{str(transcript_index + 1)}"
                         transcript_id = (
                             f"{contig_id}_mrna{str(transcript_index + 1)}_{str(frame)}"
@@ -449,13 +515,17 @@ class PoGoInputHelper:
         contig_sequences = cls._get_contig_sequences(
             path_to_directory / "resulting_contigs.fa"
         )
-        number_of_transcripts_per_contig = cls.generate_gtf_input_file(
-            path_to_directory / "alignment_result.gff3",
-            path_to_directory,
-            [len(contig_sequence[1]) for contig_sequence in contig_sequences],
+        number_of_transcripts_per_contig, updated_contig_sequences = (
+            cls.generate_gtf_input_file(
+                path_to_directory / "alignment_result.gff3",
+                path_to_directory,
+                [len(contig_sequence[1]) for contig_sequence in contig_sequences],
+                contig_sequences,
+            )
         )
         cls.generate_protein_fasta_input_file(
-            contig_sequences,
+            [contig_sequence[0] for contig_sequence in contig_sequences],
+            updated_contig_sequences,
             path_to_directory,
             number_of_transcripts_per_contig,
         )
