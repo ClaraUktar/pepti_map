@@ -317,14 +317,14 @@ class PoGoInputHelper:
         # If direction is antisense, change alignment to be on the complementary strand
         if direction == "-":
             if strand == "+":
-                new_strand = "-"
+                strand = "-"
             else:
-                new_strand = "+"
+                strand = "+"
 
-            gene.strand = new_strand
-            mrna.strand = new_strand
+            gene.strand = strand
+            mrna.strand = strand
             for exon in exons:
-                exon.strand = new_strand
+                exon.strand = strand
 
             exons.reverse()
 
@@ -358,6 +358,8 @@ class PoGoInputHelper:
         # exon_ids = [exon.attributes["ID"][0] for exon in exons]
         # cds_ids = [exon_id.replace("exon", "cds") for exon_id in exon_ids]
         mrna_id = mrna.attributes["ID"][0]
+        exon_start_coords = [exon.start for exon in exons]
+        exon_end_coords = [exon.end for exon in exons]
 
         cls._write_feature_in_gtf_format(
             output_gtf,
@@ -369,18 +371,46 @@ class PoGoInputHelper:
             cls._write_feature_in_gtf_format(
                 output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
             )
-            for exon in exons:
+            for exon_idx, exon in enumerate(exons):
                 # TODO: Not needed?
                 # exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
                 # exon.attributes["Parent"] = mrna.attributes["ID"]
+                exon.featuretype = "exon"
+                exon.start = exon_start_coords[exon_idx]
+                exon.end = exon_end_coords[exon_idx]
                 cls._write_feature_in_gtf_format(
                     output_gtf,
                     exon,
                     gene.attributes["ID"][0],
                     mrna.attributes["ID"][0],
                 )
-            for exon in exons:
+            for exon_idx, exon in enumerate(exons):
+                # TODO: Is there a better solution,
+                # e.g. copying and modifying the feature?
                 exon.featuretype = "CDS"
+                # TODO
+                # problem: overwrite of exon coords over the three iterations
+                # -> save them
+                # strand = +, dir = sense -> add frame to start of first CDS
+                # strand = +, dir = antisense -> subtract frame from end of first CDS (is first after reversing)
+                # strand = -, dir = sense -> subtract frame from end of first CDS
+                # strand = -, dir = antisense -> add frame to start of first CDS (is first after reversing)
+                # --> differentiation between +/- strand should suffice after reversing
+                if strand == "+":
+                    if exon_idx == 0:
+                        exon.start = exon.start + frame  # pyright: ignore
+                    if exon_idx == (len(exons) - 1):
+                        exon.end = exon.end - (  # pyright: ignore
+                            (len(start_end_cut_contig) - frame) % 3
+                        )
+                else:
+                    if exon_idx == 0:
+                        exon.end = exon.end - frame  # pyright: ignore
+                    if exon_idx == (len(exons) - 1):
+                        exon.start = exon.start + (  # pyright: ignore
+                            (len(start_end_cut_contig) - frame) % 3
+                        )
+
                 cls._write_feature_in_gtf_format(
                     output_gtf,
                     exon,
