@@ -76,6 +76,10 @@ class PoGoInputHelper:
             )
 
     @staticmethod
+    def _get_exon_feature_id(exon: gffutils.Feature) -> int:
+        return int(exon.attributes["ID"][0].split(".")[-1].replace("exon", ""))
+
+    @staticmethod
     def _write_feature_in_gtf_format(
         output_gtf: TextIO,
         feature: gffutils.Feature,
@@ -302,6 +306,7 @@ class PoGoInputHelper:
     #     else:
     #         raise ValueError("Strand must be one of '+', '-'.")
 
+    # TODO: Remove unneeded arguments
     @classmethod
     def _write_new_feature_coordinates(
         cls,
@@ -314,6 +319,15 @@ class PoGoInputHelper:
         contig_length: int,
         contig: str,
     ) -> str:
+        # The exons need to be sorted to follow the same order as in the original GFF.
+        # This is necessary because gffutils does not necessarily return the children
+        # of a feature in order when calling children(). The parameter order_by
+        # cannot be used here because it does not allow us to select for an
+        # exon identifier or specify the same order as in the original.
+        # TODO: Is there an easier option for ordering
+        # that does not involve string splitting?
+        exons.sort(key=cls._get_exon_feature_id)
+
         # If direction is antisense, change alignment to be on the complementary strand
         if direction == "-":
             if strand == "+":
@@ -388,9 +402,6 @@ class PoGoInputHelper:
                 # TODO: Is there a better solution,
                 # e.g. copying and modifying the feature?
                 exon.featuretype = "CDS"
-                # TODO
-                # problem: overwrite of exon coords over the three iterations
-                # -> save them
                 # strand = +, dir = sense -> add frame to start of first CDS
                 # strand = +, dir = antisense -> subtract frame from end of first CDS (is first after reversing)
                 # strand = -, dir = sense -> subtract frame from end of first CDS
@@ -488,6 +499,7 @@ class PoGoInputHelper:
 
         return (number_of_transcripts_per_contig, new_contig_sequences)
 
+    # TODO: Remove unneeded arguments
     @staticmethod
     def generate_protein_fasta_input_file(
         contig_ids: List[str],
