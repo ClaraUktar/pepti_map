@@ -248,7 +248,11 @@ def align_reads_to_genome(
     return new_results_paths
 
 
-def generate_pogo_input(paths_to_subdirectories: List[Path], peptide_file: str) -> None:
+def generate_pogo_input(
+    paths_to_subdirectories: List[Path],
+    peptide_file: str,
+    no_indels: bool
+) -> None:
     pogo_input_helper = PoGoInputHelper(
         Path(peptide_file), PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE
     )
@@ -256,7 +260,7 @@ def generate_pogo_input(paths_to_subdirectories: List[Path], peptide_file: str) 
         paths_to_subdirectories, PATH_TO_MERGED_INDEXES
     )
     PoGoInputHelper.generate_gtf_and_protein_files_for_multiple_directories(
-        paths_to_subdirectories
+        paths_to_subdirectories, no_indels
     )
     _write_last_step(Step.POGO_INPUT.value)
     logging.info("Generated PoGo input files.")
@@ -357,6 +361,7 @@ def concat_output(paths_to_subdirectories: List[Path], output_dir: str) -> None:
     "-pi",
     "--precompute-intersections",
     is_flag=True,
+    default=False,
     help=(
         "If used, the intersection sizes for the Jaccard Index "
         "calculation are precomputed during the matching phase."
@@ -431,6 +436,15 @@ def concat_output(paths_to_subdirectories: List[Path], output_dir: str) -> None:
     show_default=True,
     help="Sets the '--min-identity' option for GMAP during alignment.",
 )
+@click.option(
+    "-ni",
+    "--no-indels",
+    required=False,
+    is_flag=True,
+    default=False,
+    help=("If set, contig alignments containing indels "
+          "are excluded from further processing.")
+)
 def main(
     peptide_file: str,
     rna_file: str,
@@ -446,6 +460,7 @@ def main(
     gmap_index: Union[str, None],
     min_trimmed_coverage: float,
     min_identity: float,
+    no_indels: bool
 ):
     _setup(output_dir)
 
@@ -525,7 +540,7 @@ def main(
 
     if last_step < Step.POGO_INPUT.value:
         logging.info("Generating input files for PoGo.")
-        generate_pogo_input(paths_to_subdirectories, peptide_file)
+        generate_pogo_input(paths_to_subdirectories, peptide_file, no_indels)
     else:
         logging.info("Using already generated PoGo input files.")
 

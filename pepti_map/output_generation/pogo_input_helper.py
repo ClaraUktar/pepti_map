@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import partial
 import logging
 import multiprocessing
 from dotenv import dotenv_values
@@ -111,200 +112,6 @@ class PoGoInputHelper:
             )
             + "\n"
         )
-
-    # @classmethod
-    # def _write_new_feature_coordinates_old(
-    #     cls,
-    #     output_gtf: TextIO,
-    #     gene: gffutils.Feature,
-    #     mrna: gffutils.Feature,
-    #     exons: List[gffutils.Feature],
-    #     cds: List[gffutils.Feature],
-    #     start_exon_index: int,
-    #     end_exon_index: int,
-    #     strand: str,
-    #     direction: str,
-    #     contig_length: int,
-    # ) -> None:
-    #     start_exon = exons[start_exon_index]
-    #     end_exon = exons[end_exon_index]
-    #     if (
-    #         not start_exon.start
-    #         or not start_exon.end
-    #         or not end_exon.start
-    #         or not end_exon.end
-    #     ):
-    #         raise ValueError("No start and end coordinates given.")
-
-    #     # Adapt attributes for start/stop of coverage in sequence to the whole length of
-    #     # the contig even if not the whole contig was matched to the genome
-    #     if direction == ".":
-    #         contig_id, start_exon_contig_end, contig_start, _ = start_exon.attributes[
-    #             "Target"
-    #         ][0].split(" ")
-    #         _, contig_end, end_exon_contig_start, _ = end_exon.attributes["Target"][
-    #             0
-    #         ].split(" ")
-    #         contig_start = int(contig_start)
-    #         contig_end = int(contig_end)
-
-    #         if start_exon == end_exon:
-    #             start_exon.attributes["Target"] = " ".join(
-    #                 [contig_id, str(contig_length), "1", direction]
-    #             )
-    #         else:
-    #             start_exon.attributes["Target"] = " ".join(
-    #                 [contig_id, start_exon_contig_end, "1", direction]
-    #             )
-    #             end_exon.attributes["Target"] = " ".join(
-    #                 [contig_id, str(contig_length), end_exon_contig_start, direction]
-    #             )
-    #     else:
-    #         contig_id, contig_start, start_exon_contig_end, _ = start_exon.attributes[
-    #             "Target"
-    #         ][0].split(" ")
-    #         _, end_exon_contig_start, contig_end, _ = end_exon.attributes["Target"][
-    #             0
-    #         ].split(" ")
-    #         contig_start = int(contig_start)
-    #         contig_end = int(contig_end)
-
-    #         if start_exon == end_exon:
-    #             start_exon.attributes["Target"] = " ".join(
-    #                 [contig_id, "1", str(contig_length), direction]
-    #             )
-    #         else:
-    #             start_exon.attributes["Target"] = " ".join(
-    #                 [contig_id, "1", start_exon_contig_end, direction]
-    #             )
-    #             end_exon.attributes["Target"] = " ".join(
-    #                 [contig_id, end_exon_contig_start, str(contig_length), direction]
-    #             )
-
-    #     exon_ids = [exon.attributes["ID"][0] for exon in exons]
-    #     cds_ids = [cds_entry.attributes["ID"][0] for cds_entry in cds]
-    #     mrna_id = mrna.attributes["ID"][0]
-
-    #     # If direction is antisense, change alignment to be on the complementary strand
-    #     if direction == "-":
-    #         if strand == "+":
-    #             new_strand = "-"
-    #         else:
-    #             new_strand = "+"
-
-    #         gene.strand = new_strand
-    #         mrna.strand = new_strand
-    #         for exon in exons:
-    #             exon.strand = new_strand
-    #         for cds_entry in cds:
-    #             cds_entry.strand = new_strand
-
-    #         exons.reverse()
-    #         cds.reverse()
-
-    #         start_exon_index = (len(exons) - 1) - start_exon_index
-    #         end_exon_index = (len(exons) - 1) - end_exon_index
-
-    #     # Adapt the alignment genome coordinates to fit the whole contig length
-    #     if (
-    #         (direction == "+" and strand == "+")
-    #         or (direction == "-" and strand == "-")
-    #         or (direction == "." and strand == "+")
-    #     ):
-    #         new_start = start_exon.start - (contig_start - 1)
-    #         start_exon.start = new_start
-    #         mrna.start = new_start
-    #         gene.start = new_start
-    #         new_end = end_exon.end + (contig_length - contig_end)
-    #         end_exon.end = new_end
-    #         mrna.end = new_end
-    #         gene.end = new_end
-
-    #         cls._write_feature_in_gtf_format(
-    #             output_gtf,
-    #             gene,
-    #             gene.attributes["ID"][0],
-    #         )
-    #         for frame in range(3):
-    #             mrna.attributes["ID"] = mrna_id + "." + str(frame)
-    #             cls._write_feature_in_gtf_format(
-    #                 output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
-    #             )
-    #             for exon_index, exon in enumerate(exons):
-    #                 exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
-    #                 exon.attributes["Parent"] = mrna.attributes["ID"]
-    #                 cls._write_feature_in_gtf_format(
-    #                     output_gtf,
-    #                     exon,
-    #                     gene.attributes["ID"][0],
-    #                     mrna.attributes["ID"][0],
-    #                 )
-    #             for cds_index, cds_entry in enumerate(cds):
-    #                 cds_entry.start = exons[cds_index].start
-    #                 cds_entry.end = exons[cds_index].end
-    #                 if cds_index == start_exon_index:
-    #                     cds_entry.start = cds_entry.start + frame  # pyright: ignore
-    #                 if cds_index == end_exon_index:
-    #                     cds_entry.end = cds_entry.end - (  # pyright: ignore
-    #                         (contig_length - frame) % 3
-    #                     )
-    #                 cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
-    #                 cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-    #                 cls._write_feature_in_gtf_format(
-    #                     output_gtf,
-    #                     cds_entry,
-    #                     gene.attributes["ID"][0],
-    #                     mrna.attributes["ID"][0],
-    #                 )
-
-    #     elif (
-    #         (direction == "+" and strand == "-")
-    #         or (direction == "-" and strand == "+")
-    #         or (direction == "." and strand == "-")
-    #     ):
-    #         new_end = start_exon.end + (contig_start - 1)
-    #         start_exon.end = new_end
-    #         mrna.end = new_end
-    #         gene.end = new_end
-    #         new_start = end_exon.start - (contig_length - contig_end)
-    #         end_exon.start = new_start
-    #         mrna.start = new_start
-    #         gene.start = new_start
-
-    #         cls._write_feature_in_gtf_format(output_gtf, gene, gene.attributes["ID"][0])
-    #         for frame in range(3):
-    #             mrna.attributes["ID"] = mrna_id + "." + str(frame)
-    #             cls._write_feature_in_gtf_format(
-    #                 output_gtf, mrna, gene.attributes["ID"][0], mrna.attributes["ID"][0]
-    #             )
-    #             for exon_index, exon in enumerate(exons):
-    #                 exon.attributes["ID"] = exon_ids[exon_index] + "." + str(frame)
-    #                 exon.attributes["Parent"] = mrna.attributes["ID"]
-    #                 cls._write_feature_in_gtf_format(
-    #                     output_gtf,
-    #                     exon,
-    #                     gene.attributes["ID"][0],
-    #                     mrna.attributes["ID"][0],
-    #                 )
-    #             for cds_index, cds_entry in enumerate(cds):
-    #                 cds_entry.start = exons[cds_index].start
-    #                 cds_entry.end = exons[cds_index].end
-    #                 if cds_index == start_exon_index:
-    #                     cds_entry.end = cds_entry.end - frame  # pyright: ignore
-    #                 if cds_index == end_exon_index:
-    #                     cds_entry.start = cds_entry.start + (  # pyright: ignore
-    #                         (contig_length - frame) % 3
-    #                     )
-    #                 cds_entry.attributes["ID"] = cds_ids[cds_index] + "." + str(frame)
-    #                 cds_entry.attributes["Parent"] = mrna.attributes["ID"]
-    #                 cls._write_feature_in_gtf_format(
-    #                     output_gtf,
-    #                     cds_entry,
-    #                     gene.attributes["ID"][0],
-    #                     mrna.attributes["ID"][0],
-    #                 )
-    #     else:
-    #         raise ValueError("Strand must be one of '+', '-'.")
 
     # TODO: Remove unneeded arguments
     @classmethod
@@ -438,6 +245,7 @@ class PoGoInputHelper:
         output_directory: Path,
         sequence_lengths_per_contig: List[int],
         contig_sequences: List[Tuple[str, str]],
+        no_indels=False,
     ) -> Tuple[List[int], List[List[str]]]:
         # Track number of transcripts to write protein FASTA with matching ids
         number_of_transcripts_per_contig: List[int] = [
@@ -459,6 +267,22 @@ class PoGoInputHelper:
         ) as output_gtf:
             for gene_feature in gffutils_db.features_of_type("gene"):
                 gene_children = list(gffutils_db.children(gene_feature))
+
+                mrna = [
+                    gene_child
+                    for gene_child in gene_children
+                    if gene_child.featuretype == "mRNA"
+                ][
+                    0
+                ]  # There can be only one mRNA per gene
+
+                # TODO: If no indels allowed: Check if feature contains indels -> If so, exclude (make sure that returned number of transcripts matches up for creation of fasta file)
+                if no_indels:
+                    mrna_indels = int(mrna.attributes["indels"][0])
+                    if mrna_indels != 0:
+                        # TODO
+                        pass
+
                 exons = [
                     gene_child
                     for gene_child in gene_children
@@ -473,13 +297,6 @@ class PoGoInputHelper:
                 contig_length = sequence_lengths_per_contig[contig_id]
                 contig = contig_sequences[contig_id]
 
-                mrna = [
-                    gene_child
-                    for gene_child in gene_children
-                    if gene_child.featuretype == "mRNA"
-                ][
-                    0
-                ]  # There can be only one mRNA per gene
                 mrna_id = mrna.attributes["ID"][0]
                 # TODO: Unify with the one above?
                 contig_idx = int(mrna_id.split(".")[0].split("-")[-1])
@@ -552,7 +369,7 @@ class PoGoInputHelper:
 
     @classmethod
     def generate_gtf_and_protein_files_for_directory(
-        cls, path_to_directory: Path
+        cls, path_to_directory: Path, no_indels=False
     ) -> None:
         contig_sequences = cls._get_contig_sequences(
             path_to_directory / "resulting_contigs.fa"
@@ -563,6 +380,7 @@ class PoGoInputHelper:
                 path_to_directory,
                 [len(contig_sequence[1]) for contig_sequence in contig_sequences],
                 contig_sequences,
+                no_indels,
             )
         )
         cls.generate_protein_fasta_input_file(
@@ -574,8 +392,7 @@ class PoGoInputHelper:
 
     @classmethod
     def generate_gtf_and_protein_files_for_multiple_directories(
-        cls,
-        paths_to_directories: List[Path],
+        cls, paths_to_directories: List[Path], no_indels=False
     ) -> None:
         # TODO: Refactor code duplication
         try:
@@ -589,5 +406,9 @@ class PoGoInputHelper:
         )
         with multiprocessing.Pool(n_processes) as pool:
             pool.map(
-                cls.generate_gtf_and_protein_files_for_directory, paths_to_directories
+                partial(
+                    cls.generate_gtf_and_protein_files_for_directory,
+                    no_indels=no_indels,
+                ),
+                paths_to_directories,
             )
