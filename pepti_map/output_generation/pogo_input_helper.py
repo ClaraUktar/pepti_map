@@ -113,7 +113,6 @@ class PoGoInputHelper:
             + "\n"
         )
 
-    # TODO: Remove unneeded arguments
     @classmethod
     def _write_new_feature_coordinates(
         cls,
@@ -123,7 +122,6 @@ class PoGoInputHelper:
         exons: List[gffutils.Feature],
         strand: str,
         direction: str,
-        contig_length: int,
         contig: str,
     ) -> str:
         # The exons need to be sorted to follow the same order as in the original GFF.
@@ -209,10 +207,14 @@ class PoGoInputHelper:
                 # TODO: Is there a better solution,
                 # e.g. copying and modifying the feature?
                 exon.featuretype = "CDS"
-                # strand = +, dir = sense -> add frame to start of first CDS
-                # strand = +, dir = antisense -> subtract frame from end of first CDS (is first after reversing)
-                # strand = -, dir = sense -> subtract frame from end of first CDS
-                # strand = -, dir = antisense -> add frame to start of first CDS (is first after reversing)
+                # strand = +, dir = sense
+                # -> add frame to start of first CDS
+                # strand = +, dir = antisense
+                # -> subtract frame from end of first CDS (is first after reversing)
+                # strand = -, dir = sense
+                # -> subtract frame from end of first CDS
+                # strand = -, dir = antisense
+                # -> add frame to start of first CDS (is first after reversing)
                 # --> differentiation between +/- strand should suffice after reversing
                 if strand == "+":
                     if exon_idx == 0:
@@ -243,13 +245,12 @@ class PoGoInputHelper:
         cls,
         path_to_gff: Path,
         output_directory: Path,
-        sequence_lengths_per_contig: List[int],
         contig_sequences: List[Tuple[str, str]],
         no_indels=False,
-    ) -> Tuple[List[int], List[List[str]]]:
-        # Track number of transcripts to write protein FASTA with matching ids
-        number_of_transcripts_per_contig: List[int] = [
-            0 for _ in range(len(sequence_lengths_per_contig))
+    ) -> Tuple[List[List[int]], List[List[str]]]:
+        # Track contig alignment ids to write protein FASTA with matching ids
+        alignment_ids_per_contig: List[List[int]] = [
+            [] for _ in range(len(contig_sequences))
         ]
         # Per original contig, there can be several new contigs
         # based on different cutoffs
@@ -276,12 +277,12 @@ class PoGoInputHelper:
                     0
                 ]  # There can be only one mRNA per gene
 
-                # TODO: If no indels allowed: Check if feature contains indels -> If so, exclude (make sure that returned number of transcripts matches up for creation of fasta file)
+                # If no indels allowed: Check if feature contains indels
+                # -> If so, gene feature is skipped
                 if no_indels:
                     mrna_indels = int(mrna.attributes["indels"][0])
                     if mrna_indels != 0:
-                        # TODO
-                        pass
+                        continue
 
                 exons = [
                     gene_child
@@ -294,13 +295,7 @@ class PoGoInputHelper:
                 target: str = first_exon.attributes["Target"][0]
                 contig_id, _, _, direction = target.split(" ")
                 contig_id = int(contig_id.split("-")[-1])
-                contig_length = sequence_lengths_per_contig[contig_id]
                 contig = contig_sequences[contig_id]
-
-                mrna_id = mrna.attributes["ID"][0]
-                # TODO: Unify with the one above?
-                contig_idx = int(mrna_id.split(".")[0].split("-")[-1])
-                number_of_transcripts_per_contig[contig_idx] += 1
 
                 new_contig = cls._write_new_feature_coordinates(
                     output_gtf,
@@ -309,12 +304,16 @@ class PoGoInputHelper:
                     exons,
                     strand,
                     direction,
-                    contig_length,
                     contig[1],
                 )
-                new_contig_sequences[contig_idx].append(new_contig)
 
-        return (number_of_transcripts_per_contig, new_contig_sequences)
+                mrna_id = mrna.attributes["ID"][0]
+                contig_idx = int(mrna_id.split(".")[0].split("-")[-1])
+                path_number = int(mrna_id.split(".")[1].replace("mrna", ""))
+                new_contig_sequences[contig_idx].append(new_contig)
+                alignment_ids_per_contig[contig_idx].append(path_number)
+
+        return (alignment_ids_per_contig, new_contig_sequences)
 
     # TODO: Remove unneeded arguments
     @staticmethod
@@ -322,28 +321,24 @@ class PoGoInputHelper:
         contig_ids: List[str],
         contig_sequences: List[List[str]],
         output_directory: Path,
-        number_of_transcripts_per_contig: List[int],
+        alignment_ids_per_contig: List[List[int]],
     ) -> None:
         # TODO: Adapt to new separation of ids and seqs
         with open(
             output_directory / "pogo_fasta_in.fa", "wt", encoding="utf-8"
         ) as output_file:
-            for contig_id, contig_cut_sequences in zip(contig_ids, contig_sequences):
-                # TODO: This relies on the assumption that all paths for one contig are
-                # reported in the GMAP alignment in ascending numerical order.
-                # Can we really be sure about this?
-                for transcript_index, contig_sequence in enumerate(
-                    contig_cut_sequences
+            for contig_id, contig_cut_sequences, alignment_ids in zip(
+                contig_ids, contig_sequences, alignment_ids_per_contig
+            ):
+                for alignment_id, contig_sequence in zip(
+                    alignment_ids, contig_cut_sequences
                 ):
                     for translation, frame in get_three_frame_translations(
                         contig_sequence, False
                     ):
-                        # for transcript_index in range(
-                        #     number_of_transcripts_per_contig[contig_index]
-                        # ):
-                        gene_id = f"{contig_id}_path{str(transcript_index + 1)}"
+                        gene_id = f"{contig_id}_path{str(alignment_id)}"
                         transcript_id = (
-                            f"{contig_id}_mrna{str(transcript_index + 1)}_{str(frame)}"
+                            f"{contig_id}_mrna{str(alignment_id)}_{str(frame)}"
                         )
                         output_file.write(
                             (
@@ -374,11 +369,10 @@ class PoGoInputHelper:
         contig_sequences = cls._get_contig_sequences(
             path_to_directory / "resulting_contigs.fa"
         )
-        number_of_transcripts_per_contig, updated_contig_sequences = (
+        alignment_ids_per_contig, updated_contig_sequences = (
             cls.generate_gtf_input_file(
                 path_to_directory / "alignment_result.gff3",
                 path_to_directory,
-                [len(contig_sequence[1]) for contig_sequence in contig_sequences],
                 contig_sequences,
                 no_indels,
             )
@@ -387,7 +381,7 @@ class PoGoInputHelper:
             [contig_sequence[0] for contig_sequence in contig_sequences],
             updated_contig_sequences,
             path_to_directory,
-            number_of_transcripts_per_contig,
+            alignment_ids_per_contig,
         )
 
     @classmethod
