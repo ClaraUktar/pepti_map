@@ -8,7 +8,7 @@ from dotenv import dotenv_values
 
 
 class GmapWrapper:
-    def __init__(self):
+    def __init__(self, min_trimmed_coverage: float = 0.0, min_identity: float = 0.0):
         env_vars = dotenv_values()
         try:
             n_threads = env_vars.get("GMAP_N_THREADS")
@@ -26,6 +26,30 @@ class GmapWrapper:
 
         self._n_threads = n_threads
         self._batch_mode = batch_mode
+
+        try:
+            assert min_trimmed_coverage >= 0.0 and min_trimmed_coverage <= 1.0
+            self._min_trimmed_coverage = min_trimmed_coverage
+        except AssertionError:
+            logging.info(
+                (
+                    "--min_trimmed_coverage option for GMAP must be between 0.0 and "
+                    f"1.0, but was {str(min_trimmed_coverage)}. Using default of 0.0"
+                )
+            )
+            self._min_trimmed_coverage = 0.0
+
+        try:
+            assert min_identity >= 0.0 and min_identity <= 1.0
+            self._min_identity = min_identity
+        except AssertionError:
+            logging.info(
+                (
+                    "--min_identity option for GMAP must be between 0.0 and "
+                    f"1.0, but was {str(min_identity)}. Using default of 0.0"
+                )
+            )
+            self._min_identity = 0.0
 
     def build_index(
         self,
@@ -111,6 +135,10 @@ class GmapWrapper:
             str(self._n_threads),
             "-f",
             "gff3_gene",
+            "--min-trimmed-coverage",
+            str(self._min_trimmed_coverage),
+            "--min-identity",
+            str(self._min_identity),
         ]
         alignment_command.extend(
             [
@@ -137,6 +165,10 @@ class GmapWrapper:
             str(self._n_threads),
             "-f",
             "gff3_gene",
+            "--min-trimmed-coverage",
+            str(self._min_trimmed_coverage),
+            "--min-identity",
+            str(self._min_identity),
             path_to_sequences.absolute().as_posix(),
         ]
         with open(
