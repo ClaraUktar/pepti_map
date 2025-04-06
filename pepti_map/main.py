@@ -196,7 +196,7 @@ def generate_trinity_results(
     return trinity_results_paths
 
 
-def load_trinity_results_paths() -> List[Path]:
+def load_current_results_paths() -> List[Path]:
     return TrinityWrapper.load_results_filepaths()
 
 
@@ -205,8 +205,10 @@ def align_reads_to_genome(
     genome: Union[str, None],
     gmap_index: Union[str, None],
     output_dir: str,
-) -> None:
-    gmap_wrapper = GmapWrapper()
+    min_trimmed_coverage: float,
+    min_identity: float,
+) -> List[Path]:
+    gmap_wrapper = GmapWrapper(min_trimmed_coverage, min_identity)
     # TODO: How to automatically use previously generated index?
     if gmap_index is not None and gmap_index != "":
         gmap_index_path = Path(gmap_index)
@@ -220,16 +222,37 @@ def align_reads_to_genome(
         logging.error(missing_option_message)
         raise ValueError(missing_option_message)
 
+    new_results_paths: List[Path] = []
     for trinity_results_path in trinity_results_paths:
         gmap_wrapper.produce_alignment(
             [trinity_results_path],
             trinity_results_path.parent / "alignment_result.gff3",
         )
+        # Check if actual output was produced
+        with open(
+            trinity_results_path.parent / "alignment_result.gff3",
+            "rt",
+            encoding="utf-8",
+        ) as gmap_output:
+            line_count = 0
+            for _ in gmap_output:
+                line_count += 1
+                if line_count == 4:
+                    new_results_paths.append(trinity_results_path)
+                    break
+
+    # Save new output paths
+    TrinityWrapper.save_results_filepaths(new_results_paths)
     _write_last_step(Step.ALIGNMENT.value)
     logging.info("Generated alignment of assembled contigs with GMAP.")
+    return new_results_paths
 
 
-def generate_pogo_input(paths_to_subdirectories: List[Path], peptide_file: str) -> None:
+def generate_pogo_input(
+    paths_to_subdirectories: List[Path],
+    peptide_file: str,
+    no_indels: bool
+) -> None:
     pogo_input_helper = PoGoInputHelper(
         Path(peptide_file), PATH_PEPTIDE_TO_CLUSTER_MAPPING_FILE
     )
@@ -237,7 +260,7 @@ def generate_pogo_input(paths_to_subdirectories: List[Path], peptide_file: str) 
         paths_to_subdirectories, PATH_TO_MERGED_INDEXES
     )
     PoGoInputHelper.generate_gtf_and_protein_files_for_multiple_directories(
-        paths_to_subdirectories
+        paths_to_subdirectories, no_indels
     )
     _write_last_step(Step.POGO_INPUT.value)
     logging.info("Generated PoGo input files.")
@@ -338,6 +361,7 @@ def concat_output(paths_to_subdirectories: List[Path], output_dir: str) -> None:
     "-pi",
     "--precompute-intersections",
     is_flag=True,
+    default=False,
     help=(
         "If used, the intersection sizes for the Jaccard Index "
         "calculation are precomputed during the matching phase."
@@ -394,6 +418,33 @@ def concat_output(paths_to_subdirectories: List[Path], output_dir: str) -> None:
         "the '-g/--genome' option is ignored."
     ),
 )
+@click.option(
+    "-mtc",
+    "--min-trimmed-coverage",
+    required=False,
+    type=float,
+    default=0.0,
+    show_default=True,
+    help="Sets the '--min-trimmed-coverage' option for GMAP during alignment.",
+)
+@click.option(
+    "-mid",
+    "--min-identity",
+    required=False,
+    type=float,
+    default=0.0,
+    show_default=True,
+    help="Sets the '--min-identity' option for GMAP during alignment.",
+)
+@click.option(
+    "-ni",
+    "--no-indels",
+    required=False,
+    is_flag=True,
+    default=False,
+    help=("If set, contig alignments containing indels "
+          "are excluded from further processing.")
+)
 def main(
     peptide_file: str,
     rna_file: str,
@@ -407,6 +458,9 @@ def main(
     min_contig_length: int,
     genome: Union[str, None],
     gmap_index: Union[str, None],
+    min_trimmed_coverage: float,
+    min_identity: float,
+    no_indels: bool
 ):
     _setup(output_dir)
 
@@ -464,13 +518,21 @@ def main(
         )
     else:
         logging.info("Using already generated Trinity output files.")
-        trinity_results_paths = load_trinity_results_paths()
+        trinity_results_paths = load_current_results_paths()
 
     if last_step < Step.ALIGNMENT.value:
         logging.info("Aligning assembled RNA-seq reads to the genome.")
-        align_reads_to_genome(trinity_results_paths, genome, gmap_index, output_dir)
+        trinity_results_paths = align_reads_to_genome(
+            trinity_results_paths,
+            genome,
+            gmap_index,
+            output_dir,
+            min_trimmed_coverage,
+            min_identity,
+        )
     else:
         logging.info("Using already generated alignments.")
+        trinity_results_paths = load_current_results_paths()
 
     paths_to_subdirectories = [
         trinity_results_path.parent for trinity_results_path in trinity_results_paths
@@ -478,7 +540,7 @@ def main(
 
     if last_step < Step.POGO_INPUT.value:
         logging.info("Generating input files for PoGo.")
-        generate_pogo_input(paths_to_subdirectories, peptide_file)
+        generate_pogo_input(paths_to_subdirectories, peptide_file, no_indels)
     else:
         logging.info("Using already generated PoGo input files.")
 
